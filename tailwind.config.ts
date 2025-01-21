@@ -8,8 +8,8 @@ const config: Config = {
   ],
   theme: {
     colors: {
-      yellow: "#F4CD04",
-      yellowLighter: "#F4CD0480",
+      yellow: "#f394d0",
+      yellowLighter: "#f394d0",
       black: "#000000",
       gray: {
         50: "#ffffff1a",

@@ -1,4 +1,3 @@
-import React from "react";
 import "~/app/globals.css";
 
 const TermsOfUseTruthOrTruth = () => (
@@ -45,7 +44,7 @@ const TermsOfUseTruthOrTruth = () => (
           Your privacy is important to us. Please review our Privacy Policy at
           the following link:
           <a
-            href="https://etha.app/privacy-policy-forhowmuch"
+            href="https://taab.app/privacy-policy-forhowmuch"
             className="text-blue-500 underline"
             target="_blank"
             rel="noopener noreferrer"
@@ -94,8 +93,11 @@ const TermsOfUseTruthOrTruth = () => (
         <p className="text-lg mb-3 text-gray-700 leading-relaxed">
           If you have any questions or concerns regarding these Terms of Use,
           please feel free to contact us at{" "}
-          <a href="mailto:contact@etha.app" className="text-blue-500 underline">
-            contact@etha.app
+          <a
+            href="mailto:contact@taabapps.com"
+            className="text-blue-500 underline"
+          >
+            contact@taabapps.com
           </a>
           .
         </p>

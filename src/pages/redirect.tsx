@@ -1,14 +1,12 @@
 "use client";
 
 import { useEffect } from "react";
-import { logEvent } from "firebase/analytics";
-import { analytics } from "../utils/firebase";
+import { initializeFirebase, trackEvent } from "../utils/firebase";
 
 const RedirectPage = () => {
   useEffect(() => {
-    if (analytics) {
-      logEvent(analytics, "redirect");
-    }
+    initializeFirebase();
+    trackEvent("redirect");
 
     // Soumettre le formulaire automatiquement après une courte pause
     const timer = setTimeout(() => {

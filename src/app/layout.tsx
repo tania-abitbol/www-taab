@@ -27,9 +27,12 @@ const lexendDeca = Lexend_Deca({
 });
 
 export const metadata: Metadata = {
-  title: "Etha Studio",
+  title: "TAAB Studio",
   description:
-    "Etha Studio, le studio de création d'applications mobile de divertissements",
+    "TAAB Studio, le studio de création d'applications mobile de divertissements",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
@@ -39,9 +42,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr">
-      <head>
-        <link rel="icon" href="/logo.svg" />
-      </head>
       <body
         className={`${roboto.variable} ${lexendDeca.variable} ${pacifico.variable} ${baloo.variable}`}
       >

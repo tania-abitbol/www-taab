@@ -1,6 +1,6 @@
 "use client";
 
-import React, { FC, useState } from "react";
+import { FC, useState } from "react";
 import Slider from "react-slick";
 
 import "slick-carousel/slick/slick.css";
@@ -13,7 +13,6 @@ interface AppSectionProps {
   logo: string;
   description: string;
   iosLink: string;
-  androidLink: string;
   reversed?: boolean;
 }
 
@@ -22,7 +21,6 @@ export const AppSection: FC<AppSectionProps> = ({
   logo,
   description,
   iosLink,
-  androidLink,
   reversed,
 }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -68,17 +66,14 @@ export const AppSection: FC<AppSectionProps> = ({
           <a href={iosLink}>
             <img src="/images/apple-store-logo.svg" />
           </a>
-          <a href={androidLink}>
-            <img src="/images/google-play-logo.svg" />
-          </a>
         </div>
       </div>
       <div className={`flex-1 ${reversed ? "md:order-1" : "order-2"}`}>
         <Slider {...settings}>
-          {[1, 2, 3, 4].map((i) => (
+          {Array.from({ length: 4 }, (_, i) => i + 1).map((i) => (
             <div key={i}>
               <img
-                src={`/images/${logo}/image_${i}.png`}
+                src={`/images/${logo}/image_${i}.jpg`}
                 className="w-full md:w-60"
               />
             </div>

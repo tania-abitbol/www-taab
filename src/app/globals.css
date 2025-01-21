@@ -58,7 +58,7 @@ body {
   bottom: -8px;
   width: 36px;
   height: 4px;
-  background-color: #f4cd04;
+  background-color: #f394d0;
 }
 
 .underline-custom-right {
@@ -72,7 +72,7 @@ body {
   bottom: -8px;
   width: 36px;
   height: 4px;
-  background-color: #f4cd04;
+  background-color: #f394d0;
 }
 
 .slick-dots li.slick-active .w-5 {
@@ -108,7 +108,7 @@ body {
 
 .custom-paginator .dot.active {
   transform: scale(1.5);
-  background-color: yellow;
+  background-color: #f394d0;
 }
 
 @layer utilities {
