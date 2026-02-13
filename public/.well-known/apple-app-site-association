@@ -3,8 +3,9 @@
     "apps": [],
     "details": [
       {
-        "appID": "com.bae.app",
+        "appID": "WQBAWA432U.com.bae.app",
         "paths": [
+          "/bae/reconnect",
           "/resetPassword/*"
         ]
       }

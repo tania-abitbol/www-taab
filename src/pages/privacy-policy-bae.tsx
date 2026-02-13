@@ -3,176 +3,115 @@ import "~/app/globals.css";
 
 const PrivacyPolicyForBae = () => (
   <main>
-    <div className="min-h-screen px-8 md:px-32 pt-12 max-w-5xl m-auto">
+    <div className="min-h-screen px-8 md:px-32 pt-12 pb-16 max-w-5xl m-auto">
       <ProgressBar color="bg-yellow" bg="bg-yellow-lighter" />
 
-      <h1 className="text-4xl md:text-6xl font-bold mb-6 text-center text-blue-700">
-        Privacy Policy for Bae
+      <h1 className="text-4xl md:text-6xl font-bold mb-4 text-center text-blue-700">
+        Privacy Policy
       </h1>
-      <p className="text-lg mb-6 text-gray-700 leading-relaxed">
-        Bae (hereinafter referred to as "Bae") is committed to protecting the
-        privacy of its users. This Privacy Policy outlines how we collect,
-        store, and process your personal data in compliance with applicable
-        laws, including the EU's General Data Protection Regulation (GDPR).
+      <p className="text-sm text-center text-gray-500 mb-8">
+        Last updated: March 27, 2026
+      </p>
+      <p className="text-lg mb-8 text-gray-700 leading-relaxed">
+        This Privacy Policy describes how Bae ("we", "our", or "us") collects,
+        uses, and protects your information when you use our mobile application.
       </p>
 
-      <section className="mb-6">
-        <h2 className="text-2xl font-bold mb-3 text-blue-600">
-          1. Aim of the Privacy Policy
+      <section className="mb-8">
+        <h2 className="text-2xl font-bold mb-4 text-blue-600">
+          1. Information We Collect
         </h2>
         <p className="text-lg mb-3 text-gray-700 leading-relaxed">
-          This Privacy Policy is an integral part of the Terms and Conditions of
-          Use governing the games and software applications provided by Bae,
-          including all content, services, and features accessed via these
-          applications (hereinafter referred to as "Services"). By using our
-          Services, you explicitly accept the terms of this Privacy Policy.
+          We may collect the following information:
+        </p>
+        <ul className="list-disc list-inside text-lg text-gray-700 leading-relaxed ml-4 space-y-2">
+          <li>Usage data (app interactions, features used)</li>
+          <li>Device information (device type, OS version)</li>
+          <li>Purchase information (subscriptions handled by Apple)</li>
+        </ul>
+        <p className="text-lg mt-4 text-gray-700 leading-relaxed">
+          We do <strong>NOT</strong> collect personally identifiable information
+          unless explicitly provided.
         </p>
       </section>
 
-      <section className="mb-6">
-        <h2 className="text-2xl font-bold mb-3 text-blue-600">
-          2. Data Collection
+      <section className="mb-8">
+        <h2 className="text-2xl font-bold mb-4 text-blue-600">
+          2. How We Use Information
         </h2>
         <p className="text-lg mb-3 text-gray-700 leading-relaxed">
-          Bae collects personal data that you provide directly or through the
-          platforms you use to access our Services. This includes, but is not
-          limited to, your name, profile photo, email address, and usage data
-          such as your IP address and browsing history.
+          We use collected data to:
+        </p>
+        <ul className="list-disc list-inside text-lg text-gray-700 leading-relaxed ml-4 space-y-2">
+          <li>Improve the app experience</li>
+          <li>Analyze usage and performance</li>
+          <li>Provide customer support</li>
+        </ul>
+      </section>
+
+      <section className="mb-8">
+        <h2 className="text-2xl font-bold mb-4 text-blue-600">3. Purchases</h2>
+        <p className="text-lg text-gray-700 leading-relaxed">
+          All purchases are processed by Apple. We do not store or have access
+          to your payment information.
         </p>
       </section>
 
-      <section className="mb-6">
-        <h2 className="text-2xl font-bold mb-3 text-blue-600">
-          3. Purposes of Collecting and Processing Your Data
+      <section className="mb-8">
+        <h2 className="text-2xl font-bold mb-4 text-blue-600">
+          4. Third-Party Services
         </h2>
         <p className="text-lg mb-3 text-gray-700 leading-relaxed">
-          Bae collects and processes your data to provide, maintain, and improve
-          our Services, ensure proper application of the Terms and Conditions,
-          and offer personalized content. We may also use your data for
-          communication purposes and to analyze user behavior.
+          We may use third-party services such as:
+        </p>
+        <ul className="list-disc list-inside text-lg text-gray-700 leading-relaxed ml-4 space-y-2">
+          <li>Firebase (analytics)</li>
+          <li>RevenueCat (subscription management)</li>
+        </ul>
+        <p className="text-lg mt-4 text-gray-700 leading-relaxed">
+          These services may collect anonymized data in accordance with their
+          own privacy policies.
         </p>
       </section>
 
-      <section className="mb-6">
-        <h2 className="text-2xl font-bold mb-3 text-blue-600">
-          4. Recipients of Your Data
+      <section className="mb-8">
+        <h2 className="text-2xl font-bold mb-4 text-blue-600">
+          5. Data Security
         </h2>
-        <p className="text-lg mb-3 text-gray-700 leading-relaxed">
-          Your data will not be shared with third parties except in the
-          following cases: with your consent, for legal reasons, or with service
-          providers who assist in delivering our Services. Bae does not share
-          your personal data with third-party advertisers without your prior
-          consent.
+        <p className="text-lg text-gray-700 leading-relaxed">
+          We take reasonable measures to protect your data but cannot guarantee
+          absolute security.
         </p>
       </section>
 
-      <section className="mb-6">
-        <h2 className="text-2xl font-bold mb-3 text-blue-600">
-          5. Security of Your Data
+      <section className="mb-8">
+        <h2 className="text-2xl font-bold mb-4 text-blue-600">
+          6. Your Rights
         </h2>
-        <p className="text-lg mb-3 text-gray-700 leading-relaxed">
-          Bae implements security measures to protect your personal data.
-          However, we cannot guarantee the security of data transmitted over the
-          internet, and you should take necessary precautions to safeguard your
-          personal information.
+        <p className="text-lg text-gray-700 leading-relaxed">
+          You may stop all data collection by uninstalling the app.
         </p>
       </section>
 
-      <section className="mb-6">
-        <h2 className="text-2xl font-bold mb-3 text-blue-600">
-          6. Safeguarding of Your Data
-        </h2>
-        <p className="text-lg mb-3 text-gray-700 leading-relaxed">
-          Your personal data is stored for the duration necessary to fulfill the
-          purposes outlined in this Privacy Policy. After this period, data is
-          retained only for statistical purposes and is not used for any other
-          purpose.
+      <section className="mb-8">
+        <h2 className="text-2xl font-bold mb-4 text-blue-600">7. Changes</h2>
+        <p className="text-lg text-gray-700 leading-relaxed">
+          We may update this policy. Changes will be posted on this page.
         </p>
       </section>
 
-      <section className="mb-6">
-        <h2 className="text-2xl font-bold mb-3 text-blue-600">7. Cookies</h2>
-        <p className="text-lg mb-3 text-gray-700 leading-relaxed">
-          Bae may use cookies to enhance your user experience and manage
-          advertising. You can disable cookies in your browser settings, but
-          this may affect the quality of our Services.
-        </p>
-      </section>
-
-      <section className="mb-6">
-        <h2 className="text-2xl font-bold mb-3 text-blue-600">
-          8. Third-Party Privacy Policy
-        </h2>
-        <p className="text-lg mb-3 text-gray-700 leading-relaxed">
-          Our Services may contain links to third-party websites. Bae is not
-          responsible for the privacy practices of these third parties. We
-          encourage you to review their privacy policies directly.
-        </p>
-      </section>
-
-      <section className="mb-6">
-        <h2 className="text-2xl font-bold mb-3 text-blue-600">
-          9. Transfer of Data Internationally
-        </h2>
-        <p className="text-lg mb-3 text-gray-700 leading-relaxed">
-          For the purposes of operating our Services, your data may be
-          transferred and stored in the USA. Bae ensures that such data
-          transfers comply with applicable regulations.
-        </p>
-      </section>
-
-      <section className="mb-6">
-        <h2 className="text-2xl font-bold mb-3 text-blue-600">
-          10. Cessation / Transfer
-        </h2>
-        <p className="text-lg mb-3 text-gray-700 leading-relaxed">
-          Bae reserves the right to transfer your data in the event of a change
-          of control or cessation of business. Users will be notified of such
-          transfers.
-        </p>
-      </section>
-
-      <section className="mb-6">
-        <h2 className="text-2xl font-bold mb-3 text-blue-600">
-          11. Privacy Policy Concerning Children Under 16
-        </h2>
-        <p className="text-lg mb-3 text-gray-700 leading-relaxed">
-          Bae does not knowingly collect data from children under 16. If we
-          become aware of such data, we will take steps to delete it.
-        </p>
-      </section>
-
-      <section className="mb-6">
-        <h2 className="text-2xl font-bold mb-3 text-blue-600">
-          12. Right of Access, Modification, and Deletion of Your Personal Data
-        </h2>
-        <p className="text-lg mb-3 text-gray-700 leading-relaxed">
-          You have the right to access, modify, or delete your personal data.
-          For data collected via Platforms, you can manage this directly from
-          your account settings.
-        </p>
-      </section>
-
-      <section className="mb-6">
-        <h2 className="text-2xl font-bold mb-3 text-blue-600">
-          13. Any Questions?
-        </h2>
-        <p className="text-lg mb-3 text-gray-700 leading-relaxed">
-          If you have any questions about Bae’s Services or this Privacy Policy,
-          please feel free to contact us at{" "}
+      <section className="mb-8">
+        <h2 className="text-2xl font-bold mb-4 text-blue-600">8. Contact</h2>
+        <p className="text-lg text-gray-700 leading-relaxed">
+          If you have any questions, contact us at:{" "}
           <a
             href="mailto:contact@taabapps.com"
-            className="text-blue-500 underline"
+            className="text-blue-500 underline hover:text-blue-700 transition-colors"
           >
             contact@taabapps.com
           </a>
-          .
         </p>
       </section>
-
-      <p className="text-lg mb-3 text-gray-700 leading-relaxed">
-        By using the Services, you agree to the terms of this Privacy Policy.
-      </p>
     </div>
   </main>
 );

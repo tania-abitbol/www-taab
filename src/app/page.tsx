@@ -47,7 +47,7 @@ export default function Home() {
           iosLink="https://apps.apple.com/fr/app/bae-jeu-de-couple/id1574150149"
         />
         <AppSection
-          name="VÉRITÉ ou VÉRITÉ"
+          name="VÉRITÉ ou VÉRITÉ "
           logo="vérité"
           description="Découvrez Vérité ou Vérité, une application qui transforme votre smartphone en l'accessoire ultime pour animer vos soirées entre amis. Plongez dans une aventure sociale captivante avec Vérité ou Vérité, l'application dynamique qui redéfinit le divertissement en groupe !"
           iosLink="https://apps.apple.com/fr/app/v%C3%A9rit%C3%A9-ou-v%C3%A9rit%C3%A9/id6480046704"

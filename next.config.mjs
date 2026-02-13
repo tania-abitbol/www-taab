@@ -15,6 +15,20 @@ const nextConfig = {
           },
         ],
       },
+      {
+        // Apple Universal Links — AASA doit être servi en JSON, sans redirect.
+        source: "/.well-known/apple-app-site-association",
+        headers: [
+          {
+            key: "Content-Type",
+            value: "application/json",
+          },
+          {
+            key: "Cache-Control",
+            value: "public, max-age=3600",
+          },
+        ],
+      },
     ];
   },
 };
