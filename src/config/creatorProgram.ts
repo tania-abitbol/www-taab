@@ -86,7 +86,7 @@ const us: CreatorProgramContent = {
   country: "us",
   countryIsoCode: "US",
   hero: {
-    eyebrow: "Etha Creator Network · US",
+    eyebrow: "TAAB Creator Network · US",
     titleLead: "Post TikToks.",
     titleHighlight: "Get paid.",
     copy: "Make TikToks about our apps, in your own style, on your own account. The better your videos perform, the more you earn.",
@@ -167,13 +167,13 @@ const us: CreatorProgramContent = {
       },
       {
         title: "Early access",
-        description: "Be first on new Etha apps and new paid opportunities.",
+        description: "Be first on new TAAB apps and new paid opportunities.",
       },
     ],
   },
   apps: {
     title: "You'll be creating around apps people actually use.",
-    copy: "Etha builds consumer apps around social interaction, entertainment and everyday experiences: games for couples, party games for friends, and new ideas we're shipping next.",
+    copy: "TAAB builds consumer apps around social interaction, entertainment and everyday experiences: games for couples, party games for friends, and new ideas we're shipping next.",
     emphasis:
       "You're not making random branded content. You're helping us grow products.",
   },
@@ -186,7 +186,7 @@ const us: CreatorProgramContent = {
       "We're starting with US creators. You can still apply and we'll reach out when we open in your country.",
     success: {
       title: "You're in.",
-      copy: "Thanks for applying to the Etha Creator Network. We'll review your application and get back to you if there's a fit.",
+      copy: "Thanks for applying to the TAAB Creator Network. We'll review your application and get back to you if there's a fit.",
     },
   },
   faq: {
@@ -215,7 +215,7 @@ const us: CreatorProgramContent = {
       {
         question: "Can I work with other brands?",
         answer:
-          "Yes. Etha's creator program is designed to fit alongside your existing content and partnerships.",
+          "Yes. TAAB's creator program is designed to fit alongside your existing content and partnerships.",
       },
     ],
   },

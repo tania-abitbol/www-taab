@@ -250,7 +250,7 @@ export const HomeLanding = () => (
               <img src="/images/itemTitle1.svg" alt="" aria-hidden="true" className="pointer-events-none absolute -right-4 -top-4 w-28 opacity-90 brightness-0 invert md:w-40" />
               <div className="relative grid gap-8 md:grid-cols-[1.4fr_1fr] md:items-end">
                 <div>
-                  <p className="mb-4 font-body text-xs font-bold uppercase tracking-[0.16em]">Etha Creator Network</p>
+                  <p className="mb-4 font-body text-xs font-bold uppercase tracking-[0.16em]">TAAB Creator Network</p>
                   <h2 id="creators-title" className="mb-4 font-title text-4xl leading-[1.05] tracking-tight md:text-6xl">
                     Make TikToks? Create with us.
                   </h2>

@@ -34,7 +34,7 @@ import {
 import { submitCreatorApplication } from "./submitApplication";
 import { CREATOR_EVENTS, trackCreatorEvent } from "./tracking";
 
-const DRAFT_STORAGE_KEY = "etha:creator-application-draft";
+const DRAFT_STORAGE_KEY = "taab:creator-application-draft";
 
 interface ApplicationFormProps {
   content: CreatorProgramContent;
@@ -495,7 +495,7 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
                 <>
                   <TextAreaField
                     name="whyCreator"
-                    label="Why do you want to become an Etha Creator?"
+                    label="Why do you want to become a TAAB Creator?"
                     value={draft.whyCreator}
                     onChange={(value) => update("whyCreator", value)}
                     maxLength={LIMITS.whyCreator}
@@ -504,7 +504,7 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
                   />
                   <CheckboxField
                     name="informationConfirmed"
-                    label="I confirm this information is accurate and that Etha can contact me by email about the creator program."
+                    label="I confirm this information is accurate and that TAAB can contact me by email about the creator program."
                     checked={draft.informationConfirmed}
                     onChange={(value) => update("informationConfirmed", value)}
                     error={errors.informationConfirmed}

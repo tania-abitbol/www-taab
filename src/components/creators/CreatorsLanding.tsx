@@ -147,9 +147,8 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
         </a>
 
         <header className={`${container} flex items-center justify-between pt-8 md:pt-10`}>
-          <a href="/" aria-label="Etha home" className="rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-4">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo-white.svg" alt="" width={62} height={34} className="h-8 w-auto invert md:h-9" />
+          <a href="/" className="rounded font-title text-3xl tracking-tight focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-4">
+            TAAB<span className="text-yellow">.</span>
           </a>
           <ApplyButton size="sm" onClick={handleCta("header")}>
             Apply
@@ -348,10 +347,10 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
             </div>
           </section>
 
-          {/* 6. Etha apps */}
+          {/* 6. TAAB apps */}
           <section aria-labelledby="apps-title" className={`${container} pb-24 md:pb-36`}>
             <Reveal className="max-w-3xl">
-              <Eyebrow>Etha apps</Eyebrow>
+              <Eyebrow>TAAB apps</Eyebrow>
               <h2 id="apps-title" className={`${sectionTitle} mb-6`}>
                 {apps.title}
               </h2>
