@@ -253,7 +253,7 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
 
               <div aria-hidden="true" className="relative mx-auto h-[360px] w-full max-w-[380px] sm:h-[440px] lg:h-[520px] lg:max-w-none">
                 <div className="absolute left-1/2 top-1/2 h-[78%] w-[78%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-yellow/30 blur-2xl" />
-                <PhoneShot src="/images/vérité/image_3.jpg" className="left-[6%] top-[8%] h-[78%] w-[42%] -rotate-6" />
+                <PhoneShot src="/images/bae/image_3.jpg" className="left-[6%] top-[8%] h-[78%] w-[42%] -rotate-6" />
                 <PhoneShot src="/images/vérité/image_1.jpg" className="right-[6%] top-[16%] h-[78%] w-[42%] rotate-6" />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/images/itemTitle2.svg" alt="" className="absolute -right-2 top-0 w-16 md:w-24" />
