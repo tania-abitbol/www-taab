@@ -9,7 +9,6 @@ import { AppShowcaseCard } from "~/components/site/AppShowcase";
 import {
   CheckIcon,
   Eyebrow,
-  PhoneShot,
   Reveal,
   bodyCopy,
   container,
@@ -19,6 +18,8 @@ import { STUDIO_APPS } from "~/config/apps";
 import type { CreatorProgramContent } from "~/config/creatorProgram";
 
 import { ApplicationForm } from "./ApplicationForm";
+import { CreatorPhoneMock } from "./CreatorPhoneMock";
+import { EarningsEstimator } from "./EarningsEstimator";
 import { CREATOR_EVENTS, trackCreatorEvent } from "./tracking";
 
 const APPLY_SECTION_ID = "apply";
@@ -89,7 +90,7 @@ const Icon = ({ name }: { name: keyof typeof icons }) => (
 );
 
 export const CreatorsLanding = ({ content }: { content: CreatorProgramContent }) => {
-  const { hero, positioning, steps, lookingFor, benefits, apps, application, faq, finalCta } =
+  const { hero, deal, earnings, positioning, lookingFor, benefits, apps, application, faq, finalCta } =
     content;
   const program = content.country;
 
@@ -157,35 +158,98 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
 
         <main>
           {/* 1. Hero */}
-          <section ref={heroRef} aria-labelledby="hero-title" className={`${container} relative pb-20 pt-14 md:pb-32 md:pt-24`}>
-            <div className="grid items-center gap-14 lg:grid-cols-[1.15fr_0.85fr] lg:gap-10">
+          <section ref={heroRef} aria-labelledby="hero-title" className={`${container} relative pb-20 pt-12 md:pb-32 md:pt-20`}>
+            <div className="grid items-center gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-10">
               <div className="relative z-10">
                 <Eyebrow>{hero.eyebrow}</Eyebrow>
-                <h1 id="hero-title" className="isolate mb-7 font-title text-[2.9rem] leading-[1.05] tracking-tight sm:text-6xl lg:text-[5.25rem]">
+                <h1 id="hero-title" className="isolate mb-7 font-title text-[3.4rem] leading-[1.02] tracking-tight sm:text-7xl lg:text-[6rem]">
                   {hero.titleLead}{" "}
                   <span className="rotating-background mt-2 whitespace-nowrap">{hero.titleHighlight}</span>
                 </h1>
-                <p className="mb-4 max-w-xl font-body text-lg leading-relaxed text-black md:text-xl">
+                <p className="mb-6 max-w-xl font-body text-lg leading-relaxed text-black md:text-xl">
                   {hero.copy}
                 </p>
-                <p className="mb-9 max-w-xl font-body text-base text-gray-700">{hero.secondary}</p>
-                <ApplyButton onClick={handleCta("hero")} className="w-full sm:w-auto">
-                  {hero.cta}
-                </ApplyButton>
+                <ul className="mb-9 flex flex-wrap gap-2">
+                  {hero.proofPoints.map((point) => (
+                    <li key={point} className="flex items-center gap-2 rounded-full bg-white px-3.5 py-2 font-body text-sm font-bold shadow-[0_1px_0_rgba(0,0,0,0.06)] ring-1 ring-black/10">
+                      <span aria-hidden="true" className="flex h-5 w-5 items-center justify-center rounded-full bg-yellow text-black">
+                        <CheckIcon className="h-3 w-3" />
+                      </span>
+                      {point}
+                    </li>
+                  ))}
+                </ul>
+                <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:gap-5">
+                  <ApplyButton onClick={handleCta("hero")} className="w-full sm:w-auto">
+                    {hero.cta}
+                  </ApplyButton>
+                  <p className="text-center font-body text-sm text-gray-700 sm:text-left">{hero.ctaNote}</p>
+                </div>
+                <p className="mt-8 flex items-center gap-2 font-body text-sm font-bold">
+                  <span aria-hidden="true" className="relative flex h-2.5 w-2.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-yellow opacity-75" />
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-yellow" />
+                  </span>
+                  {hero.secondary}
+                </p>
               </div>
 
-              <div aria-hidden="true" className="relative mx-auto h-[360px] w-full max-w-[380px] sm:h-[440px] lg:h-[520px] lg:max-w-none">
-                <div className="absolute left-1/2 top-1/2 h-[78%] w-[78%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-yellow/30 blur-2xl" />
-                <PhoneShot eager src="/images/bae/image_3.jpg" className="absolute left-[6%] top-[8%] h-[78%] w-[42%] -rotate-6" />
-                <PhoneShot eager src="/images/vérité/image_1.jpg" className="absolute right-[6%] top-[16%] h-[78%] w-[42%] rotate-6" />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/images/itemTitle2.svg" alt="" className="absolute -right-2 top-0 w-16 md:w-24" />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/images/itemTitle3.svg" alt="" className="absolute bottom-0 left-0 w-14 md:w-20" />
+              <CreatorPhoneMock />
+            </div>
+          </section>
+
+          {/* 2. The deal */}
+          <section aria-labelledby="deal-title" className="px-3 pb-24 sm:px-5 md:pb-36">
+            <div className="relative mx-auto max-w-[1280px] overflow-clip rounded-[2rem] bg-black py-16 text-white md:rounded-[2.5rem] md:py-24">
+              <div aria-hidden="true" className="pointer-events-none absolute -left-24 -top-24 h-80 w-80 rounded-full bg-yellow/20 blur-3xl" />
+              <div className={`${container} relative`}>
+                <Reveal className="mb-12 max-w-2xl md:mb-16">
+                  <Eyebrow inverted>{deal.eyebrow}</Eyebrow>
+                  <h2 id="deal-title" className={`${sectionTitle} mb-5`}>
+                    {deal.title}
+                  </h2>
+                  <p className="font-body text-lg leading-relaxed text-white/75 md:text-xl">{deal.copy}</p>
+                </Reveal>
+                <ol className="grid gap-4 md:grid-cols-3 md:gap-5">
+                  {deal.steps.map((step, index) => {
+                    const isPayout = index === deal.steps.length - 1;
+                    return (
+                      <li key={step.title}>
+                        <Reveal
+                          delay={index * 0.08}
+                          className={`flex h-full flex-col rounded-3xl p-6 md:p-8 ${isPayout ? "bg-yellow text-black" : "border border-white/10 bg-white/5"}`}
+                        >
+                          <p aria-hidden="true" className={`mb-10 font-title text-5xl md:mb-14 ${isPayout ? "text-black" : "text-yellow"}`}>
+                            {isPayout ? "$" : String(index + 1).padStart(2, "0")}
+                          </p>
+                          <h3 className="mb-2 font-title text-2xl">
+                            <span className="sr-only">Step {index + 1}: </span>
+                            {step.title}
+                          </h3>
+                          <p className={`font-body text-base leading-relaxed ${isPayout ? "text-black/80" : "text-white/75"}`}>
+                            {step.description}
+                          </p>
+                        </Reveal>
+                      </li>
+                    );
+                  })}
+                </ol>
+                {earnings ? (
+                  <Reveal className="mt-6">
+                    <EarningsEstimator earnings={earnings} />
+                  </Reveal>
+                ) : (
+                  <Reveal className="mt-6">
+                    <p className="flex items-start gap-3 rounded-2xl border border-white/10 px-5 py-4 font-body text-base text-white/80 md:items-center md:px-6">
+                      <span aria-hidden="true" className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-yellow text-black md:mt-0">
+                        <CheckIcon />
+                      </span>
+                      {deal.ratesNote}
+                    </p>
+                  </Reveal>
+                )}
               </div>
             </div>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/itemTitle1.svg" alt="" aria-hidden="true" className="pointer-events-none absolute -top-2 right-6 hidden w-20 md:block lg:right-[44%]" />
           </section>
 
           {/* 2. Positioning */}
@@ -219,36 +283,37 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
             </Reveal>
           </section>
 
-          {/* 3. How it works */}
-          <section aria-labelledby="how-title" className="px-3 pb-24 sm:px-5 md:pb-36">
-            <div className="mx-auto max-w-[1280px] rounded-[2rem] bg-black py-16 text-white md:rounded-[2.5rem] md:py-24">
-              <div className={container}>
-                <Reveal>
-                  <h2 id="how-title" className={`${sectionTitle} mb-12 max-w-2xl md:mb-16`}>
-                    How it works
-                  </h2>
-                </Reveal>
-                <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
-                  {steps.map((step, index) => (
-                    <li key={step.title}>
-                      <Reveal delay={index * 0.08} className="h-full rounded-3xl border border-white/10 bg-white/5 p-6 md:p-7">
-                        <p className="mb-8 font-title text-4xl text-yellow md:mb-12 md:text-5xl" aria-hidden="true">
-                          {String(index + 1).padStart(2, "0")}
-                        </p>
-                        <h3 className="mb-2 font-title text-xl md:text-2xl">
-                          <span className="sr-only">Step {index + 1}: </span>
-                          {step.title}
-                        </h3>
-                        <p className="font-body text-base leading-relaxed text-white/75">{step.description}</p>
-                      </Reveal>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            </div>
+          {/* 4. What creators get */}
+          <section aria-labelledby="benefits-title" className={`${container} pb-24 md:pb-36`}>
+            <Reveal>
+              <h2 id="benefits-title" className={`${sectionTitle} mb-12 max-w-3xl md:mb-16`}>
+                {benefits.title}
+              </h2>
+            </Reveal>
+            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
+              {benefits.items.map((benefit, index) => {
+                const accent = index === 0;
+                return (
+                  <li key={benefit.title}>
+                    <Reveal
+                      delay={index * 0.08}
+                      className={`flex h-full flex-col rounded-3xl p-6 md:p-7 ${accent ? "bg-yellow" : "border border-black/10 bg-white"}`}
+                    >
+                      <span className={`mb-10 flex h-12 w-12 items-center justify-center rounded-2xl ${accent ? "bg-black text-yellow" : "bg-yellow/30"}`}>
+                        <Icon name={(["chart", "bulb", "pen", "key"] as const)[index % 4]} />
+                      </span>
+                      <h3 className="mb-2 font-title text-xl md:text-2xl">{benefit.title}</h3>
+                      <p className={`font-body text-base leading-relaxed ${accent ? "text-black" : "text-gray-700"}`}>
+                        {benefit.description}
+                      </p>
+                    </Reveal>
+                  </li>
+                );
+              })}
+            </ul>
           </section>
 
-          {/* 4. What we're looking for */}
+          {/* 5. What we're looking for */}
           <section aria-labelledby="looking-title" className={`${container} pb-24 md:pb-36`}>
             <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
               <Reveal>
@@ -281,36 +346,6 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
                 })}
               </ul>
             </div>
-          </section>
-
-          {/* 5. What creators get */}
-          <section aria-labelledby="benefits-title" className={`${container} pb-24 md:pb-36`}>
-            <Reveal>
-              <h2 id="benefits-title" className={`${sectionTitle} mb-12 max-w-3xl md:mb-16`}>
-                {benefits.title}
-              </h2>
-            </Reveal>
-            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
-              {benefits.items.map((benefit, index) => {
-                const accent = index === 2;
-                return (
-                  <li key={benefit.title}>
-                    <Reveal
-                      delay={index * 0.08}
-                      className={`flex h-full flex-col rounded-3xl p-6 md:p-7 ${accent ? "bg-yellow" : "border border-black/10 bg-white"}`}
-                    >
-                      <span className={`mb-10 flex h-12 w-12 items-center justify-center rounded-2xl ${accent ? "bg-black text-yellow" : "bg-yellow/30"}`}>
-                        <Icon name={(["pen", "bulb", "chart", "key"] as const)[index % 4]} />
-                      </span>
-                      <h3 className="mb-2 font-title text-xl md:text-2xl">{benefit.title}</h3>
-                      <p className={`font-body text-base leading-relaxed ${accent ? "text-black" : "text-gray-700"}`}>
-                        {benefit.description}
-                      </p>
-                    </Reveal>
-                  </li>
-                );
-              })}
-            </ul>
           </section>
 
           {/* 6. Etha apps */}
@@ -349,7 +384,7 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
                     {application.copy}
                   </p>
                   <ul className="hidden space-y-3 font-body text-base text-white/80 lg:block">
-                    {["5 short steps", "No follower minimum", application.recruitingNote].map((item) => (
+                    {["Takes about 3 minutes", "No follower minimum", "Paid on performance", application.recruitingNote].map((item) => (
                       <li key={item} className="flex items-start gap-3">
                         <span aria-hidden="true" className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-yellow text-black">
                           <CheckIcon className="h-3 w-3" />

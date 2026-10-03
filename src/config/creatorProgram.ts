@@ -5,6 +5,17 @@ export interface CreatorFaqItem {
   answer: string;
 }
 
+export interface CreatorEarnings {
+  /** ISO 4217 code used to format amounts, e.g. "USD". */
+  currency: string;
+  /** Real payout per 1,000 views for this program. */
+  ratePer1000Views: number;
+  /** Optional flat amount paid per accepted video. */
+  basePerVideo?: number;
+  viewPresets: number[];
+  maxVideosPerMonth: number;
+}
+
 export interface CreatorProgramContent {
   country: CreatorCountryCode;
   /** ISO 3166-1 alpha-2 code preselected in the application form. */
@@ -14,16 +25,29 @@ export interface CreatorProgramContent {
     titleLead: string;
     titleHighlight: string;
     copy: string;
+    proofPoints: string[];
     secondary: string;
     cta: string;
+    ctaNote: string;
   };
+  deal: {
+    eyebrow: string;
+    title: string;
+    copy: string;
+    steps: { title: string; description: string }[];
+    ratesNote: string;
+  };
+  /**
+   * Leave undefined until the payout model is final: the earnings estimator
+   * only renders when real rates are configured.
+   */
+  earnings?: CreatorEarnings;
   positioning: {
     title: string;
     copy: string;
     points: { title: string; description: string }[];
     note: string;
   };
-  steps: { title: string; description: string }[];
   lookingFor: {
     title: string;
     copy: string;
@@ -62,12 +86,36 @@ const us: CreatorProgramContent = {
   country: "us",
   countryIsoCode: "US",
   hero: {
-    eyebrow: "ETHA CREATOR NETWORK",
-    titleLead: "Become an",
-    titleHighlight: "Etha Creator",
-    copy: "Create authentic TikToks around our apps. Keep your style. Keep your audience. Get rewarded when your content performs.",
-    secondary: "We're building a small network of talented creators in the US.",
-    cta: "Apply to become a creator",
+    eyebrow: "Etha Creator Network · US",
+    titleLead: "Post TikToks.",
+    titleHighlight: "Get paid.",
+    copy: "Make TikToks about our apps, in your own style, on your own account. The better your videos perform, the more you earn.",
+    proofPoints: ["No follower minimum", "Paid on performance", "No scripts"],
+    secondary: "We're selecting our first 20 creators in the US.",
+    cta: "Apply now",
+    ctaNote: "Takes about 3 minutes",
+  },
+  deal: {
+    eyebrow: "How you get paid",
+    title: "Here's the deal.",
+    copy: "No brand-deal negotiation, no follower threshold. You post, your videos perform, you get paid.",
+    steps: [
+      {
+        title: "Get accepted",
+        description:
+          "Apply in 3 minutes. We pick a small group of creators who are a great fit for our apps.",
+      },
+      {
+        title: "Post in your style",
+        description:
+          "Make TikToks featuring our apps the way you already make videos. We send ideas and hooks that work.",
+      },
+      {
+        title: "Get paid on performance",
+        description: "Every video is paid based on how it performs. More views, more money.",
+      },
+    ],
+    ratesNote: "Your exact rate and payout details are shared as soon as you're accepted.",
   },
   positioning: {
     title: "You don't need 100K followers.",
@@ -88,27 +136,6 @@ const us: CreatorProgramContent = {
     ],
     note: "Your account stays yours. No scripts to read, no turning your feed into an ad account.",
   },
-  steps: [
-    {
-      title: "Apply",
-      description:
-        "Tell us about your TikTok, your audience and the type of content you create.",
-    },
-    {
-      title: "Get selected",
-      description:
-        "We select a small group of creators who are a strong fit for our apps.",
-    },
-    {
-      title: "Create",
-      description:
-        "Create authentic content that fits naturally into your usual style.",
-    },
-    {
-      title: "Get rewarded",
-      description: "When your content performs, you can earn more.",
-    },
-  ],
   lookingFor: {
     title: "We're looking for creators, not influencers.",
     copy: "Follower count isn't the main thing we care about. Content quality, personality and the ability to make people stop scrolling matter more.",
@@ -127,22 +154,20 @@ const us: CreatorProgramContent = {
     title: "You create. We handle the rest.",
     items: [
       {
-        title: "Creative freedom",
-        description: "Your content should still feel like you.",
+        title: "Paid on performance",
+        description: "You earn from how your videos perform, not from your follower count.",
       },
       {
-        title: "Content ideas",
-        description:
-          "Get access to concepts, hooks and examples that can inspire your videos.",
+        title: "Ideas that work",
+        description: "Get hooks, concepts and examples built to make people stop scrolling.",
       },
       {
-        title: "Performance rewards",
-        description:
-          "Creators can earn based on the performance of their content.",
+        title: "Your style, your account",
+        description: "No scripts and no ad-account vibe. Your content still feels like you.",
       },
       {
         title: "Early access",
-        description: "Get early access to new Etha apps and opportunities.",
+        description: "Be first on new Etha apps and new paid opportunities.",
       },
     ],
   },
@@ -185,7 +210,7 @@ const us: CreatorProgramContent = {
       {
         question: "How does payment work?",
         answer:
-          "Compensation depends on the creator program and content performance. Details are provided to selected creators.",
+          "You're paid based on how your videos perform: the more views they get, the more you earn. Your exact rate and payout details are shared as soon as you're accepted.",
       },
       {
         question: "Can I work with other brands?",
@@ -195,8 +220,8 @@ const us: CreatorProgramContent = {
     ],
   },
   finalCta: {
-    title: "Ready to create with Etha?",
-    copy: "We're looking for our first group of US creators.",
+    title: "Your next TikTok could pay.",
+    copy: "We're selecting our first 20 creators in the US.",
     cta: "Apply now",
   },
 };
