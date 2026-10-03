@@ -36,3 +36,6 @@ firestore-debug.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# impeccable: platform engine binary, fetched by the launcher per machine
+/.claude/skills/impeccable/scripts/bin/
