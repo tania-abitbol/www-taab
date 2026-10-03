@@ -1,0 +1,77 @@
+rules_version = '2';
+
+// The production project may already have rules for other collections that are
+// not in this repository. Merge the creatorApplications block into the live
+// rules before deploying; deploying this file as-is replaces them all.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Public, create-only. Applicants can never read, list, update or delete
+    // applications; reviews happen through the console / Admin SDK only.
+    match /creatorApplications/{applicationId} {
+      allow read, update, delete: if false;
+      allow create: if isValidCreatorApplication(request.resource.data);
+    }
+
+    function isBoundedString(value, min, max) {
+      return value is string && value.size() >= min && value.size() <= max;
+    }
+
+    function isTikTokUrl(value) {
+      return value is string
+        && value.size() <= 300
+        && value.matches('^https://([a-z]+[.])?tiktok[.]com/.+$');
+    }
+
+    // Keep enums and limits in sync with src/config/creatorApplication.ts.
+    function isValidCreatorApplication(data) {
+      let requiredKeys = [
+        'name', 'email', 'country', 'state', 'ageConfirmed',
+        'tiktokUsername', 'tiktokUrl', 'followers', 'averageViews',
+        'postingFrequency', 'contentCategories', 'contentDescription',
+        'showsFace', 'videoUrls', 'contentDifference', 'whyCreator',
+        'informationConfirmed', 'status', 'source', 'locale', 'createdAt'
+      ];
+      let videoUrls = data.videoUrls;
+      return data.keys().hasOnly(requiredKeys)
+        && data.keys().hasAll(requiredKeys)
+        && isBoundedString(data.name, 1, 100)
+        && isBoundedString(data.email, 3, 254)
+        && data.email.matches('^[^@ ]+@[^@ ]+[.][^@ ]+$')
+        && data.country is string
+        && data.country.matches('^[A-Z]{2}$')
+        && isBoundedString(data.state, 1, 100)
+        && data.ageConfirmed == true
+        && data.tiktokUsername is string
+        && data.tiktokUsername.matches('^[A-Za-z0-9._]{2,24}$')
+        && isTikTokUrl(data.tiktokUrl)
+        && data.followers in ['under_1k', '1k_10k', '10k_50k', '50k_100k', '100k_500k', '500k_plus']
+        && data.averageViews in ['under_500', '500_2k', '2k_10k', '10k_50k', '50k_plus']
+        && data.postingFrequency in ['daily', 'few_per_week', 'weekly', 'few_per_month', 'occasionally']
+        && data.contentCategories is list
+        && data.contentCategories.size() >= 1
+        && data.contentCategories.size() <= 4
+        && data.contentCategories.hasOnly([
+          'comedy', 'storytelling', 'relationships', 'friends', 'lifestyle',
+          'pov_skits', 'trends', 'beauty_fashion', 'gaming', 'education',
+          'music_dance', 'other'
+        ])
+        && isBoundedString(data.contentDescription, 10, 500)
+        && data.showsFace in ['yes', 'sometimes', 'no']
+        && videoUrls is list
+        && videoUrls.size() >= 1
+        && videoUrls.size() <= 3
+        && isTikTokUrl(videoUrls[0])
+        && (videoUrls.size() < 2 || isTikTokUrl(videoUrls[1]))
+        && (videoUrls.size() < 3 || isTikTokUrl(videoUrls[2]))
+        && isBoundedString(data.contentDifference, 10, 500)
+        && isBoundedString(data.whyCreator, 10, 1000)
+        && data.informationConfirmed == true
+        && data.status == 'new'
+        && data.source == 'creators_page'
+        && data.locale is string
+        && data.locale.matches('^[a-z]{2}(-[A-Z]{2})?$')
+        && data.createdAt == request.time;
+    }
+  }
+}

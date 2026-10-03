@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-etha \"node scripts/test-firestore-rules.mjs\""
   },
   "dependencies": {
     "@react-three/drei": "^9.115.0",
