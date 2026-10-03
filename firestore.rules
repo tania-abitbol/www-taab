@@ -1,8 +1,7 @@
 rules_version = '2';
 
-// The production project may already have rules for other collections that are
-// not in this repository. Merge the creatorApplications block into the live
-// rules before deploying; deploying this file as-is replaces them all.
+// Complete rule set for the website project (taab-b82a4): deploying this file
+// replaces all live rules, and anything not matched below is denied.
 service cloud.firestore {
   match /databases/{database}/documents {
 
