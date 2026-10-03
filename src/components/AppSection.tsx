@@ -45,7 +45,7 @@ export const AppSection: FC<AppSectionProps> = ({
           <div className="flex flex-col">
             <img
               src={`/images/${logo}-logo.svg`}
-              alt="Logo de l'application bae : jeu de couple"
+              alt={`${name} logo`}
               className={`w-9 md:w-20 mb-3 md:mb-7 ${
                 reversed ? "self-end" : "self-start"
               } md:self-start`}
@@ -64,7 +64,10 @@ export const AppSection: FC<AppSectionProps> = ({
         </p>
         <div className="flex gap-3 mb-12">
           <a href={iosLink}>
-            <img src="/images/apple-store-logo.svg" />
+            <img
+              src="/images/apple-store-logo.svg"
+              alt="Download on the App Store"
+            />
           </a>
         </div>
       </div>
@@ -74,6 +77,7 @@ export const AppSection: FC<AppSectionProps> = ({
             <div key={i}>
               <img
                 src={`/images/${logo}/image_${i}.jpg`}
+                alt={`${name} screenshot ${i}`}
                 className="w-full md:w-60"
               />
             </div>

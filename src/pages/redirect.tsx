@@ -19,12 +19,12 @@ const RedirectPage = () => {
 
   return (
     <div style={{ textAlign: "center", padding: "20px" }}>
-      <h1>Redirection...</h1>
-      <p>Vous allez être redirigé vers l'application dans quelques secondes.</p>
+      <h1>Redirecting...</h1>
+      <p>You will be redirected to the app in a few seconds.</p>
       <p>
-        Si vous n'êtes pas redirigé,{" "}
+        If you are not redirected,{" "}
         <a href="https://apps.apple.com/fr/app/v%C3%A9rit%C3%A9-ou-v%C3%A9rit%C3%A9/id6480046704">
-          cliquez ici
+          click here
         </a>
         .
       </p>
@@ -35,7 +35,7 @@ const RedirectPage = () => {
         method="get"
       >
         <noscript>
-          <button type="submit">Cliquez ici pour continuer</button>
+          <button type="submit">Click here to continue</button>
         </noscript>
       </form>
     </div>

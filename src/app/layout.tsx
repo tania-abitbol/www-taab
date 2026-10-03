@@ -29,7 +29,7 @@ const lexendDeca = Lexend_Deca({
 export const metadata: Metadata = {
   title: "TAAB Studio",
   description:
-    "TAAB Studio, le studio de création d'applications mobile de divertissements",
+    "TAAB Studio, the studio creating entertainment mobile apps",
   icons: {
     icon: "/icon.svg",
   },
@@ -41,7 +41,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr">
+    <html lang="en">
       <body
         className={`${roboto.variable} ${lexendDeca.variable} ${pacifico.variable} ${baloo.variable}`}
       >

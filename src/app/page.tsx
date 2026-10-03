@@ -13,11 +13,11 @@ export default function Home() {
         <div className="relative">
           <div className="flex">
             <p className="z-30 text-2xl md:text-8xl/normal font-semibold text-center px-6 mb-14 md:mb-28 font-title leading-relaxed">
-              TAAB LE STUDIO DE CRÉATION{" "}
+              TAAB THE STUDIO CREATING{" "}
               <span className="text-white rotating-background md:text-8xl">
-                D’APPLICATIONS
+                ENTERTAINMENT
               </span>{" "}
-              MOBILE DE DIVERTISSEMENTS
+              MOBILE APPS
             </p>
           </div>
           <img
@@ -38,18 +38,15 @@ export default function Home() {
         </div>
 
         <AppSection
-          name="Bae : Jeu de couple"
+          name="Bae: Couple Game"
           logo="bae"
-          description="Si vous êtes à la recherche d'une application qui vous permettra de
-        redécouvrir votre relation amoureuse, de renforcer votre lien émotionnel
-        et de briser la routine quotidienne, vous serez ravis de découvrir Bae,
-        l'application de quiz pour couples !"
+          description="If you are looking for an app that helps you rediscover your relationship, strengthen your emotional bond, and break out of the daily routine, you will love Bae, the quiz app for couples!"
           iosLink="https://apps.apple.com/fr/app/bae-jeu-de-couple/id1574150149"
         />
         <AppSection
-          name="VÉRITÉ ou VÉRITÉ "
+          name="TRUTH OR TRUTH"
           logo="vérité"
-          description="Découvrez Vérité ou Vérité, une application qui transforme votre smartphone en l'accessoire ultime pour animer vos soirées entre amis. Plongez dans une aventure sociale captivante avec Vérité ou Vérité, l'application dynamique qui redéfinit le divertissement en groupe !"
+          description="Discover Truth or Truth, an app that turns your phone into the ultimate accessory for nights out with friends. Dive into a captivating social adventure with Truth or Truth, the lively app that redefines group entertainment!"
           iosLink="https://apps.apple.com/fr/app/v%C3%A9rit%C3%A9-ou-v%C3%A9rit%C3%A9/id6480046704"
           reversed
         />
@@ -87,12 +84,11 @@ export default function Home() {
               International
             </h3>
             <p className="text-sm/normal md:text-xl/normal font-body font-normal text-gray-500-500 text-justify">
-              Nos applications connaissent un grand succès et sont actuellement
-              disponibles et activement utilisées dans de nombreux pays à
-              travers le monde, notamment dans les régions hispanophones,
-              anglophones et francophones. Que ce soit en Espagne, au Mexique,
-              aux États-Unis, au Royaume-Uni, en France ou au Canada, nos
-              applications continuent de divertir des millions de personnes.
+              Our apps are a major success and are available and actively used
+              in many countries around the world, including Spanish-speaking,
+              English-speaking, and French-speaking regions. From Spain and
+              Mexico to the United States, the United Kingdom, France, and
+              Canada, they keep entertaining millions of people.
             </p>
           </div>
         </div>
@@ -105,7 +101,7 @@ export default function Home() {
                   5<span className="text-[#f394d0]">+</span>
                 </h3>
                 <p className="font-bold text-gray-500">
-                  Nouvelles applications en moins de 1 an
+                  New apps in under 1 year
                 </p>
               </div>
 
@@ -115,7 +111,7 @@ export default function Home() {
                     1M<span className="text-[#f394d0]">+</span>
                   </h3>
                   <p className="font-bold text-gray-500 self-end">
-                    Téléchargements
+                    Downloads
                   </p>
                 </div>
               </div>
@@ -125,7 +121,7 @@ export default function Home() {
                 <h3 className="text-6xl font-bold mb-2">
                   1500<span className="text-[#f394d0]">+</span>
                 </h3>
-                <p className="font-bold text-gray-500">Notes positives</p>
+                <p className="font-bold text-gray-500">Positive reviews</p>
               </div>
 
               <div className="flex flex-col mb-10">
@@ -134,7 +130,7 @@ export default function Home() {
                     50<span className="text-[#f394d0]">+</span>
                   </h3>
                   <p className="font-bold text-gray-500 self-end">
-                    Pays touchées
+                    Countries reached
                   </p>
                 </div>
               </div>
@@ -142,36 +138,35 @@ export default function Home() {
           </div>
           <div className="md-flex-col">
             <h3 className="text-3xl font-bold mb-4 md:text-6xl">
-              Les chiffres
+              The numbers
             </h3>
             <p className="text-sm/normal md:text-xl/normal font-body font-normal text-gray-500 text-justify">
-              Nous sommes transparents quant à nos chiffres et fiers de voir que
-              des personnes du monde entier passent des moments de qualité avec
-              leurs proches grâce à nos applications. Nous nous engageons à
-              offrir des expériences enrichissantes et divertissantes,
-              renforçant les liens entre amis et familles.
+              We are open about our numbers, and proud that people around the
+              world spend quality time with the people they love through our
+              apps. We are committed to creating meaningful, entertaining
+              experiences that bring friends and families closer together.
             </p>
           </div>
         </div>
 
         <div className="md:flex md:justify-between">
           <h3 className="font-medium text-3xl mb-12 leading-normal md:w-1/2 md:text-4xl">
-            Une{" "}
+            A{" "}
             <span className="font-extrabold">
-              demande <span className="text-[#f394d0]">?</span>
+              request <span className="text-[#f394d0]">?</span>
             </span>{" "}
-            Une{" "}
+            A{" "}
             <span className="font-extrabold">
-              question <span className="text-[#f394d0]">?</span>
+              question <span className="text-[#f394d0]">?</span>
             </span>{" "}
-            Des idées{" "}
+            Ideas for{" "}
             <span className="font-extrabold">
-              d’amélioration <span className="text-[#f394d0]">?</span>
+              improvement <span className="text-[#f394d0]">?</span>
             </span>
           </h3>
 
           <a className="bg-black md:w-1/2  text-white w-full text-md font-semibold  py-3 px-4 rounded-xl mb-24 md:mb-28 md:max-w-72 text-center">
-            Nous contacter : contact@taabapps.com
+            Contact us: contact@taabapps.com
           </a>
         </div>
       </div>

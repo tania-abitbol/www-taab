@@ -15,7 +15,7 @@ const BaeReconnectPage = () => (
       <title>Bae — Reconnect as a Couple</title>
       <meta
         name="description"
-        content="Reconnectez-vous en couple avec Bae : un pack de questions pensé pour raviver votre lien."
+        content="Reconnect as a couple with Bae: a pack of questions designed to rekindle your bond."
       />
       <meta name="viewport" content="width=device-width, initial-scale=1" />
     </Head>
@@ -25,21 +25,21 @@ const BaeReconnectPage = () => (
         Reconnect as a Couple
       </h1>
       <p className="text-lg text-gray-700 leading-relaxed mb-8">
-        Un moment à deux pour vous reconnecter. Ouvrez Bae pour lancer le
-        challenge « Se reconnecter » — des questions personnalisées pour
-        raviver votre lien.
+        A moment for the two of you to reconnect. Open Bae to start the
+        &quot;Reconnect&quot; challenge — personalized questions to rekindle
+        your bond.
       </p>
       <a
         href={APP_STORE_URL}
         className="inline-block rounded-xl bg-blue-700 text-white px-6 py-3 text-lg font-semibold hover:bg-blue-800 transition-colors"
       >
-        Télécharger Bae sur l&apos;App Store
+        Download Bae on the App Store
       </a>
       <p className="mt-10 text-sm text-gray-500">
-        Déjà installée ? Ouvrez ce lien sur votre iPhone pour lancer Bae
-        directement.{" "}
+        Already installed? Open this link on your iPhone to launch Bae
+        directly.{" "}
         <Link href="/" className="underline">
-          Retour au site TAAB
+          Back to the TAAB site
         </Link>
       </p>
     </main>
