@@ -75,45 +75,28 @@ body {
   background-color: #f394d0;
 }
 
-.slick-dots li.slick-active .w-5 {
-  width: 30px !important;
-  height: 30px !important;
-  background-color: #3b82f6; /* couleur bleue de Tailwind */
-}
-
-.slick-slide > div {
-  padding: 0 10px; /* Adjust the padding as needed */
-}
-
-.slide-item {
-  background-color: #f0f0f0; /* Couleur de fond pour les slides */
-  text-align: center; /* Centrer le texte */
-  border-radius: 8px; /* Coins arrondis */
-}
-
-.custom-paginator {
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
-}
-
-.custom-paginator .dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background-color: gray;
-  margin: 0 5px;
-  transition: transform 0.3s ease;
-}
-
-.custom-paginator .dot.active {
-  transform: scale(1.5);
-  background-color: #f394d0;
-}
-
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  .animate-marquee {
+    animation: marquee 40s linear infinite;
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation: none;
   }
 }
 

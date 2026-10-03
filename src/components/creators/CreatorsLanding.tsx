@@ -1,53 +1,27 @@
 "use client";
 
 import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
-import { MotionConfig, motion, useInView } from "framer-motion";
+import { MotionConfig, useInView } from "framer-motion";
 
-import { AppSection } from "~/components/AppSection";
 import { Footer } from "~/components/Footer";
 import { ProgressBar } from "~/components/progressBar";
+import { AppShowcaseCard } from "~/components/site/AppShowcase";
+import {
+  CheckIcon,
+  Eyebrow,
+  PhoneShot,
+  Reveal,
+  bodyCopy,
+  container,
+  sectionTitle,
+} from "~/components/site/primitives";
+import { STUDIO_APPS } from "~/config/apps";
 import type { CreatorProgramContent } from "~/config/creatorProgram";
 
 import { ApplicationForm } from "./ApplicationForm";
 import { CREATOR_EVENTS, trackCreatorEvent } from "./tracking";
 
 const APPLY_SECTION_ID = "apply";
-
-const container = "mx-auto w-full max-w-[1200px] px-5 sm:px-8 lg:px-12";
-const sectionTitle =
-  "font-title text-[2.25rem] leading-[1.08] tracking-tight text-balance sm:text-5xl lg:text-6xl";
-const bodyCopy = "font-body text-lg leading-relaxed text-gray-700 md:text-xl";
-
-const Reveal = ({
-  children,
-  className,
-  delay = 0,
-}: {
-  children: ReactNode;
-  className?: string;
-  delay?: number;
-}) => (
-  <motion.div
-    className={className}
-    initial={{ opacity: 0, y: 24 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, margin: "0px 0px -60px 0px" }}
-    transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
-  >
-    {children}
-  </motion.div>
-);
-
-const Eyebrow = ({ children, inverted }: { children: ReactNode; inverted?: boolean }) => (
-  <p
-    className={`mb-5 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 font-body text-xs font-bold uppercase tracking-[0.16em] ${
-      inverted ? "border-white/20 text-white" : "border-black/15 text-black"
-    }`}
-  >
-    <span aria-hidden="true" className="h-2 w-2 rounded-full bg-yellow" />
-    {children}
-  </p>
-);
 
 const ApplyButton = ({
   children,
@@ -114,47 +88,6 @@ const Icon = ({ name }: { name: keyof typeof icons }) => (
   </svg>
 );
 
-const CheckIcon = ({ className = "" }: { className?: string }) => (
-  <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" className={`h-4 w-4 shrink-0 ${className}`}>
-    <path d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0L3.3 9.7a1 1 0 1 1 1.4-1.4l3.8 3.79 6.8-6.8a1 1 0 0 1 1.4 0Z" />
-  </svg>
-);
-
-const PhoneShot = ({ src, className }: { src: string; className: string }) => (
-  <div className={`absolute overflow-hidden rounded-[1.75rem] border-[6px] border-black bg-black shadow-[0_30px_60px_-25px_rgba(0,0,0,0.45)] ${className}`}>
-    {/* eslint-disable-next-line @next/next/no-img-element */}
-    <img src={src} alt="" className="h-full w-full object-cover" />
-  </div>
-);
-
-/** AppSection eagerly loads its screenshot carousel, so it is only mounted near the viewport. */
-const LazyAppShowcase = ({
-  apps,
-  forceMount,
-}: {
-  apps: CreatorProgramContent["apps"]["list"];
-  forceMount: boolean;
-}) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const isNear = useInView(ref, { once: true, margin: "600px 0px" });
-  const mounted = isNear || forceMount;
-  return (
-    <div ref={ref} className={`mt-16 md:mt-24 [&>section:last-child]:mb-0 ${mounted ? "" : "min-h-[900px] md:min-h-[1000px]"}`}>
-      {mounted &&
-        apps.map((app, index) => (
-          <AppSection
-            key={app.logo}
-            name={app.name}
-            logo={app.logo}
-            description={app.description}
-            iosLink={app.iosLink}
-            reversed={index % 2 === 1}
-          />
-        ))}
-    </div>
-  );
-};
-
 export const CreatorsLanding = ({ content }: { content: CreatorProgramContent }) => {
   const { hero, positioning, steps, lookingFor, benefits, apps, application, faq, finalCta } =
     content;
@@ -180,23 +113,13 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
     trackCreatorEvent(CREATOR_EVENTS.pageView, { program });
   }, [program]);
 
-  const [appsMounted, setAppsMounted] = useState(false);
-  const [pendingScroll, setPendingScroll] = useState(0);
-
-  // Runs after the app showcase (above the form) has mounted, so the target no longer moves.
-  useEffect(() => {
-    if (!pendingScroll) return;
+  const scrollToApplication = useCallback(() => {
     const target = document.getElementById(APPLY_SECTION_ID);
     if (!target) return;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     target.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
     window.history.replaceState(null, "", `#${APPLY_SECTION_ID}`);
     document.getElementById("apply-title")?.focus({ preventScroll: true });
-  }, [pendingScroll]);
-
-  const scrollToApplication = useCallback(() => {
-    setAppsMounted(true);
-    setPendingScroll((count) => count + 1);
   }, []);
 
   const handleCta = (location: string) => () => {
@@ -253,8 +176,8 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
 
               <div aria-hidden="true" className="relative mx-auto h-[360px] w-full max-w-[380px] sm:h-[440px] lg:h-[520px] lg:max-w-none">
                 <div className="absolute left-1/2 top-1/2 h-[78%] w-[78%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-yellow/30 blur-2xl" />
-                <PhoneShot src="/images/bae/image_3.jpg" className="left-[6%] top-[8%] h-[78%] w-[42%] -rotate-6" />
-                <PhoneShot src="/images/vérité/image_1.jpg" className="right-[6%] top-[16%] h-[78%] w-[42%] rotate-6" />
+                <PhoneShot eager src="/images/bae/image_3.jpg" className="absolute left-[6%] top-[8%] h-[78%] w-[42%] -rotate-6" />
+                <PhoneShot eager src="/images/vérité/image_1.jpg" className="absolute right-[6%] top-[16%] h-[78%] w-[42%] rotate-6" />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/images/itemTitle2.svg" alt="" className="absolute -right-2 top-0 w-16 md:w-24" />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -400,7 +323,11 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
               <p className={`${bodyCopy} mb-6`}>{apps.copy}</p>
               <p className="font-title text-xl leading-snug md:text-2xl">{apps.emphasis}</p>
             </Reveal>
-            <LazyAppShowcase apps={apps.list} forceMount={appsMounted} />
+            <div className="mt-12 space-y-6 md:mt-16 md:space-y-8">
+              {STUDIO_APPS.map((app, index) => (
+                <AppShowcaseCard key={app.id} app={app} reversed={index % 2 === 1} />
+              ))}
+            </div>
           </section>
 
           {/* 7. Application */}
@@ -481,7 +408,7 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
           </section>
         </main>
 
-        <Footer color="bg-black" />
+        <Footer />
 
         <div
           className={`fixed inset-x-0 bottom-0 z-40 border-t border-black/10 bg-[#f9f6f0]/90 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-md transition-transform duration-300 md:hidden ${

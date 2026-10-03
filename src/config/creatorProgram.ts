@@ -1,12 +1,5 @@
 export type CreatorCountryCode = "us";
 
-export interface CreatorApp {
-  name: string;
-  logo: string;
-  description: string;
-  iosLink: string;
-}
-
 export interface CreatorFaqItem {
   question: string;
   answer: string;
@@ -45,7 +38,6 @@ export interface CreatorProgramContent {
     title: string;
     copy: string;
     emphasis: string;
-    list: CreatorApp[];
   };
   application: {
     title: string;
@@ -159,22 +151,6 @@ const us: CreatorProgramContent = {
     copy: "Etha builds consumer apps around social interaction, entertainment and everyday experiences: games for couples, party games for friends, and new ideas we're shipping next.",
     emphasis:
       "You're not making random branded content. You're helping us grow products.",
-    list: [
-      {
-        name: "Bae: Couple Game",
-        logo: "bae",
-        description:
-          "A quiz game for couples to rediscover each other, strengthen their bond and break out of the daily routine.",
-        iosLink: "https://apps.apple.com/us/app/id1574150149",
-      },
-      {
-        name: "Truth or Truth",
-        logo: "vérité",
-        description:
-          "A party game that turns your phone into the ultimate accessory for nights out with friends.",
-        iosLink: "https://apps.apple.com/us/app/id6480046704",
-      },
-    ],
   },
   application: {
     title: "Think you'd be a good fit?",
