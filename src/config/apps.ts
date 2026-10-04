@@ -22,6 +22,7 @@ export const STUDIO_APPS: StudioApp[] = [
     logo: "/images/bae-logo.svg",
     iosLink: "https://apps.apple.com/app/id1574150149",
     screenshots: ["/images/bae/image_3.jpg", "/images/bae/image_2.jpg", "/images/bae/image_4.jpg"],
+    appScreens: ["/images/bae/app/question.jpg", "/images/bae/app/themes.jpg", "/images/bae/app/question-2.jpg"],
     theme: "light",
   },
   {
