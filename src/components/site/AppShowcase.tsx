@@ -23,14 +23,19 @@ export const AppShowcaseCard = ({
   reversed,
   preferAppScreens,
   onStoreClick,
+  copy,
+  badge,
 }: {
   app: StudioApp;
   headingLevel?: "h2" | "h3";
   reversed?: boolean;
   preferAppScreens?: boolean;
   onStoreClick?: (app: StudioApp) => void;
+  copy?: Pick<StudioApp, "name" | "tagline" | "description">;
+  badge?: { src: string; altTemplate: string };
 }) => {
   const theme = themes[app.theme];
+  const { name, tagline, description } = copy ?? app;
   const screens = (preferAppScreens && app.appScreens) || app.screenshots;
   const Heading = headingLevel;
 
@@ -45,13 +50,19 @@ export const AppShowcaseCard = ({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={app.logo} alt="" width={64} height={64} className="mb-6 h-14 w-14 rounded-2xl shadow-lg md:h-16 md:w-16" />
           <Heading id={`app-${app.id}-title`} className="mb-3 font-title text-3xl tracking-tight md:text-5xl">
-            {app.name}
+            {name}
           </Heading>
-          <p className="mb-4 font-title text-lg leading-snug md:text-2xl">{app.tagline}</p>
+          <p className="mb-4 font-title text-lg leading-snug md:text-2xl">{tagline}</p>
           <p className={`mb-8 max-w-md font-body text-base leading-relaxed md:text-lg ${theme.copy}`}>
-            {app.description}
+            {description}
           </p>
-          <AppStoreBadge href={app.iosLink} appName={app.name} onClick={() => onStoreClick?.(app)} />
+          <AppStoreBadge
+            href={app.iosLink}
+            appName={name}
+            onClick={() => onStoreClick?.(app)}
+            src={badge?.src}
+            altTemplate={badge?.altTemplate}
+          />
         </Reveal>
 
         <div

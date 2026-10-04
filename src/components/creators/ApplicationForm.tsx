@@ -8,7 +8,6 @@ import {
   AVERAGE_VIEWS_OPTIONS,
   CONTENT_CATEGORY_OPTIONS,
   CreatorApplicationDraft,
-  DEFAULT_REGION_LABEL,
   DraftField,
   FOLLOWER_OPTIONS,
   FieldErrors,
@@ -19,9 +18,11 @@ import {
   createEmptyDraft,
   getCountryOptions,
   normalizeUsername,
+  regionLabel,
   tiktokProfileUrl,
   validateFields,
 } from "~/config/creatorApplication";
+import { CREATOR_FORM_COPY } from "~/config/creatorFormCopy";
 import type { CreatorProgramContent } from "~/config/creatorProgram";
 
 import {
@@ -35,7 +36,6 @@ import {
 import { submitCreatorApplication } from "./submitApplication";
 import { CREATOR_EVENTS, trackCreatorEvent } from "./tracking";
 
-const DRAFT_STORAGE_KEY = "taab:creator-application-draft";
 const USERNAME_PREVIEW_PATTERN = /^[A-Za-z0-9._]{2,24}$/;
 
 interface ApplicationFormProps {
@@ -44,7 +44,9 @@ interface ApplicationFormProps {
 }
 
 export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) => {
-  const { application, countryIsoCode, country: program } = content;
+  const { application, countryIsoCode, country: program, locale } = content;
+  const copy = CREATOR_FORM_COPY[locale];
+  const draftStorageKey = `taab:creator-application-draft:${program}`;
   const reduceMotion = useReducedMotion();
 
   const [draft, setDraft] = useState<CreatorApplicationDraft>(() =>
@@ -64,18 +66,22 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
   const startedAtRef = useRef<number | null>(null);
 
   const step = APPLICATION_STEPS[stepIndex];
+  const stepCopy = copy.steps[step.id];
+  const localizedOptions = <T extends string>(options: readonly { value: T }[], labels: Record<T, string>) =>
+    options.map((option) => ({ value: option.value, label: labels[option.value] }));
   const isLastStep = stepIndex === APPLICATION_STEPS.length - 1;
   const pinnedCountryOptions = useMemo(
-    () => getCountryOptions([countryIsoCode]).slice(0, 1),
-    [countryIsoCode]
+    () => getCountryOptions([countryIsoCode], locale).slice(0, 1),
+    [countryIsoCode, locale]
   );
   // Country names come from Intl and differ between Node and browsers, so the
   // full list is only built after hydration.
   const [countryOptions, setCountryOptions] = useState(pinnedCountryOptions);
   useEffect(() => {
-    setCountryOptions(getCountryOptions([countryIsoCode]));
-  }, [countryIsoCode]);
-  const region = REGIONS_BY_COUNTRY[draft.country];
+    setCountryOptions(getCountryOptions([countryIsoCode], locale));
+  }, [countryIsoCode, locale]);
+  const regionOptions = REGIONS_BY_COUNTRY[draft.country];
+  const currentRegionLabel = regionLabel(copy, draft.country);
   const usernameLooksValid = USERNAME_PREVIEW_PATTERN.test(normalizeUsername(draft.tiktokUsername));
 
   useEffect(() => {
@@ -89,7 +95,7 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
 
   useEffect(() => {
     try {
-      const saved = sessionStorage.getItem(DRAFT_STORAGE_KEY);
+      const saved = sessionStorage.getItem(draftStorageKey);
       if (saved) {
         const parsed = JSON.parse(saved);
         setDraft((current) => ({ ...current, ...parsed.draft }));
@@ -98,19 +104,19 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
         }
       }
     } catch {
-      sessionStorage.removeItem(DRAFT_STORAGE_KEY);
+      sessionStorage.removeItem(draftStorageKey);
     }
     restoredRef.current = true;
-  }, []);
+  }, [draftStorageKey]);
 
   useEffect(() => {
     if (!restoredRef.current || status === "success") return;
     try {
-      sessionStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({ draft, stepIndex }));
+      sessionStorage.setItem(draftStorageKey, JSON.stringify({ draft, stepIndex }));
     } catch {
       // Storage can be unavailable (private mode, in-app browsers); the form still works.
     }
-  }, [draft, stepIndex, status]);
+  }, [draft, stepIndex, status, draftStorageKey]);
 
   useEffect(() => {
     if (!hasNavigatedRef.current) return;
@@ -139,7 +145,7 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
       setErrors((currentErrors) => {
         if (!currentErrors[field]) return currentErrors;
         const { [field]: _cleared, ...rest } = currentErrors;
-        return { ...rest, ...validateFields(next, [field]) };
+        return { ...rest, ...validateFields(next, [field], copy) };
       });
       return next;
     });
@@ -154,13 +160,13 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
     } else {
       setErrors((currentErrors) => ({
         ...currentErrors,
-        contentCategories: `Pick up to ${MAX_CONTENT_CATEGORIES}. Unselect one to swap it.`,
+        contentCategories: copy.errors.categoriesSwap(MAX_CONTENT_CATEGORIES),
       }));
     }
   };
 
   const validateStep = () => {
-    const stepErrors = validateFields(draft, step.fields);
+    const stepErrors = validateFields(draft, step.fields, copy);
     setErrors(stepErrors);
     const firstInvalid = step.fields.find((field) => stepErrors[field]);
     if (firstInvalid) {
@@ -186,7 +192,7 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
     submittingRef.current = true;
     setStatus("submitting");
     try {
-      if (!honeypot) await submitCreatorApplication(draft);
+      if (!honeypot) await submitCreatorApplication(draft, locale);
       trackCreatorEvent(CREATOR_EVENTS.applicationSubmitted, {
         program,
         country: draft.country,
@@ -195,7 +201,7 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
           startedAtRef.current ? Math.round((Date.now() - startedAtRef.current) / 1000) : 0
         ),
       });
-      sessionStorage.removeItem(DRAFT_STORAGE_KEY);
+      sessionStorage.removeItem(draftStorageKey);
       setStatus("success");
       onSubmitted?.();
     } catch (error) {
@@ -254,19 +260,24 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
       <div className="mb-8">
         <div className="mb-3 flex items-center justify-between font-body text-sm">
           <p className="font-bold">
-            Step {stepIndex + 1} <span className="font-normal text-gray-700">of {APPLICATION_STEPS.length}</span>
+            {copy.progress.step(stepIndex + 1, APPLICATION_STEPS.length)[0]}{" "}
+            <span className="font-normal text-gray-700">
+              {copy.progress.step(stepIndex + 1, APPLICATION_STEPS.length)[1]}
+            </span>
           </p>
           <p className="text-gray-700" aria-hidden="true">
-            {isLastStep ? "Final step" : `Next: ${APPLICATION_STEPS[stepIndex + 1].title}`}
+            {isLastStep
+              ? copy.progress.finalStep
+              : copy.progress.next(copy.steps[APPLICATION_STEPS[stepIndex + 1].id].title)}
           </p>
         </div>
         <div
           role="progressbar"
-          aria-label="Application progress"
+          aria-label={copy.progress.ariaLabel}
           aria-valuemin={1}
           aria-valuemax={APPLICATION_STEPS.length}
           aria-valuenow={stepIndex + 1}
-          aria-valuetext={`Step ${stepIndex + 1} of ${APPLICATION_STEPS.length}: ${step.title}`}
+          aria-valuetext={copy.progress.ariaValue(stepIndex + 1, APPLICATION_STEPS.length, stepCopy.title)}
           className="flex gap-1.5"
         >
           {APPLICATION_STEPS.map((item, index) => (
@@ -280,7 +291,7 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
             </span>
           ))}
         </div>
-        <span className="sr-only">{Math.round(progress)}% complete</span>
+        <span className="sr-only">{copy.progress.complete(Math.round(progress))}</span>
       </div>
 
       <form noValidate onSubmit={handleSubmit} aria-labelledby="creator-application-step-title">
@@ -311,16 +322,16 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
               tabIndex={-1}
               className="mb-1 font-title text-2xl tracking-tight focus:outline-none md:text-3xl"
             >
-              {step.title}
+              {stepCopy.title}
             </h3>
-            <p className="mb-7 font-body text-base text-gray-700">{step.description}</p>
+            <p className="mb-7 font-body text-base text-gray-700">{stepCopy.description}</p>
 
             <div className="space-y-6">
               {step.id === "about" && (
                 <>
                   <TextField
                     name="name"
-                    label="Name"
+                    label={copy.fields.name}
                     autoComplete="name"
                     value={draft.name}
                     onChange={(value) => update("name", value)}
@@ -329,11 +340,11 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
                   />
                   <TextField
                     name="email"
-                    label="Email"
+                    label={copy.fields.email}
                     type="email"
                     inputMode="email"
                     autoComplete="email"
-                    placeholder="you@example.com"
+                    placeholder={copy.fields.emailPlaceholder}
                     value={draft.email}
                     onChange={(value) => update("email", value)}
                     maxLength={LIMITS.email}
@@ -342,7 +353,7 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
                   <div className="grid gap-6 sm:grid-cols-2">
                     <SelectField
                       name="country"
-                      label="Country"
+                      label={copy.fields.country}
                       autoComplete="country"
                       hint={draft.country === countryIsoCode ? application.recruitingNote : undefined}
                       value={draft.country}
@@ -350,21 +361,21 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
                       options={countryOptions}
                       error={errors.country}
                     />
-                    {region ? (
+                    {regionOptions ? (
                       <SelectField
                         name="state"
-                        label={region.label}
+                        label={currentRegionLabel}
                         autoComplete="address-level1"
-                        placeholder={`Select your ${region.label.toLowerCase()}`}
+                        placeholder={copy.fields.selectRegion(currentRegionLabel)}
                         value={draft.state}
                         onChange={(value) => update("state", value)}
-                        options={region.options.map((option) => ({ value: option, label: option }))}
+                        options={regionOptions.map((option) => ({ value: option, label: option }))}
                         error={errors.state}
                       />
                     ) : (
                       <TextField
                         name="state"
-                        label={DEFAULT_REGION_LABEL}
+                        label={currentRegionLabel}
                         autoComplete="address-level1"
                         value={draft.state}
                         onChange={(value) => update("state", value)}
@@ -380,7 +391,7 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
                   )}
                   <CheckboxField
                     name="ageConfirmed"
-                    label="I'm 18 or older."
+                    label={copy.fields.ageConfirmed}
                     checked={draft.ageConfirmed}
                     onChange={(value) => update("ageConfirmed", value)}
                     error={errors.ageConfirmed}
@@ -392,10 +403,10 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
                 <>
                   <TextField
                     name="tiktokUsername"
-                    label="TikTok username"
+                    label={copy.fields.tiktokUsername}
                     prefix="@"
                     autoComplete="username"
-                    placeholder="yourname"
+                    placeholder={copy.fields.tiktokUsernamePlaceholder}
                     value={draft.tiktokUsername}
                     onChange={(value) => update("tiktokUsername", value.replace(/^\s*@+/, ""))}
                     maxLength={30}
@@ -408,41 +419,41 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
                           rel="noopener noreferrer"
                           className="font-bold text-black underline underline-offset-2"
                         >
-                          Check it&apos;s you: tiktok.com/@{normalizeUsername(draft.tiktokUsername)} ↗
+                          {copy.fields.checkProfile(normalizeUsername(draft.tiktokUsername))}
                         </a>
                       ) : undefined
                     }
                   />
                   <ChoiceGroup
                     name="followers"
-                    label="Followers"
-                    hint="Any follower count is welcome."
-                    options={FOLLOWER_OPTIONS}
+                    label={copy.fields.followers}
+                    hint={copy.fields.followersHint}
+                    options={localizedOptions(FOLLOWER_OPTIONS, copy.options.followers)}
                     value={draft.followers}
                     onChange={(value) => update("followers", value)}
                     error={errors.followers}
                   />
                   <ChoiceGroup
                     name="averageViews"
-                    label="Average views per video"
-                    options={AVERAGE_VIEWS_OPTIONS}
+                    label={copy.fields.averageViews}
+                    options={localizedOptions(AVERAGE_VIEWS_OPTIONS, copy.options.averageViews)}
                     value={draft.averageViews}
                     onChange={(value) => update("averageViews", value)}
                     error={errors.averageViews}
                   />
                   <ChoiceGroup
                     name="postingFrequency"
-                    label="How often do you post?"
-                    options={POSTING_FREQUENCY_OPTIONS}
+                    label={copy.fields.postingFrequency}
+                    options={localizedOptions(POSTING_FREQUENCY_OPTIONS, copy.options.postingFrequency)}
                     value={draft.postingFrequency}
                     onChange={(value) => update("postingFrequency", value)}
                     error={errors.postingFrequency}
                   />
                   <ChoiceGroup
                     name="contentCategories"
-                    label="What do you post about?"
-                    hint={`Pick up to ${MAX_CONTENT_CATEGORIES}.`}
-                    options={CONTENT_CATEGORY_OPTIONS}
+                    label={copy.fields.contentCategories}
+                    hint={copy.fields.contentCategoriesHint(MAX_CONTENT_CATEGORIES)}
+                    options={localizedOptions(CONTENT_CATEGORY_OPTIONS, copy.options.contentCategories)}
                     value={draft.contentCategories}
                     onChange={toggleCategory}
                     multiple
@@ -455,9 +466,9 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
                 <>
                   <TextAreaField
                     name="whyCreator"
-                    label="Why do you want to become a TAAB Creator, and why you?"
-                    hint="What makes your content different and why it would work for our apps. A few sentences is perfect."
-                    placeholder="e.g. I post relatable dating stories that get my audience talking in the comments..."
+                    label={copy.fields.whyCreator}
+                    hint={copy.fields.whyCreatorHint}
+                    placeholder={copy.fields.whyCreatorPlaceholder}
                     value={draft.whyCreator}
                     onChange={(value) => update("whyCreator", value)}
                     maxLength={LIMITS.whyCreator}
@@ -466,11 +477,12 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
                   />
                   <CheckboxField
                     name="informationConfirmed"
-                    label="I confirm this information is accurate and that TAAB can contact me by email about the creator program."
+                    label={copy.fields.informationConfirmed}
                     checked={draft.informationConfirmed}
                     onChange={(value) => update("informationConfirmed", value)}
                     error={errors.informationConfirmed}
                   />
+                  <p className="-mt-2 font-body text-xs text-gray-700">{copy.fields.privacyNote}</p>
                 </>
               )}
             </div>
@@ -479,7 +491,7 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
 
         {status === "error" && (
           <p role="alert" className="mt-6 rounded-xl border border-[#C8102E] bg-[#C8102E]/5 px-4 py-3 font-body text-sm text-[#C8102E]">
-            Something went wrong while sending your application. Your answers are saved, so please try again.
+            {copy.errors.submit}
           </p>
         )}
 
@@ -494,7 +506,7 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
               disabled={status === "submitting"}
               className="h-12 rounded-xl border border-gray-300 px-5 font-body text-base font-bold transition-colors hover:border-black focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:opacity-50"
             >
-              Back
+              {copy.buttons.back}
             </button>
           )}
           <button
@@ -509,13 +521,13 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
                   <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.3" strokeWidth="3" />
                   <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
                 </svg>
-                Sending…
+                {copy.buttons.sending}
               </>
             ) : isLastStep ? (
-              "Submit application"
+              copy.buttons.submit
             ) : (
               <>
-                Continue
+                {copy.buttons.continue}
                 <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
                   <path d="M3 10a.75.75 0 0 1 .75-.75h10.64l-3.97-3.97a.75.75 0 1 1 1.06-1.06l5.25 5.25a.75.75 0 0 1 0 1.06l-5.25 5.25a.75.75 0 1 1-1.06-1.06l3.97-3.97H3.75A.75.75 0 0 1 3 10Z" />
                 </svg>

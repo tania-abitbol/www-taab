@@ -91,8 +91,21 @@ const Icon = ({ name }: { name: keyof typeof icons }) => (
 );
 
 export const CreatorsLanding = ({ content }: { content: CreatorProgramContent }) => {
-  const { hero, deal, earnings, positioning, lookingFor, benefits, apps, application, faq, finalCta } =
-    content;
+  const {
+    hero,
+    deal,
+    earnings,
+    positioning,
+    lookingFor,
+    benefits,
+    apps,
+    application,
+    faq,
+    finalCta,
+    ui,
+    locale,
+    appsCopy,
+  } = content;
   const program = content.country;
 
   const heroRef = useRef<HTMLElement>(null);
@@ -114,7 +127,7 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
   useEffect(() => {
     trackCreatorEvent(CREATOR_EVENTS.pageView, { program });
   }, [program]);
-  usePageAnalytics("creators");
+  usePageAnalytics(program === "us" ? "creators" : `creators_${program}`);
 
   const scrollToApplication = useCallback(() => {
     const target = document.getElementById(APPLY_SECTION_ID);
@@ -145,22 +158,33 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
 
   return (
     <MotionConfig reducedMotion="user">
-      <div lang="en" className="overflow-x-clip">
+      <div lang={locale} className="overflow-x-clip">
         <ProgressBar color="bg-yellow" bg="bg-yellow-lighter" />
         <a
           href={`#${APPLY_SECTION_ID}`}
           className="sr-only z-50 rounded-xl bg-black px-4 py-3 font-body text-white focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
         >
-          Skip to application
+          {ui.skipToApplication}
         </a>
 
         <header className={`${container} flex items-center justify-between pt-8 md:pt-10`}>
-          <a href="/" className="rounded font-title text-3xl tracking-tight focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-4">
+          <a href="/" aria-label={ui.homeLabel} className="rounded font-title text-3xl tracking-tight focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-4">
             TAAB<span className="text-yellow">.</span>
           </a>
-          <ApplyButton size="sm" onClick={handleCta("header")}>
-            Apply
-          </ApplyButton>
+          <div className="flex items-center gap-2">
+            <a
+              href={ui.switcher.href}
+              aria-label={ui.switcher.ariaLabel}
+              hrefLang={ui.switcher.href === "/createurs" ? "fr" : "en"}
+              onClick={() => trackCreatorEvent(CREATOR_EVENTS.languageSwitch, { program, to: ui.switcher.label })}
+              className="flex h-10 items-center rounded-xl border border-black/15 px-3 font-body text-sm font-bold transition-colors hover:border-black focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
+            >
+              {ui.switcher.label}
+            </a>
+            <ApplyButton size="sm" onClick={handleCta("header")}>
+              {ui.headerCta}
+            </ApplyButton>
+          </div>
         </header>
 
         <main>
@@ -171,7 +195,7 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
                 <Eyebrow>{hero.eyebrow}</Eyebrow>
                 <h1 id="hero-title" className="isolate mb-7 font-title text-[3.4rem] leading-[1.02] tracking-tight sm:text-7xl lg:text-[6rem]">
                   {hero.titleLead}{" "}
-                  <span className="rotating-background mt-2 whitespace-nowrap">{hero.titleHighlight}</span>
+                  <span className="rotating-background mt-2 sm:whitespace-nowrap">{hero.titleHighlight}</span>
                 </h1>
                 <p className="mb-6 max-w-xl font-body text-lg leading-relaxed text-black md:text-xl">
                   {hero.copy}
@@ -201,7 +225,7 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
                 </p>
               </div>
 
-              <CreatorPhoneMock />
+              <CreatorPhoneMock copy={ui.phoneMock} locale={locale} />
             </div>
           </section>
 
@@ -230,7 +254,7 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
                             {isPayout ? "$" : String(index + 1).padStart(2, "0")}
                           </p>
                           <h3 className="mb-2 font-title text-2xl">
-                            <span className="sr-only">Step {index + 1}: </span>
+                            <span className="sr-only">{ui.stepLabel.replace("{n}", String(index + 1))}</span>
                             {step.title}
                           </h3>
                           <p className={`font-body text-base leading-relaxed ${isPayout ? "text-black/80" : "text-white/75"}`}>
@@ -245,6 +269,8 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
                   <Reveal className="mt-6">
                     <EarningsEstimator
                       earnings={earnings}
+                      copy={ui.estimator}
+                      locale={locale}
                       onChange={(views, videos) =>
                         trackCreatorEvent(CREATOR_EVENTS.estimatorChange, {
                           program,
@@ -367,7 +393,7 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
           {/* 6. TAAB apps */}
           <section aria-labelledby="apps-title" className={`${container} pb-24 md:pb-36`}>
             <Reveal className="max-w-3xl">
-              <Eyebrow>TAAB apps</Eyebrow>
+              <Eyebrow>{ui.appsEyebrow}</Eyebrow>
               <h2 id="apps-title" className={`${sectionTitle} mb-6`}>
                 {apps.title}
               </h2>
@@ -381,6 +407,8 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
                   app={app}
                   reversed={index % 2 === 1}
                   preferAppScreens
+                  copy={appsCopy?.[app.id]}
+                  badge={{ src: ui.appStoreBadgeSrc, altTemplate: ui.appStoreBadgeAlt }}
                   onStoreClick={(clicked) => trackCreatorEvent(CREATOR_EVENTS.appStoreClick, { program, app: clicked.id })}
                 />
               ))}
@@ -398,7 +426,7 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
               <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-yellow/25 blur-3xl" />
               <div className={`${container} relative grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16`}>
                 <div className="lg:sticky lg:top-12 lg:self-start">
-                  <Eyebrow inverted>Apply</Eyebrow>
+                  <Eyebrow inverted>{ui.applyEyebrow}</Eyebrow>
                   <h2 id="apply-title" tabIndex={-1} className={`${sectionTitle} mb-4 focus:outline-none md:mb-6`}>
                     {application.title}
                   </h2>
@@ -406,7 +434,7 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
                     {application.copy}
                   </p>
                   <ul className="hidden space-y-3 font-body text-base text-white/80 lg:block">
-                    {["Takes about 2 minutes", "No follower minimum", "Paid on performance", application.recruitingNote].map((item) => (
+                    {[...ui.applyChecklist, application.recruitingNote].map((item) => (
                       <li key={item} className="flex items-start gap-3">
                         <span aria-hidden="true" className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-yellow text-black">
                           <CheckIcon className="h-3 w-3" />
@@ -473,7 +501,7 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
           </section>
         </main>
 
-        <Footer />
+        <Footer locale={locale} />
 
         <div
           className={`fixed inset-x-0 bottom-0 z-40 border-t border-black/10 bg-[#f9f6f0]/90 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-md transition-transform duration-300 md:hidden ${

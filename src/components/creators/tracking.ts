@@ -15,6 +15,7 @@ export const CREATOR_EVENTS = {
   stickyCtaShown: "creator_sticky_cta_shown",
   estimatorChange: "creator_estimator_change",
   appStoreClick: "creator_app_store_click",
+  languageSwitch: "creator_language_switch",
 } as const;
 
 export type CreatorEventName =

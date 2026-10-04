@@ -4,12 +4,14 @@ import {
   CreatorApplicationDraft,
   buildApplicationPayload,
 } from "~/config/creatorApplication";
+import type { CreatorLocale } from "~/config/creatorFormCopy";
 
 let emulatorConnected = false;
 
 /** Firestore is loaded on demand so it stays out of the landing page bundle. */
 export const submitCreatorApplication = async (
-  draft: CreatorApplicationDraft
+  draft: CreatorApplicationDraft,
+  locale: CreatorLocale
 ) => {
   const { getFirestore, connectFirestoreEmulator, collection, addDoc, serverTimestamp } =
     await import("firebase/firestore");
@@ -24,7 +26,7 @@ export const submitCreatorApplication = async (
   }
 
   await addDoc(collection(db, CREATOR_APPLICATIONS_COLLECTION), {
-    ...buildApplicationPayload(draft),
+    ...buildApplicationPayload(draft, locale),
     createdAt: serverTimestamp(),
   });
 };

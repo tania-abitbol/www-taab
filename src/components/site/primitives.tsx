@@ -74,10 +74,15 @@ export const AppStoreBadge = ({
   href,
   appName,
   onClick,
+  src = "/images/apple-store-logo.svg",
+  altTemplate = "Download {app} on the App Store",
 }: {
   href: string;
   appName: string;
   onClick?: () => void;
+  src?: string;
+  /** `{app}` is replaced with the app name. */
+  altTemplate?: string;
 }) => (
   <a
     href={href}
@@ -86,8 +91,8 @@ export const AppStoreBadge = ({
   >
     {/* eslint-disable-next-line @next/next/no-img-element */}
     <img
-      src="/images/apple-store-logo.svg"
-      alt={`Download ${appName} on the App Store`}
+      src={src}
+      alt={altTemplate.replace("{app}", appName)}
       width={150}
       height={50}
       className="h-12 w-auto"

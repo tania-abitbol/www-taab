@@ -2,9 +2,7 @@
 
 import { useId, useMemo, useState } from "react";
 
-import type { CreatorEarnings } from "~/config/creatorProgram";
-
-const compact = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
+import type { CreatorEarnings, CreatorUiCopy } from "~/config/creatorProgram";
 
 export const estimateMonthlyEarnings = (
   earnings: CreatorEarnings,
@@ -12,24 +10,39 @@ export const estimateMonthlyEarnings = (
   videosPerMonth: number
 ) => ((viewsPerVideo / 1000) * earnings.ratePer1000Views + (earnings.basePerVideo ?? 0)) * videosPerMonth;
 
+const fill = (template: string, values: Record<string, string>) =>
+  Object.entries(values).reduce((text, [key, value]) => text.replace(`{${key}}`, value), template);
+
 export const EarningsEstimator = ({
   earnings,
+  copy,
+  locale,
   onChange,
 }: {
   earnings: CreatorEarnings;
+  copy: CreatorUiCopy["estimator"];
+  locale: string;
   onChange?: (viewsPerVideo: number, videosPerMonth: number) => void;
 }) => {
   const sliderId = useId();
   const [views, setViews] = useState(earnings.viewPresets[Math.floor(earnings.viewPresets.length / 2)]);
   const [videos, setVideos] = useState(Math.min(4, earnings.maxVideosPerMonth));
 
-  const currency = useMemo(
-    () => new Intl.NumberFormat("en-US", { style: "currency", currency: earnings.currency, maximumFractionDigits: 0 }),
-    [earnings.currency]
-  );
-  const rateFormat = useMemo(
-    () => new Intl.NumberFormat("en-US", { style: "currency", currency: earnings.currency, maximumFractionDigits: 2 }),
-    [earnings.currency]
+  const { compact, currency, rateFormat } = useMemo(
+    () => ({
+      compact: new Intl.NumberFormat(locale, { notation: "compact", maximumFractionDigits: 1 }),
+      currency: new Intl.NumberFormat(locale, {
+        style: "currency",
+        currency: earnings.currency,
+        maximumFractionDigits: 0,
+      }),
+      rateFormat: new Intl.NumberFormat(locale, {
+        style: "currency",
+        currency: earnings.currency,
+        maximumFractionDigits: 2,
+      }),
+    }),
+    [locale, earnings.currency]
   );
   const monthly = estimateMonthlyEarnings(earnings, views, videos);
 
@@ -38,7 +51,7 @@ export const EarningsEstimator = ({
       <div className="grid gap-8 md:grid-cols-[1.1fr_0.9fr] md:items-center md:gap-12">
         <div className="space-y-8">
           <fieldset>
-            <legend className="mb-3 font-body text-sm font-bold">Average views per video</legend>
+            <legend className="mb-3 font-body text-sm font-bold">{copy.viewsLabel}</legend>
             <div className="flex flex-wrap gap-2">
               {earnings.viewPresets.map((preset) => (
                 <label key={preset} className="cursor-pointer">
@@ -62,7 +75,7 @@ export const EarningsEstimator = ({
           </fieldset>
           <div>
             <label htmlFor={sliderId} className="mb-3 flex items-baseline justify-between font-body text-sm font-bold">
-              Videos per month
+              {copy.videosLabel}
               <span className="font-title text-2xl">{videos}</span>
             </label>
             <input
@@ -79,16 +92,15 @@ export const EarningsEstimator = ({
           </div>
         </div>
         <div className="rounded-2xl bg-black p-6 text-white md:p-8" aria-live="polite">
-          <p className="mb-2 font-body text-sm text-white/70">Estimated monthly earnings</p>
+          <p className="mb-2 font-body text-sm text-white/70">{copy.resultLabel}</p>
           <p className="font-title text-5xl tracking-tight text-yellow md:text-6xl">{currency.format(monthly)}</p>
           <p className="mt-3 font-body text-sm text-white/70">
-            {videos} video{videos > 1 ? "s" : ""} × {compact.format(views)} views
+            {fill(copy.breakdown, { videos: String(videos), views: compact.format(views) })}
           </p>
         </div>
       </div>
       <p className="mt-6 font-body text-xs leading-relaxed text-gray-700">
-        Estimate based on our current creator rate of {rateFormat.format(earnings.ratePer1000Views)} per 1,000 views
-        {earnings.basePerVideo ? ` plus ${rateFormat.format(earnings.basePerVideo)} per video` : ""}. Actual earnings depend on how your videos perform and are not guaranteed.
+        {fill(copy.disclaimer, { rate: rateFormat.format(earnings.ratePer1000Views) })}
       </p>
     </div>
   );

@@ -3,6 +3,8 @@
  * and size limit here must stay in sync with `firestore.rules`.
  */
 
+import type { CreatorFormCopy, CreatorLocale } from "./creatorFormCopy";
+
 export const CREATOR_APPLICATIONS_COLLECTION = "creatorApplications";
 export const CREATOR_APPLICATION_SOURCE = "creators_page";
 
@@ -11,49 +13,53 @@ export interface Option<T extends string = string> {
   label: string;
 }
 
+interface OptionValue {
+  value: string;
+}
+
 export const FOLLOWER_OPTIONS = [
-  { value: "under_1k", label: "Under 1K" },
-  { value: "1k_10k", label: "1K – 10K" },
-  { value: "10k_50k", label: "10K – 50K" },
-  { value: "50k_100k", label: "50K – 100K" },
-  { value: "100k_500k", label: "100K – 500K" },
-  { value: "500k_plus", label: "500K+" },
-] as const satisfies readonly Option[];
+  { value: "under_1k" },
+  { value: "1k_10k" },
+  { value: "10k_50k" },
+  { value: "50k_100k" },
+  { value: "100k_500k" },
+  { value: "500k_plus" },
+] as const satisfies readonly OptionValue[];
 
 export const AVERAGE_VIEWS_OPTIONS = [
-  { value: "under_500", label: "Under 500" },
-  { value: "500_2k", label: "500 – 2K" },
-  { value: "2k_10k", label: "2K – 10K" },
-  { value: "10k_50k", label: "10K – 50K" },
-  { value: "50k_plus", label: "50K+" },
-] as const satisfies readonly Option[];
+  { value: "under_500" },
+  { value: "500_2k" },
+  { value: "2k_10k" },
+  { value: "10k_50k" },
+  { value: "50k_plus" },
+] as const satisfies readonly OptionValue[];
 
 export const POSTING_FREQUENCY_OPTIONS = [
-  { value: "daily", label: "Every day" },
-  { value: "few_per_week", label: "A few times a week" },
-  { value: "weekly", label: "About once a week" },
-  { value: "few_per_month", label: "A few times a month" },
-  { value: "occasionally", label: "Once in a while" },
-] as const satisfies readonly Option[];
+  { value: "daily" },
+  { value: "few_per_week" },
+  { value: "weekly" },
+  { value: "few_per_month" },
+  { value: "occasionally" },
+] as const satisfies readonly OptionValue[];
 
 export const CONTENT_CATEGORY_OPTIONS = [
-  { value: "comedy", label: "Comedy" },
-  { value: "storytelling", label: "Storytelling" },
-  { value: "relationships", label: "Relationships & dating" },
-  { value: "friends", label: "Friends & party" },
-  { value: "lifestyle", label: "Lifestyle" },
-  { value: "pov_skits", label: "POV & skits" },
-  { value: "trends", label: "Trends" },
-  { value: "beauty_fashion", label: "Beauty & fashion" },
-  { value: "gaming", label: "Gaming" },
-  { value: "education", label: "Education" },
-  { value: "music_dance", label: "Music & dance" },
-  { value: "other", label: "Something else" },
-] as const satisfies readonly Option[];
+  { value: "comedy" },
+  { value: "storytelling" },
+  { value: "relationships" },
+  { value: "friends" },
+  { value: "lifestyle" },
+  { value: "pov_skits" },
+  { value: "trends" },
+  { value: "beauty_fashion" },
+  { value: "gaming" },
+  { value: "education" },
+  { value: "music_dance" },
+  { value: "other" },
+] as const satisfies readonly OptionValue[];
 
 export const MAX_CONTENT_CATEGORIES = 4;
 
-type ValueOf<T extends readonly Option[]> = T[number]["value"];
+type ValueOf<T extends readonly OptionValue[]> = T[number]["value"];
 
 export const LIMITS = {
   name: 100,
@@ -64,10 +70,8 @@ export const LIMITS = {
 } as const;
 
 /** Countries that get a fixed list of regions instead of a free-text field. */
-export const REGIONS_BY_COUNTRY: Record<string, { label: string; options: string[] }> = {
-  US: {
-    label: "State",
-    options: [
+export const REGIONS_BY_COUNTRY: Record<string, string[]> = {
+  US: [
       "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado",
       "Connecticut", "Delaware", "District of Columbia", "Florida", "Georgia",
       "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky",
@@ -78,11 +82,15 @@ export const REGIONS_BY_COUNTRY: Record<string, { label: string; options: string
       "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota",
       "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington",
       "West Virginia", "Wisconsin", "Wyoming",
-    ],
-  },
+  ],
+  FR: [
+    "Auvergne-Rhône-Alpes", "Bourgogne-Franche-Comté", "Bretagne",
+    "Centre-Val de Loire", "Corse", "Grand Est", "Hauts-de-France",
+    "Île-de-France", "Normandie", "Nouvelle-Aquitaine", "Occitanie",
+    "Pays de la Loire", "Provence-Alpes-Côte d'Azur", "Guadeloupe", "Guyane",
+    "La Réunion", "Martinique", "Mayotte",
+  ],
 };
-
-export const DEFAULT_REGION_LABEL = "State / region";
 
 const ISO_COUNTRY_CODES =
   "AD AE AF AG AI AL AM AO AR AS AT AU AW AZ BA BB BD BE BF BG BH BI BJ BM BN BO BR BS BT BW BY BZ CA CD CF CG CH CI CK CL CM CN CO CR CU CV CW CY CZ DE DJ DK DM DO DZ EC EE EG ER ES ET FI FJ FM FO FR GA GB GD GE GF GH GI GL GM GN GP GQ GR GT GU GW GY HK HN HR HT HU ID IE IL IN IQ IR IS IT JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MG MH MK ML MM MN MO MQ MR MT MU MV MW MX MY MZ NA NC NE NG NI NL NO NP NR NZ OM PA PE PF PG PH PK PL PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SI SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TG TH TJ TL TM TN TO TR TT TV TW TZ UA UG US UY UZ VA VC VE VG VI VN VU WS XK YE YT ZA ZM ZW".split(
@@ -143,32 +151,21 @@ export const createEmptyDraft = (country: string): CreatorApplicationDraft => ({
 });
 
 export interface ApplicationStep {
-  id: string;
-  title: string;
-  description: string;
+  id: "about" | "tiktok" | "motivation";
   fields: DraftField[];
 }
 
 export const APPLICATION_STEPS: ApplicationStep[] = [
-  {
-    id: "about",
-    title: "About you",
-    description: "The basics, so we know who we're talking to.",
-    fields: ["name", "email", "country", "state", "ageConfirmed"],
-  },
+  { id: "about", fields: ["name", "email", "country", "state", "ageConfirmed"] },
   {
     id: "tiktok",
-    title: "Your TikTok",
-    description: "Rough numbers are fine. No screenshots needed.",
     fields: ["tiktokUsername", "followers", "averageViews", "postingFrequency", "contentCategories"],
   },
-  {
-    id: "motivation",
-    title: "Last step",
-    description: "One quick question and you're done.",
-    fields: ["whyCreator", "informationConfirmed"],
-  },
+  { id: "motivation", fields: ["whyCreator", "informationConfirmed"] },
 ];
+
+export const regionLabel = (copy: CreatorFormCopy, country: string) =>
+  copy.fields.regionLabels[country] ?? copy.fields.defaultRegionLabel;
 
 const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const USERNAME_PATTERN = /^[A-Za-z0-9._]{2,24}$/;
@@ -179,69 +176,67 @@ export const normalizeUsername = (value: string) =>
 export const tiktokProfileUrl = (username: string) =>
   `https://www.tiktok.com/@${normalizeUsername(username)}`;
 
-const longText = (value: string, max: number, empty: string) => {
+const longText = (copy: CreatorFormCopy, value: string, max: number, empty: string) => {
   const length = value.trim().length;
   if (length === 0) return empty;
-  if (length < LIMITS.minLongText) return "Tell us a bit more (at least a sentence).";
-  if (length > max) return `Keep it under ${max} characters.`;
+  if (length < LIMITS.minLongText) return copy.errors.tooShort;
+  if (length > max) return copy.errors.tooLong(max);
   return undefined;
 };
 
-const validators: Record<DraftField, (draft: CreatorApplicationDraft) => string | undefined> = {
-  name: ({ name }) => {
+type Validator = (draft: CreatorApplicationDraft, copy: CreatorFormCopy) => string | undefined;
+
+const validators: Record<DraftField, Validator> = {
+  name: ({ name }, copy) => {
     const value = name.trim();
-    if (!value) return "What should we call you?";
-    if (value.length > LIMITS.name) return `Keep it under ${LIMITS.name} characters.`;
+    if (!value) return copy.errors.nameEmpty;
+    if (value.length > LIMITS.name) return copy.errors.tooLong(LIMITS.name);
   },
-  email: ({ email }) => {
+  email: ({ email }, copy) => {
     const value = email.trim();
-    if (!value) return "We need an email to get back to you.";
-    if (value.length > LIMITS.email || !EMAIL_PATTERN.test(value))
-      return "That email doesn't look right.";
+    if (!value) return copy.errors.emailEmpty;
+    if (value.length > LIMITS.email || !EMAIL_PATTERN.test(value)) return copy.errors.emailInvalid;
   },
-  country: ({ country }) =>
-    /^[A-Z]{2}$/.test(country) ? undefined : "Pick the country you're based in.",
-  state: ({ state, country }) => {
+  country: ({ country }, copy) => (/^[A-Z]{2}$/.test(country) ? undefined : copy.errors.country),
+  state: ({ state, country }, copy) => {
     const value = state.trim();
-    if (!value)
-      return `Pick your ${(REGIONS_BY_COUNTRY[country]?.label ?? "state or region").toLowerCase()}.`;
-    if (value.length > LIMITS.state) return `Keep it under ${LIMITS.state} characters.`;
+    if (!value) return copy.errors.regionEmpty(regionLabel(copy, country));
+    if (value.length > LIMITS.state) return copy.errors.tooLong(LIMITS.state);
   },
-  ageConfirmed: ({ ageConfirmed }) =>
-    ageConfirmed ? undefined : "You need to be 18 or older to apply.",
-  tiktokUsername: ({ tiktokUsername }) => {
+  ageConfirmed: ({ ageConfirmed }, copy) => (ageConfirmed ? undefined : copy.errors.ageConfirmed),
+  tiktokUsername: ({ tiktokUsername }, copy) => {
     const value = normalizeUsername(tiktokUsername);
-    if (!value) return "Add your TikTok username.";
-    if (!USERNAME_PATTERN.test(value))
-      return "Usernames use letters, numbers, periods and underscores (2–24 characters).";
+    if (!value) return copy.errors.usernameEmpty;
+    if (!USERNAME_PATTERN.test(value)) return copy.errors.usernameInvalid;
   },
-  followers: ({ followers }) => (followers ? undefined : "Pick a range."),
-  averageViews: ({ averageViews }) => (averageViews ? undefined : "Pick a range."),
-  postingFrequency: ({ postingFrequency }) =>
-    postingFrequency ? undefined : "Pick how often you post.",
-  contentCategories: ({ contentCategories }) => {
-    if (contentCategories.length === 0) return "Pick at least one category.";
+  followers: ({ followers }, copy) => (followers ? undefined : copy.errors.pickRange),
+  averageViews: ({ averageViews }, copy) => (averageViews ? undefined : copy.errors.pickRange),
+  postingFrequency: ({ postingFrequency }, copy) =>
+    postingFrequency ? undefined : copy.errors.postingFrequency,
+  contentCategories: ({ contentCategories }, copy) => {
+    if (contentCategories.length === 0) return copy.errors.categoriesEmpty;
     if (contentCategories.length > MAX_CONTENT_CATEGORIES)
-      return `Pick up to ${MAX_CONTENT_CATEGORIES}.`;
+      return copy.errors.categoriesMax(MAX_CONTENT_CATEGORIES);
   },
-  whyCreator: ({ whyCreator }) =>
-    longText(whyCreator, LIMITS.whyCreator, "Tell us why you want to join, and why you."),
-  informationConfirmed: ({ informationConfirmed }) =>
-    informationConfirmed ? undefined : "Please confirm to submit your application.",
+  whyCreator: ({ whyCreator }, copy) =>
+    longText(copy, whyCreator, LIMITS.whyCreator, copy.errors.whyCreatorEmpty),
+  informationConfirmed: ({ informationConfirmed }, copy) =>
+    informationConfirmed ? undefined : copy.errors.informationConfirmed,
 };
 
 export const validateFields = (
   draft: CreatorApplicationDraft,
-  fields: DraftField[]
+  fields: DraftField[],
+  copy: CreatorFormCopy
 ): FieldErrors =>
   fields.reduce<FieldErrors>((errors, field) => {
-    const error = validators[field](draft);
+    const error = validators[field](draft, copy);
     if (error) errors[field] = error;
     return errors;
   }, {});
 
 /** Firestore document shape, minus `createdAt` (set with serverTimestamp()). */
-export const buildApplicationPayload = (draft: CreatorApplicationDraft) => ({
+export const buildApplicationPayload = (draft: CreatorApplicationDraft, locale: CreatorLocale) => ({
   name: draft.name.trim(),
   email: draft.email.trim().toLowerCase(),
   country: draft.country,
@@ -257,5 +252,5 @@ export const buildApplicationPayload = (draft: CreatorApplicationDraft) => ({
   informationConfirmed: true,
   status: "new" as const,
   source: CREATOR_APPLICATION_SOURCE,
-  locale: "en",
+  locale,
 });
