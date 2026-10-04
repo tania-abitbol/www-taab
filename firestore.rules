@@ -27,7 +27,7 @@ service cloud.firestore {
       let requiredKeys = [
         'name', 'email', 'country', 'state', 'ageConfirmed',
         'tiktokUsername', 'tiktokUrl', 'followers', 'averageViews',
-        'postingFrequency', 'contentCategories', 'contentDescription',
+        'postingFrequency', 'contentCategories',
         'showsFace', 'videoUrls', 'contentDifference', 'whyCreator',
         'informationConfirmed', 'status', 'source', 'locale', 'createdAt'
       ];
@@ -55,12 +55,10 @@ service cloud.firestore {
           'pov_skits', 'trends', 'beauty_fashion', 'gaming', 'education',
           'music_dance', 'other'
         ])
-        && isBoundedString(data.contentDescription, 10, 500)
         && data.showsFace in ['yes', 'sometimes', 'no']
         && videoUrls is list
-        && videoUrls.size() >= 1
         && videoUrls.size() <= 3
-        && isTikTokUrl(videoUrls[0])
+        && (videoUrls.size() < 1 || isTikTokUrl(videoUrls[0]))
         && (videoUrls.size() < 2 || isTikTokUrl(videoUrls[1]))
         && (videoUrls.size() < 3 || isTikTokUrl(videoUrls[2]))
         && isBoundedString(data.contentDifference, 10, 500)

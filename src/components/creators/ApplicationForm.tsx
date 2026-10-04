@@ -37,6 +37,8 @@ import { submitCreatorApplication } from "./submitApplication";
 import { CREATOR_EVENTS, trackCreatorEvent } from "./tracking";
 
 const DRAFT_STORAGE_KEY = "taab:creator-application-draft";
+const VIDEO_FIELDS = ["videoUrl1", "videoUrl2", "videoUrl3"] as const;
+const USERNAME_PREVIEW_PATTERN = /^[A-Za-z0-9._]{2,24}$/;
 
 interface ApplicationFormProps {
   content: CreatorProgramContent;
@@ -61,6 +63,8 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
   const stepHeadingRef = useRef<HTMLHeadingElement>(null);
   const successHeadingRef = useRef<HTMLHeadingElement>(null);
   const hasNavigatedRef = useRef(false);
+  const startedAtRef = useRef<number | null>(null);
+  const [extraVideoFields, setExtraVideoFields] = useState(0);
 
   const step = APPLICATION_STEPS[stepIndex];
   const isLastStep = stepIndex === APPLICATION_STEPS.length - 1;
@@ -75,6 +79,18 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
     setCountryOptions(getCountryOptions([countryIsoCode]));
   }, [countryIsoCode]);
   const region = REGIONS_BY_COUNTRY[draft.country];
+  const filledVideoFields = VIDEO_FIELDS.reduce((last, field, index) => (draft[field].trim() ? index + 1 : last), 0);
+  const visibleVideoFields = Math.min(VIDEO_FIELDS.length, Math.max(1 + extraVideoFields, filledVideoFields));
+  const usernameLooksValid = USERNAME_PREVIEW_PATTERN.test(normalizeUsername(draft.tiktokUsername));
+
+  useEffect(() => {
+    if (!hasNavigatedRef.current) return;
+    trackCreatorEvent(CREATOR_EVENTS.applicationStepView, {
+      program,
+      step: step.id,
+      step_number: String(stepIndex + 1),
+    });
+  }, [program, step.id, stepIndex]);
 
   useEffect(() => {
     try {
@@ -114,7 +130,14 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
     if (status === "success") successHeadingRef.current?.focus();
   }, [status]);
 
+  const markStarted = (field: DraftField) => {
+    if (startedAtRef.current !== null) return;
+    startedAtRef.current = Date.now();
+    trackCreatorEvent(CREATOR_EVENTS.applicationStart, { program, first_field: field });
+  };
+
   const update = <K extends DraftField>(field: K, value: CreatorApplicationDraft[K]) => {
+    markStarted(field);
     setDraft((current) => {
       const next = { ...current, [field]: value };
       if (field === "country" && current.country !== value) next.state = "";
@@ -146,6 +169,11 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
     setErrors(stepErrors);
     const firstInvalid = step.fields.find((field) => stepErrors[field]);
     if (firstInvalid) {
+      trackCreatorEvent(CREATOR_EVENTS.applicationValidationError, {
+        program,
+        step: step.id,
+        fields: step.fields.filter((field) => stepErrors[field]).join(","),
+      });
       document.getElementById(fieldId(firstInvalid))?.focus();
       return false;
     }
@@ -164,7 +192,14 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
     setStatus("submitting");
     try {
       if (!honeypot) await submitCreatorApplication(draft);
-      trackCreatorEvent(CREATOR_EVENTS.applicationSubmitted, { program });
+      trackCreatorEvent(CREATOR_EVENTS.applicationSubmitted, {
+        program,
+        country: draft.country,
+        followers: draft.followers,
+        seconds_to_submit: String(
+          startedAtRef.current ? Math.round((Date.now() - startedAtRef.current) / 1000) : 0
+        ),
+      });
       sessionStorage.removeItem(DRAFT_STORAGE_KEY);
       setStatus("success");
       onSubmitted?.();
@@ -371,7 +406,7 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
                     maxLength={30}
                     error={errors.tiktokUsername}
                     hint={
-                      /^[A-Za-z0-9._]{2,24}$/.test(normalizeUsername(draft.tiktokUsername)) ? (
+                      usernameLooksValid ? (
                         <a
                           href={tiktokProfileUrl(draft.tiktokUsername)}
                           target="_blank"
@@ -415,23 +450,13 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
                 <>
                   <ChoiceGroup
                     name="contentCategories"
-                    label="Content categories"
+                    label="What do you post about?"
                     hint={`Pick up to ${MAX_CONTENT_CATEGORIES}.`}
                     options={CONTENT_CATEGORY_OPTIONS}
                     value={draft.contentCategories}
                     onChange={toggleCategory}
                     multiple
                     error={errors.contentCategories}
-                  />
-                  <TextAreaField
-                    name="contentDescription"
-                    label="What type of content do you usually create?"
-                    placeholder="e.g. Story times about dating in my 20s, filmed in my car."
-                    value={draft.contentDescription}
-                    onChange={(value) => update("contentDescription", value)}
-                    maxLength={LIMITS.contentDescription}
-                    rows={3}
-                    error={errors.contentDescription}
                   />
                   <ChoiceGroup
                     name="showsFace"
@@ -441,46 +466,39 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
                     onChange={(value) => update("showsFace", value)}
                     error={errors.showsFace}
                   />
+                  {VIDEO_FIELDS.slice(0, visibleVideoFields).map((field, index) => (
+                    <TextField
+                      key={field}
+                      name={field}
+                      label={index === 0 ? "Your best TikTok" : index === 1 ? "Another TikTok" : "One more"}
+                      optional
+                      type="url"
+                      inputMode="url"
+                      placeholder="tiktok.com/@yourname/video/..."
+                      hint={index === 0 ? "Paste a link to the video you're proudest of." : undefined}
+                      value={draft[field]}
+                      onChange={(value) => update(field, value)}
+                      maxLength={LIMITS.url}
+                      error={errors[field]}
+                    />
+                  ))}
+                  {visibleVideoFields < VIDEO_FIELDS.length && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setExtraVideoFields((count) => count + 1);
+                        trackCreatorEvent(CREATOR_EVENTS.applicationAddVideo, { program });
+                      }}
+                      className="-mt-2 rounded-lg font-body text-sm font-bold underline underline-offset-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
+                    >
+                      + Add another video
+                    </button>
+                  )}
                 </>
               )}
 
-              {step.id === "examples" && (
+              {step.id === "motivation" && (
                 <>
-                  <TextField
-                    name="videoUrl1"
-                    label="Your best TikTok"
-                    type="url"
-                    inputMode="url"
-                    placeholder="tiktok.com/@yourname/video/..."
-                    value={draft.videoUrl1}
-                    onChange={(value) => update("videoUrl1", value)}
-                    maxLength={LIMITS.url}
-                    error={errors.videoUrl1}
-                  />
-                  <TextField
-                    name="videoUrl2"
-                    label="Second TikTok"
-                    optional
-                    type="url"
-                    inputMode="url"
-                    placeholder="tiktok.com/@yourname/video/..."
-                    value={draft.videoUrl2}
-                    onChange={(value) => update("videoUrl2", value)}
-                    maxLength={LIMITS.url}
-                    error={errors.videoUrl2}
-                  />
-                  <TextField
-                    name="videoUrl3"
-                    label="Third TikTok"
-                    optional
-                    type="url"
-                    inputMode="url"
-                    placeholder="tiktok.com/@yourname/video/..."
-                    value={draft.videoUrl3}
-                    onChange={(value) => update("videoUrl3", value)}
-                    maxLength={LIMITS.url}
-                    error={errors.videoUrl3}
-                  />
                   <TextAreaField
                     name="contentDifference"
                     label="What makes your content different?"
@@ -491,18 +509,13 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
                     rows={3}
                     error={errors.contentDifference}
                   />
-                </>
-              )}
-
-              {step.id === "motivation" && (
-                <>
                   <TextAreaField
                     name="whyCreator"
                     label="Why do you want to become a TAAB Creator?"
                     value={draft.whyCreator}
                     onChange={(value) => update("whyCreator", value)}
                     maxLength={LIMITS.whyCreator}
-                    rows={4}
+                    rows={3}
                     error={errors.whyCreator}
                   />
                   <CheckboxField
@@ -528,7 +541,10 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
           {stepIndex > 0 && (
             <button
               type="button"
-              onClick={() => goTo(stepIndex - 1)}
+              onClick={() => {
+                trackCreatorEvent(CREATOR_EVENTS.applicationBack, { program, from_step: step.id });
+                goTo(stepIndex - 1);
+              }}
               disabled={status === "submitting"}
               className="h-12 rounded-xl border border-gray-300 px-5 font-body text-base font-bold transition-colors hover:border-black focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:opacity-50"
             >

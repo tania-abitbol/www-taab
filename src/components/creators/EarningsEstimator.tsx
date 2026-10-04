@@ -12,7 +12,13 @@ export const estimateMonthlyEarnings = (
   videosPerMonth: number
 ) => ((viewsPerVideo / 1000) * earnings.ratePer1000Views + (earnings.basePerVideo ?? 0)) * videosPerMonth;
 
-export const EarningsEstimator = ({ earnings }: { earnings: CreatorEarnings }) => {
+export const EarningsEstimator = ({
+  earnings,
+  onChange,
+}: {
+  earnings: CreatorEarnings;
+  onChange?: (viewsPerVideo: number, videosPerMonth: number) => void;
+}) => {
   const sliderId = useId();
   const [views, setViews] = useState(earnings.viewPresets[Math.floor(earnings.viewPresets.length / 2)]);
   const [videos, setVideos] = useState(Math.min(4, earnings.maxVideosPerMonth));
@@ -41,7 +47,10 @@ export const EarningsEstimator = ({ earnings }: { earnings: CreatorEarnings }) =
                     name="estimator-views"
                     value={preset}
                     checked={views === preset}
-                    onChange={() => setViews(preset)}
+                    onChange={() => {
+                      setViews(preset);
+                      onChange?.(preset, videos);
+                    }}
                     className="peer sr-only"
                   />
                   <span className="flex min-h-11 items-center rounded-full border border-gray-300 px-4 font-body text-sm font-bold transition-colors hover:border-black peer-checked:border-black peer-checked:bg-black peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-black peer-focus-visible:ring-offset-2">
@@ -63,6 +72,8 @@ export const EarningsEstimator = ({ earnings }: { earnings: CreatorEarnings }) =
               max={earnings.maxVideosPerMonth}
               value={videos}
               onChange={(event) => setVideos(Number(event.target.value))}
+              onPointerUp={() => onChange?.(views, videos)}
+              onKeyUp={() => onChange?.(views, videos)}
               className="w-full accent-black"
             />
           </div>

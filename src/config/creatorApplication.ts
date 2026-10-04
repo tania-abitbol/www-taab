@@ -66,7 +66,6 @@ export const LIMITS = {
   email: 254,
   state: 100,
   url: 300,
-  contentDescription: 500,
   contentDifference: 500,
   whyCreator: 1000,
   minLongText: 10,
@@ -129,7 +128,6 @@ export interface CreatorApplicationDraft {
   averageViews: ValueOf<typeof AVERAGE_VIEWS_OPTIONS> | "";
   postingFrequency: ValueOf<typeof POSTING_FREQUENCY_OPTIONS> | "";
   contentCategories: ValueOf<typeof CONTENT_CATEGORY_OPTIONS>[];
-  contentDescription: string;
   showsFace: ValueOf<typeof SHOWS_FACE_OPTIONS> | "";
   videoUrl1: string;
   videoUrl2: string;
@@ -153,7 +151,6 @@ export const createEmptyDraft = (country: string): CreatorApplicationDraft => ({
   averageViews: "",
   postingFrequency: "",
   contentCategories: [],
-  contentDescription: "",
   showsFace: "",
   videoUrl1: "",
   videoUrl2: "",
@@ -181,30 +178,19 @@ export const APPLICATION_STEPS: ApplicationStep[] = [
     id: "tiktok",
     title: "Your TikTok",
     description: "Rough numbers are fine. No screenshots needed.",
-    fields: [
-      "tiktokUsername",
-      "followers",
-      "averageViews",
-      "postingFrequency",
-    ],
+    fields: ["tiktokUsername", "followers", "averageViews", "postingFrequency"],
   },
   {
     id: "content",
     title: "Your content",
     description: "Help us picture what you'd make.",
-    fields: ["contentCategories", "contentDescription", "showsFace"],
-  },
-  {
-    id: "examples",
-    title: "Your best work",
-    description: "Show us the videos you're proudest of.",
-    fields: ["videoUrl1", "videoUrl2", "videoUrl3", "contentDifference"],
+    fields: ["contentCategories", "showsFace", "videoUrl1", "videoUrl2", "videoUrl3"],
   },
   {
     id: "motivation",
     title: "Last step",
-    description: "Almost done.",
-    fields: ["whyCreator", "informationConfirmed"],
+    description: "Two quick questions and you're done.",
+    fields: ["contentDifference", "whyCreator", "informationConfirmed"],
   },
 ];
 
@@ -284,13 +270,9 @@ const validators: Record<DraftField, (draft: CreatorApplicationDraft) => string 
     if (contentCategories.length > MAX_CONTENT_CATEGORIES)
       return `Pick up to ${MAX_CONTENT_CATEGORIES}.`;
   },
-  contentDescription: ({ contentDescription }) =>
-    longText(contentDescription, LIMITS.contentDescription, "Describe the content you usually make."),
   showsFace: ({ showsFace }) => (showsFace ? undefined : "Pick one."),
-  videoUrl1: ({ videoUrl1 }) => {
-    if (!videoUrl1.trim()) return "Add at least one TikTok you're proud of.";
-    if (!isTikTokUrl(videoUrl1)) return "Paste a tiktok.com video link.";
-  },
+  videoUrl1: ({ videoUrl1 }) =>
+    videoUrl1.trim() && !isTikTokUrl(videoUrl1) ? "Paste a tiktok.com video link." : undefined,
   videoUrl2: ({ videoUrl2 }) =>
     videoUrl2.trim() && !isTikTokUrl(videoUrl2) ? "Paste a tiktok.com video link." : undefined,
   videoUrl3: ({ videoUrl3 }) =>
@@ -326,7 +308,6 @@ export const buildApplicationPayload = (draft: CreatorApplicationDraft) => ({
   averageViews: draft.averageViews,
   postingFrequency: draft.postingFrequency,
   contentCategories: draft.contentCategories,
-  contentDescription: draft.contentDescription.trim(),
   showsFace: draft.showsFace,
   videoUrls: [draft.videoUrl1, draft.videoUrl2, draft.videoUrl3]
     .map(normalizeTikTokUrl)

@@ -14,6 +14,7 @@ import {
   container,
   sectionTitle,
 } from "~/components/site/primitives";
+import { usePageAnalytics } from "~/components/site/usePageAnalytics";
 import { STUDIO_APPS } from "~/config/apps";
 import type { CreatorProgramContent } from "~/config/creatorProgram";
 
@@ -113,6 +114,7 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
   useEffect(() => {
     trackCreatorEvent(CREATOR_EVENTS.pageView, { program });
   }, [program]);
+  usePageAnalytics("creators");
 
   const scrollToApplication = useCallback(() => {
     const target = document.getElementById(APPLY_SECTION_ID);
@@ -134,6 +136,12 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
   };
 
   const showStickyCta = !heroInView && !applyInView && !finalInView && !submitted;
+  const stickyTrackedRef = useRef(false);
+  useEffect(() => {
+    if (!showStickyCta || stickyTrackedRef.current) return;
+    stickyTrackedRef.current = true;
+    trackCreatorEvent(CREATOR_EVENTS.stickyCtaShown, { program });
+  }, [showStickyCta, program]);
 
   return (
     <MotionConfig reducedMotion="user">
@@ -235,7 +243,16 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
                 </ol>
                 {earnings ? (
                   <Reveal className="mt-6">
-                    <EarningsEstimator earnings={earnings} />
+                    <EarningsEstimator
+                      earnings={earnings}
+                      onChange={(views, videos) =>
+                        trackCreatorEvent(CREATOR_EVENTS.estimatorChange, {
+                          program,
+                          views: String(views),
+                          videos: String(videos),
+                        })
+                      }
+                    />
                   </Reveal>
                 ) : (
                   <Reveal className="mt-6">
@@ -359,7 +376,13 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
             </Reveal>
             <div className="mt-12 space-y-6 md:mt-16 md:space-y-8">
               {STUDIO_APPS.map((app, index) => (
-                <AppShowcaseCard key={app.id} app={app} reversed={index % 2 === 1} preferAppScreens />
+                <AppShowcaseCard
+                  key={app.id}
+                  app={app}
+                  reversed={index % 2 === 1}
+                  preferAppScreens
+                  onStoreClick={(clicked) => trackCreatorEvent(CREATOR_EVENTS.appStoreClick, { program, app: clicked.id })}
+                />
               ))}
             </div>
           </section>
@@ -408,7 +431,15 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
               </Reveal>
               <div className="divide-y divide-black/10 border-y border-black/10">
                 {faq.items.map((item) => (
-                  <details key={item.question} className="group">
+                  <details
+                    key={item.question}
+                    className="group"
+                    onToggle={(event) => {
+                      if (event.currentTarget.open) {
+                        trackCreatorEvent(CREATOR_EVENTS.faqOpen, { program, question: item.question });
+                      }
+                    }}
+                  >
                     <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-6 font-title text-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-4 md:text-xl [&::-webkit-details-marker]:hidden">
                       {item.question}
                       <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-black/15 transition-transform duration-200 group-open:rotate-45 group-open:bg-black group-open:text-white">

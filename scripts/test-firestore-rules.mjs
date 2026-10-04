@@ -39,7 +39,6 @@ const valid = () => ({
   averageViews: "2k_10k",
   postingFrequency: "few_per_week",
   contentCategories: ["comedy", "storytelling"],
-  contentDescription: "Short skits about everyday situations with friends.",
   showsFace: "yes",
   videoUrls: ["https://www.tiktok.com/@jordan.makes_stuff/video/1234567890"],
   contentDifference: "I write every skit around a real story from my week.",
@@ -74,6 +73,9 @@ await test("valid application can be created", async () => {
 await test("non-US country is accepted", async () => {
   await addDoc(applications, { ...valid(), country: "GB", state: "London" });
 });
+await test("no video URLs is accepted", async () => {
+  await addDoc(applications, { ...valid(), videoUrls: [] });
+});
 await test("up to 3 video URLs are accepted", async () => {
   const urls = [1, 2, 3].map((i) => `https://www.tiktok.com/@a/video/${i}`);
   await addDoc(applications, { ...valid(), videoUrls: urls });
@@ -104,7 +106,8 @@ const invalidCases = {
   "too many categories": {
     contentCategories: ["comedy", "storytelling", "trends", "gaming", "other"],
   },
-  "no video URLs": { videoUrls: [] },
+  "legacy contentDescription field": { contentDescription: "Short skits about my week." },
+  "non-TikTok first video": { videoUrls: ["https://youtube.com/x"] },
   "4 video URLs": {
     videoUrls: [1, 2, 3, 4].map((i) => `https://www.tiktok.com/@a/video/${i}`),
   },
