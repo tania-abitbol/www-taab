@@ -16,7 +16,6 @@ import {
   MAX_CONTENT_CATEGORIES,
   POSTING_FREQUENCY_OPTIONS,
   REGIONS_BY_COUNTRY,
-  SHOWS_FACE_OPTIONS,
   createEmptyDraft,
   getCountryOptions,
   normalizeUsername,
@@ -457,14 +456,6 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
                     onChange={toggleCategory}
                     multiple
                     error={errors.contentCategories}
-                  />
-                  <ChoiceGroup
-                    name="showsFace"
-                    label="Comfortable appearing on camera?"
-                    options={SHOWS_FACE_OPTIONS}
-                    value={draft.showsFace}
-                    onChange={(value) => update("showsFace", value)}
-                    error={errors.showsFace}
                   />
                   {VIDEO_FIELDS.slice(0, visibleVideoFields).map((field, index) => (
                     <TextField

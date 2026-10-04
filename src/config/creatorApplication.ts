@@ -53,12 +53,6 @@ export const CONTENT_CATEGORY_OPTIONS = [
 
 export const MAX_CONTENT_CATEGORIES = 4;
 
-export const SHOWS_FACE_OPTIONS = [
-  { value: "yes", label: "Yes" },
-  { value: "sometimes", label: "Sometimes" },
-  { value: "no", label: "No" },
-] as const satisfies readonly Option[];
-
 type ValueOf<T extends readonly Option[]> = T[number]["value"];
 
 export const LIMITS = {
@@ -128,7 +122,6 @@ export interface CreatorApplicationDraft {
   averageViews: ValueOf<typeof AVERAGE_VIEWS_OPTIONS> | "";
   postingFrequency: ValueOf<typeof POSTING_FREQUENCY_OPTIONS> | "";
   contentCategories: ValueOf<typeof CONTENT_CATEGORY_OPTIONS>[];
-  showsFace: ValueOf<typeof SHOWS_FACE_OPTIONS> | "";
   videoUrl1: string;
   videoUrl2: string;
   videoUrl3: string;
@@ -151,7 +144,6 @@ export const createEmptyDraft = (country: string): CreatorApplicationDraft => ({
   averageViews: "",
   postingFrequency: "",
   contentCategories: [],
-  showsFace: "",
   videoUrl1: "",
   videoUrl2: "",
   videoUrl3: "",
@@ -184,7 +176,7 @@ export const APPLICATION_STEPS: ApplicationStep[] = [
     id: "content",
     title: "Your content",
     description: "Help us picture what you'd make.",
-    fields: ["contentCategories", "showsFace", "videoUrl1", "videoUrl2", "videoUrl3"],
+    fields: ["contentCategories", "videoUrl1", "videoUrl2", "videoUrl3"],
   },
   {
     id: "motivation",
@@ -270,7 +262,6 @@ const validators: Record<DraftField, (draft: CreatorApplicationDraft) => string 
     if (contentCategories.length > MAX_CONTENT_CATEGORIES)
       return `Pick up to ${MAX_CONTENT_CATEGORIES}.`;
   },
-  showsFace: ({ showsFace }) => (showsFace ? undefined : "Pick one."),
   videoUrl1: ({ videoUrl1 }) =>
     videoUrl1.trim() && !isTikTokUrl(videoUrl1) ? "Paste a tiktok.com video link." : undefined,
   videoUrl2: ({ videoUrl2 }) =>
@@ -308,7 +299,6 @@ export const buildApplicationPayload = (draft: CreatorApplicationDraft) => ({
   averageViews: draft.averageViews,
   postingFrequency: draft.postingFrequency,
   contentCategories: draft.contentCategories,
-  showsFace: draft.showsFace,
   videoUrls: [draft.videoUrl1, draft.videoUrl2, draft.videoUrl3]
     .map(normalizeTikTokUrl)
     .filter(Boolean),

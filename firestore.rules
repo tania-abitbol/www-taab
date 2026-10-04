@@ -28,7 +28,7 @@ service cloud.firestore {
         'name', 'email', 'country', 'state', 'ageConfirmed',
         'tiktokUsername', 'tiktokUrl', 'followers', 'averageViews',
         'postingFrequency', 'contentCategories',
-        'showsFace', 'videoUrls', 'contentDifference', 'whyCreator',
+        'videoUrls', 'contentDifference', 'whyCreator',
         'informationConfirmed', 'status', 'source', 'locale', 'createdAt'
       ];
       let videoUrls = data.videoUrls;
@@ -55,7 +55,6 @@ service cloud.firestore {
           'pov_skits', 'trends', 'beauty_fashion', 'gaming', 'education',
           'music_dance', 'other'
         ])
-        && data.showsFace in ['yes', 'sometimes', 'no']
         && videoUrls is list
         && videoUrls.size() <= 3
         && (videoUrls.size() < 1 || isTikTokUrl(videoUrls[0]))

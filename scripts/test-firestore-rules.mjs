@@ -39,7 +39,6 @@ const valid = () => ({
   averageViews: "2k_10k",
   postingFrequency: "few_per_week",
   contentCategories: ["comedy", "storytelling"],
-  showsFace: "yes",
   videoUrls: ["https://www.tiktok.com/@jordan.makes_stuff/video/1234567890"],
   contentDifference: "I write every skit around a real story from my week.",
   whyCreator: "I love games with friends and want to turn that into content.",
@@ -107,6 +106,7 @@ const invalidCases = {
     contentCategories: ["comedy", "storytelling", "trends", "gaming", "other"],
   },
   "legacy contentDescription field": { contentDescription: "Short skits about my week." },
+  "legacy showsFace field": { showsFace: "yes" },
   "non-TikTok first video": { videoUrls: ["https://youtube.com/x"] },
   "4 video URLs": {
     videoUrls: [1, 2, 3, 4].map((i) => `https://www.tiktok.com/@a/video/${i}`),
