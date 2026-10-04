@@ -59,6 +59,8 @@ export interface CreatorProgramContent {
   locale: CreatorLocale;
   /** Route of this program's landing page. */
   path: string;
+  /** Entry shown on the shared /join country picker. */
+  picker: { flag: string; countryName: string; cta: string };
   meta: { title: string; description: string };
   ui: CreatorUiCopy;
   /** Localized app names and copy; falls back to the default app copy. */
@@ -131,6 +133,7 @@ const us: CreatorProgramContent = {
   country: "us",
   locale: "en",
   path: "/creators",
+  picker: { flag: "🇺🇸", countryName: "United States", cta: "I'm based in the US" },
   meta: {
     title: "Become a TAAB Creator | TAAB",
     description:
@@ -313,6 +316,7 @@ const fr: CreatorProgramContent = {
   country: "fr",
   locale: "fr",
   path: "/createurs",
+  picker: { flag: "🇫🇷", countryName: "France", cta: "Je suis en France" },
   meta: {
     title: "Deviens TAAB Creator | TAAB",
     description:

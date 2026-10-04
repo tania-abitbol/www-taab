@@ -16,6 +16,7 @@ export const CREATOR_EVENTS = {
   estimatorChange: "creator_estimator_change",
   appStoreClick: "creator_app_store_click",
   languageSwitch: "creator_language_switch",
+  countryPicked: "creator_country_picked",
 } as const;
 
 export type CreatorEventName =
