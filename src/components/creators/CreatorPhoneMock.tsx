@@ -38,18 +38,18 @@ export const CreatorPhoneMock = () => {
   }, [reduceMotion]);
 
   return (
-    <div aria-hidden="true" className="relative mx-auto h-[440px] w-full max-w-[380px] sm:h-[500px] lg:h-[560px] lg:max-w-[440px]">
+    <div aria-hidden="true" className="relative mx-auto h-[500px] w-full max-w-[380px] sm:h-[540px] lg:h-[600px] lg:max-w-[440px]">
       <div className="absolute left-1/2 top-1/2 h-[85%] w-[85%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-yellow/40 blur-3xl" />
 
       <motion.div
-        className="absolute left-[18%] top-[2%] h-[94%] w-[64%]"
+        className="absolute left-[21%] top-[1%] aspect-[1206/2622] w-[58%]"
         initial={{ opacity: 0, y: 30, rotate: 0 }}
         animate={{ opacity: 1, y: 0, rotate: -3 }}
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
       >
         <div className="relative h-full w-full overflow-hidden rounded-[2.25rem] border-[7px] border-black bg-black shadow-[0_40px_80px_-30px_rgba(0,0,0,0.55)]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/images/vérité/image_1.jpg" alt="" className="h-full w-full origin-bottom scale-[1.3] object-cover object-bottom" />
+          <img src="/images/vérité/app/question.jpg" alt="" className="h-full w-full object-cover" />
           <div className="absolute inset-x-0 top-0 flex justify-center gap-4 bg-gradient-to-b from-black/60 to-transparent pb-8 pt-4 font-body text-xs font-bold text-white">
             <span className="text-white/60">Following</span>
             <span className="border-b-2 border-white pb-1">For You</span>

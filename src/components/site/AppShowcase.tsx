@@ -21,14 +21,17 @@ export const AppShowcaseCard = ({
   app,
   headingLevel = "h3",
   reversed,
+  preferAppScreens,
   onStoreClick,
 }: {
   app: StudioApp;
   headingLevel?: "h2" | "h3";
   reversed?: boolean;
+  preferAppScreens?: boolean;
   onStoreClick?: (app: StudioApp) => void;
 }) => {
   const theme = themes[app.theme];
+  const screens = (preferAppScreens && app.appScreens) || app.screenshots;
   const Heading = headingLevel;
 
   return (
@@ -53,11 +56,11 @@ export const AppShowcaseCard = ({
 
         <div
           aria-hidden="true"
-          className={`relative mx-auto h-[300px] w-full max-w-[420px] sm:h-[380px] md:h-[440px] ${reversed ? "md:order-1" : ""}`}
+          className={`relative mx-auto aspect-[10/9] w-full max-w-[440px] ${reversed ? "md:order-1" : ""}`}
         >
-          <PhoneShot src={app.screenshots[1]} className="absolute bottom-[-12%] left-[2%] h-[86%] w-[36%] -rotate-[8deg] md:bottom-[4%]" />
-          <PhoneShot src={app.screenshots[2]} className="absolute bottom-[-12%] right-[2%] h-[86%] w-[36%] rotate-[8deg] md:bottom-[4%]" />
-          <PhoneShot src={app.screenshots[0]} className="absolute bottom-[-6%] left-1/2 z-10 h-[96%] w-[40%] -translate-x-1/2 md:bottom-[8%]" />
+          <PhoneShot src={screens[1]} className="absolute bottom-[-10%] left-0 aspect-[1206/2622] w-[38%] -rotate-[8deg] md:bottom-[2%]" />
+          <PhoneShot src={screens[2]} className="absolute bottom-[-10%] right-0 aspect-[1206/2622] w-[38%] rotate-[8deg] md:bottom-[2%]" />
+          <PhoneShot src={screens[0]} className="absolute bottom-[-4%] left-[28%] z-10 aspect-[1206/2622] w-[44%] md:bottom-[6%]" />
         </div>
       </div>
     </article>

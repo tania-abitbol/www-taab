@@ -359,7 +359,7 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
             </Reveal>
             <div className="mt-12 space-y-6 md:mt-16 md:space-y-8">
               {STUDIO_APPS.map((app, index) => (
-                <AppShowcaseCard key={app.id} app={app} reversed={index % 2 === 1} />
+                <AppShowcaseCard key={app.id} app={app} reversed={index % 2 === 1} preferAppScreens />
               ))}
             </div>
           </section>

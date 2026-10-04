@@ -5,7 +5,10 @@ export interface StudioApp {
   description: string;
   logo: string;
   iosLink: string;
+  /** App Store marketing screenshots (homepage). */
   screenshots: string[];
+  /** Raw in-app screens, used where the product itself should show (e.g. /creators). */
+  appScreens?: string[];
   theme: "light" | "dark";
 }
 
@@ -30,6 +33,7 @@ export const STUDIO_APPS: StudioApp[] = [
     logo: "/images/vérité-logo.svg",
     iosLink: "https://apps.apple.com/app/id6480046704",
     screenshots: ["/images/vérité/image_1.jpg", "/images/vérité/image_3.jpg", "/images/vérité/image_2.jpg"],
+    appScreens: ["/images/vérité/app/question.jpg", "/images/vérité/app/themes.jpg", "/images/vérité/app/players.jpg"],
     theme: "dark",
   },
 ];
