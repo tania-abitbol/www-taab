@@ -93,7 +93,7 @@ const us: CreatorProgramContent = {
     proofPoints: ["No follower minimum", "Paid on performance", "No scripts"],
     secondary: "We're selecting our first 20 creators in the US.",
     cta: "Apply now",
-    ctaNote: "Takes about 3 minutes",
+    ctaNote: "Takes about 2 minutes",
   },
   deal: {
     eyebrow: "How you get paid",
@@ -103,7 +103,7 @@ const us: CreatorProgramContent = {
       {
         title: "Get accepted",
         description:
-          "Apply in 3 minutes. We pick a small group of creators who are a great fit for our apps.",
+          "Apply in 2 minutes. We pick a small group of creators who are a great fit for our apps.",
       },
       {
         title: "Post in your style",

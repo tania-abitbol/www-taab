@@ -383,7 +383,7 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
                     {application.copy}
                   </p>
                   <ul className="hidden space-y-3 font-body text-base text-white/80 lg:block">
-                    {["Takes about 3 minutes", "No follower minimum", "Paid on performance", application.recruitingNote].map((item) => (
+                    {["Takes about 2 minutes", "No follower minimum", "Paid on performance", application.recruitingNote].map((item) => (
                       <li key={item} className="flex items-start gap-3">
                         <span aria-hidden="true" className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-yellow text-black">
                           <CheckIcon className="h-3 w-3" />
