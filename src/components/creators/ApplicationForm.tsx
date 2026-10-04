@@ -19,6 +19,8 @@ import {
   SHOWS_FACE_OPTIONS,
   createEmptyDraft,
   getCountryOptions,
+  normalizeUsername,
+  tiktokProfileUrl,
   validateFields,
 } from "~/config/creatorApplication";
 import type { CreatorProgramContent } from "~/config/creatorProgram";
@@ -368,17 +370,18 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
                     onChange={(value) => update("tiktokUsername", value.replace(/^\s*@+/, ""))}
                     maxLength={30}
                     error={errors.tiktokUsername}
-                  />
-                  <TextField
-                    name="tiktokUrl"
-                    label="TikTok profile link"
-                    type="url"
-                    inputMode="url"
-                    placeholder="tiktok.com/@yourname"
-                    value={draft.tiktokUrl}
-                    onChange={(value) => update("tiktokUrl", value)}
-                    maxLength={LIMITS.url}
-                    error={errors.tiktokUrl}
+                    hint={
+                      /^[A-Za-z0-9._]{2,24}$/.test(normalizeUsername(draft.tiktokUsername)) ? (
+                        <a
+                          href={tiktokProfileUrl(draft.tiktokUsername)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-bold text-black underline underline-offset-2"
+                        >
+                          Check it&apos;s you: tiktok.com/@{normalizeUsername(draft.tiktokUsername)} ↗
+                        </a>
+                      ) : undefined
+                    }
                   />
                   <ChoiceGroup
                     name="followers"

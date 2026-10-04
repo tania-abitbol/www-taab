@@ -125,7 +125,6 @@ export interface CreatorApplicationDraft {
   state: string;
   ageConfirmed: boolean;
   tiktokUsername: string;
-  tiktokUrl: string;
   followers: ValueOf<typeof FOLLOWER_OPTIONS> | "";
   averageViews: ValueOf<typeof AVERAGE_VIEWS_OPTIONS> | "";
   postingFrequency: ValueOf<typeof POSTING_FREQUENCY_OPTIONS> | "";
@@ -150,7 +149,6 @@ export const createEmptyDraft = (country: string): CreatorApplicationDraft => ({
   state: "",
   ageConfirmed: false,
   tiktokUsername: "",
-  tiktokUrl: "",
   followers: "",
   averageViews: "",
   postingFrequency: "",
@@ -185,7 +183,6 @@ export const APPLICATION_STEPS: ApplicationStep[] = [
     description: "Rough numbers are fine. No screenshots needed.",
     fields: [
       "tiktokUsername",
-      "tiktokUrl",
       "followers",
       "averageViews",
       "postingFrequency",
@@ -217,6 +214,9 @@ const TIKTOK_URL_PATTERN = /^https:\/\/([a-z]+\.)?tiktok\.com\/.+$/;
 
 export const normalizeUsername = (value: string) =>
   value.trim().replace(/^@+/, "");
+
+export const tiktokProfileUrl = (username: string) =>
+  `https://www.tiktok.com/@${normalizeUsername(username)}`;
 
 /** Accepts `tiktok.com/...`, `www.tiktok.com/...` or full URLs and returns an https URL. */
 export const normalizeTikTokUrl = (value: string) => {
@@ -275,10 +275,6 @@ const validators: Record<DraftField, (draft: CreatorApplicationDraft) => string 
     if (!USERNAME_PATTERN.test(value))
       return "Usernames use letters, numbers, periods and underscores (2–24 characters).";
   },
-  tiktokUrl: ({ tiktokUrl }) => {
-    if (!tiktokUrl.trim()) return "Add the link to your TikTok profile.";
-    if (!isTikTokUrl(tiktokUrl)) return "Paste a tiktok.com link.";
-  },
   followers: ({ followers }) => (followers ? undefined : "Pick a range."),
   averageViews: ({ averageViews }) => (averageViews ? undefined : "Pick a range."),
   postingFrequency: ({ postingFrequency }) =>
@@ -325,7 +321,7 @@ export const buildApplicationPayload = (draft: CreatorApplicationDraft) => ({
   state: draft.state.trim(),
   ageConfirmed: true,
   tiktokUsername: normalizeUsername(draft.tiktokUsername),
-  tiktokUrl: normalizeTikTokUrl(draft.tiktokUrl),
+  tiktokUrl: tiktokProfileUrl(draft.tiktokUsername),
   followers: draft.followers,
   averageViews: draft.averageViews,
   postingFrequency: draft.postingFrequency,
