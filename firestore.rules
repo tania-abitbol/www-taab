@@ -27,12 +27,13 @@ service cloud.firestore {
       let requiredKeys = [
         'name', 'email', 'country', 'state', 'ageConfirmed',
         'tiktokUsername', 'tiktokUrl', 'followers', 'averageViews',
-        'postingFrequency', 'contentCategories',
-        'videoUrls', 'contentDifference', 'whyCreator',
+        'postingFrequency', 'contentCategories', 'whyCreator',
         'informationConfirmed', 'status', 'source', 'locale', 'createdAt'
       ];
-      let videoUrls = data.videoUrls;
-      return data.keys().hasOnly(requiredKeys)
+      // Sent by earlier versions of the form; still validated when present.
+      let optionalKeys = ['videoUrls', 'contentDifference'];
+      let videoUrls = data.get('videoUrls', []);
+      return data.keys().hasOnly(requiredKeys.concat(optionalKeys))
         && data.keys().hasAll(requiredKeys)
         && isBoundedString(data.name, 1, 100)
         && isBoundedString(data.email, 3, 254)
@@ -60,7 +61,7 @@ service cloud.firestore {
         && (videoUrls.size() < 1 || isTikTokUrl(videoUrls[0]))
         && (videoUrls.size() < 2 || isTikTokUrl(videoUrls[1]))
         && (videoUrls.size() < 3 || isTikTokUrl(videoUrls[2]))
-        && isBoundedString(data.contentDifference, 10, 500)
+        && (!('contentDifference' in data) || isBoundedString(data.contentDifference, 10, 500))
         && isBoundedString(data.whyCreator, 10, 1000)
         && data.informationConfirmed == true
         && data.status == 'new'

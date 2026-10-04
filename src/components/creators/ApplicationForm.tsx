@@ -36,7 +36,6 @@ import { submitCreatorApplication } from "./submitApplication";
 import { CREATOR_EVENTS, trackCreatorEvent } from "./tracking";
 
 const DRAFT_STORAGE_KEY = "taab:creator-application-draft";
-const VIDEO_FIELDS = ["videoUrl1", "videoUrl2", "videoUrl3"] as const;
 const USERNAME_PREVIEW_PATTERN = /^[A-Za-z0-9._]{2,24}$/;
 
 interface ApplicationFormProps {
@@ -63,7 +62,6 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
   const successHeadingRef = useRef<HTMLHeadingElement>(null);
   const hasNavigatedRef = useRef(false);
   const startedAtRef = useRef<number | null>(null);
-  const [extraVideoFields, setExtraVideoFields] = useState(0);
 
   const step = APPLICATION_STEPS[stepIndex];
   const isLastStep = stepIndex === APPLICATION_STEPS.length - 1;
@@ -78,8 +76,6 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
     setCountryOptions(getCountryOptions([countryIsoCode]));
   }, [countryIsoCode]);
   const region = REGIONS_BY_COUNTRY[draft.country];
-  const filledVideoFields = VIDEO_FIELDS.reduce((last, field, index) => (draft[field].trim() ? index + 1 : last), 0);
-  const visibleVideoFields = Math.min(VIDEO_FIELDS.length, Math.max(1 + extraVideoFields, filledVideoFields));
   const usernameLooksValid = USERNAME_PREVIEW_PATTERN.test(normalizeUsername(draft.tiktokUsername));
 
   useEffect(() => {
@@ -442,11 +438,6 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
                     onChange={(value) => update("postingFrequency", value)}
                     error={errors.postingFrequency}
                   />
-                </>
-              )}
-
-              {step.id === "content" && (
-                <>
                   <ChoiceGroup
                     name="contentCategories"
                     label="What do you post about?"
@@ -457,49 +448,11 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
                     multiple
                     error={errors.contentCategories}
                   />
-                  {VIDEO_FIELDS.slice(0, visibleVideoFields).map((field, index) => (
-                    <TextField
-                      key={field}
-                      name={field}
-                      label={index === 0 ? "Your best TikTok" : index === 1 ? "Another TikTok" : "One more"}
-                      optional
-                      type="url"
-                      inputMode="url"
-                      placeholder="tiktok.com/@yourname/video/..."
-                      hint={index === 0 ? "Paste a link to the video you're proudest of." : undefined}
-                      value={draft[field]}
-                      onChange={(value) => update(field, value)}
-                      maxLength={LIMITS.url}
-                      error={errors[field]}
-                    />
-                  ))}
-                  {visibleVideoFields < VIDEO_FIELDS.length && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setExtraVideoFields((count) => count + 1);
-                        trackCreatorEvent(CREATOR_EVENTS.applicationAddVideo, { program });
-                      }}
-                      className="-mt-2 rounded-lg font-body text-sm font-bold underline underline-offset-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
-                    >
-                      + Add another video
-                    </button>
-                  )}
                 </>
               )}
 
               {step.id === "motivation" && (
                 <>
-                  <TextAreaField
-                    name="contentDifference"
-                    label="What makes your content different?"
-                    hint="One or two sentences is perfect."
-                    value={draft.contentDifference}
-                    onChange={(value) => update("contentDifference", value)}
-                    maxLength={LIMITS.contentDifference}
-                    rows={3}
-                    error={errors.contentDifference}
-                  />
                   <TextAreaField
                     name="whyCreator"
                     label="Why do you want to become a TAAB Creator?"

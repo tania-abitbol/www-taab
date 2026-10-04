@@ -9,7 +9,6 @@ export const CREATOR_EVENTS = {
   applicationStepCompleted: "creator_application_step_completed",
   applicationValidationError: "creator_application_validation_error",
   applicationBack: "creator_application_back",
-  applicationAddVideo: "creator_application_add_video",
   applicationSubmitted: "creator_application_submitted",
   applicationError: "creator_application_error",
   faqOpen: "creator_faq_open",

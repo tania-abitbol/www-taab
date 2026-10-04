@@ -59,8 +59,6 @@ export const LIMITS = {
   name: 100,
   email: 254,
   state: 100,
-  url: 300,
-  contentDifference: 500,
   whyCreator: 1000,
   minLongText: 10,
 } as const;
@@ -122,10 +120,6 @@ export interface CreatorApplicationDraft {
   averageViews: ValueOf<typeof AVERAGE_VIEWS_OPTIONS> | "";
   postingFrequency: ValueOf<typeof POSTING_FREQUENCY_OPTIONS> | "";
   contentCategories: ValueOf<typeof CONTENT_CATEGORY_OPTIONS>[];
-  videoUrl1: string;
-  videoUrl2: string;
-  videoUrl3: string;
-  contentDifference: string;
   whyCreator: string;
   informationConfirmed: boolean;
 }
@@ -144,10 +138,6 @@ export const createEmptyDraft = (country: string): CreatorApplicationDraft => ({
   averageViews: "",
   postingFrequency: "",
   contentCategories: [],
-  videoUrl1: "",
-  videoUrl2: "",
-  videoUrl3: "",
-  contentDifference: "",
   whyCreator: "",
   informationConfirmed: false,
 });
@@ -170,52 +160,24 @@ export const APPLICATION_STEPS: ApplicationStep[] = [
     id: "tiktok",
     title: "Your TikTok",
     description: "Rough numbers are fine. No screenshots needed.",
-    fields: ["tiktokUsername", "followers", "averageViews", "postingFrequency"],
-  },
-  {
-    id: "content",
-    title: "Your content",
-    description: "Help us picture what you'd make.",
-    fields: ["contentCategories", "videoUrl1", "videoUrl2", "videoUrl3"],
+    fields: ["tiktokUsername", "followers", "averageViews", "postingFrequency", "contentCategories"],
   },
   {
     id: "motivation",
     title: "Last step",
-    description: "Two quick questions and you're done.",
-    fields: ["contentDifference", "whyCreator", "informationConfirmed"],
+    description: "One quick question and you're done.",
+    fields: ["whyCreator", "informationConfirmed"],
   },
 ];
 
 const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const USERNAME_PATTERN = /^[A-Za-z0-9._]{2,24}$/;
-const TIKTOK_URL_PATTERN = /^https:\/\/([a-z]+\.)?tiktok\.com\/.+$/;
 
 export const normalizeUsername = (value: string) =>
   value.trim().replace(/^@+/, "");
 
 export const tiktokProfileUrl = (username: string) =>
   `https://www.tiktok.com/@${normalizeUsername(username)}`;
-
-/** Accepts `tiktok.com/...`, `www.tiktok.com/...` or full URLs and returns an https URL. */
-export const normalizeTikTokUrl = (value: string) => {
-  const trimmed = value.trim();
-  if (!trimmed) return "";
-  const withProtocol = /^https?:\/\//i.test(trimmed)
-    ? trimmed.replace(/^http:\/\//i, "https://")
-    : `https://${trimmed}`;
-  try {
-    const url = new URL(withProtocol);
-    url.hostname = url.hostname.toLowerCase();
-    return url.toString();
-  } catch {
-    return trimmed;
-  }
-};
-
-const isTikTokUrl = (value: string) => {
-  const url = normalizeTikTokUrl(value);
-  return url.length <= LIMITS.url && TIKTOK_URL_PATTERN.test(url);
-};
 
 const longText = (value: string, max: number, empty: string) => {
   const length = value.trim().length;
@@ -262,14 +224,6 @@ const validators: Record<DraftField, (draft: CreatorApplicationDraft) => string 
     if (contentCategories.length > MAX_CONTENT_CATEGORIES)
       return `Pick up to ${MAX_CONTENT_CATEGORIES}.`;
   },
-  videoUrl1: ({ videoUrl1 }) =>
-    videoUrl1.trim() && !isTikTokUrl(videoUrl1) ? "Paste a tiktok.com video link." : undefined,
-  videoUrl2: ({ videoUrl2 }) =>
-    videoUrl2.trim() && !isTikTokUrl(videoUrl2) ? "Paste a tiktok.com video link." : undefined,
-  videoUrl3: ({ videoUrl3 }) =>
-    videoUrl3.trim() && !isTikTokUrl(videoUrl3) ? "Paste a tiktok.com video link." : undefined,
-  contentDifference: ({ contentDifference }) =>
-    longText(contentDifference, LIMITS.contentDifference, "Tell us what makes your content yours."),
   whyCreator: ({ whyCreator }) =>
     longText(whyCreator, LIMITS.whyCreator, "Tell us why you'd like to join."),
   informationConfirmed: ({ informationConfirmed }) =>
@@ -299,10 +253,6 @@ export const buildApplicationPayload = (draft: CreatorApplicationDraft) => ({
   averageViews: draft.averageViews,
   postingFrequency: draft.postingFrequency,
   contentCategories: draft.contentCategories,
-  videoUrls: [draft.videoUrl1, draft.videoUrl2, draft.videoUrl3]
-    .map(normalizeTikTokUrl)
-    .filter(Boolean),
-  contentDifference: draft.contentDifference.trim(),
   whyCreator: draft.whyCreator.trim(),
   informationConfirmed: true,
   status: "new" as const,

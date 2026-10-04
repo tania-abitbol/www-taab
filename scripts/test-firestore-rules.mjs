@@ -39,8 +39,6 @@ const valid = () => ({
   averageViews: "2k_10k",
   postingFrequency: "few_per_week",
   contentCategories: ["comedy", "storytelling"],
-  videoUrls: ["https://www.tiktok.com/@jordan.makes_stuff/video/1234567890"],
-  contentDifference: "I write every skit around a real story from my week.",
   whyCreator: "I love games with friends and want to turn that into content.",
   informationConfirmed: true,
   status: "new",
@@ -72,7 +70,14 @@ await test("valid application can be created", async () => {
 await test("non-US country is accepted", async () => {
   await addDoc(applications, { ...valid(), country: "GB", state: "London" });
 });
-await test("no video URLs is accepted", async () => {
+await test("earlier form payload (videos + contentDifference) is accepted", async () => {
+  await addDoc(applications, {
+    ...valid(),
+    videoUrls: ["https://www.tiktok.com/@jordan.makes_stuff/video/1234567890"],
+    contentDifference: "I write every skit around a real story from my week.",
+  });
+});
+await test("empty video list is accepted", async () => {
   await addDoc(applications, { ...valid(), videoUrls: [] });
 });
 await test("up to 3 video URLs are accepted", async () => {
