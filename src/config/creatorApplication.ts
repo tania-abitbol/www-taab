@@ -225,7 +225,7 @@ const validators: Record<DraftField, (draft: CreatorApplicationDraft) => string 
       return `Pick up to ${MAX_CONTENT_CATEGORIES}.`;
   },
   whyCreator: ({ whyCreator }) =>
-    longText(whyCreator, LIMITS.whyCreator, "Tell us why you'd like to join."),
+    longText(whyCreator, LIMITS.whyCreator, "Tell us why you want to join, and why you."),
   informationConfirmed: ({ informationConfirmed }) =>
     informationConfirmed ? undefined : "Please confirm to submit your application.",
 };

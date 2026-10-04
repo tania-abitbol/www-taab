@@ -455,11 +455,13 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
                 <>
                   <TextAreaField
                     name="whyCreator"
-                    label="Why do you want to become a TAAB Creator?"
+                    label="Why do you want to become a TAAB Creator, and why you?"
+                    hint="What makes your content different and why it would work for our apps. A few sentences is perfect."
+                    placeholder="e.g. I post relatable dating stories that get my audience talking in the comments..."
                     value={draft.whyCreator}
                     onChange={(value) => update("whyCreator", value)}
                     maxLength={LIMITS.whyCreator}
-                    rows={3}
+                    rows={4}
                     error={errors.whyCreator}
                   />
                   <CheckboxField
