@@ -1,32 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-
 import { ArrowIcon, Eyebrow } from "~/components/site/primitives";
 import type { CreatorProgramContent } from "~/config/creatorProgram";
 
-import { CREATOR_EVENTS, trackCreatorEvent } from "./tracking";
+import { COUNTRY_PICK_STORAGE_KEY } from "./tracking";
 
 type PickerProgram = Pick<CreatorProgramContent, "country" | "locale" | "path" | "picker">;
 
-/** Shared entry link (e.g. TikTok bio) that sends creators to their country's page. */
-export const CountryPicker = ({ programs }: { programs: PickerProgram[] }) => {
-  const [ordered, setOrdered] = useState(programs);
-  const [suggested, setSuggested] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
-
-  useEffect(() => {
-    setQuery(window.location.search);
-    const languages = navigator.languages?.length ? navigator.languages : [navigator.language];
-    const match = programs.find((program) =>
-      languages.some((language) => language.toLowerCase().startsWith(program.locale))
-    );
-    if (!match) return;
-    setSuggested(match.country);
-    setOrdered([match, ...programs.filter((program) => program.country !== match.country)]);
-  }, [programs]);
-
+/**
+ * Shared entry link (e.g. a bio) that sends creators to their country's page.
+ * Order and query string are decided on the server so the list never jumps
+ * after hydration, and utm params are already on the link in the first HTML.
+ */
+export const CountryPicker = ({
+  programs,
+  suggested,
+  query,
+}: {
+  programs: PickerProgram[];
+  suggested: string | null;
+  query: string;
+}) => {
   return (
     <main className="flex min-h-[100svh] flex-col px-5 pb-10 pt-8 sm:px-8">
       <a href="/" className="mx-auto w-full max-w-[560px] font-title text-3xl tracking-tight">
@@ -46,24 +40,26 @@ export const CountryPicker = ({ programs }: { programs: PickerProgram[] }) => {
           Where are you based? <span lang="fr" className="font-normal text-gray-700">· Tu es où ?</span>
         </p>
         <ul className="space-y-3">
-          {ordered.map((program, index) => (
-            <motion.li
-              key={program.country}
-              layout
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: index * 0.06 }}
-            >
+          {programs.map((program) => (
+            <li key={program.country}>
               <a
                 href={`${program.path}${query}`}
                 hrefLang={program.locale}
                 lang={program.locale}
-                onClick={() =>
-                  trackCreatorEvent(CREATOR_EVENTS.countryPicked, {
-                    program: program.country,
-                    suggested: String(program.country === suggested),
-                  })
-                }
+                onClick={() => {
+                  try {
+                    sessionStorage.setItem(
+                      COUNTRY_PICK_STORAGE_KEY,
+                      JSON.stringify({
+                        program: program.country,
+                        suggested: String(program.country === suggested),
+                        ts: Date.now(),
+                      })
+                    );
+                  } catch {
+                    // The destination page only logs the click when this write succeeds.
+                  }
+                }}
                 className={`group flex items-center gap-4 rounded-2xl border p-5 transition-transform hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 sm:p-6 ${
                   program.country === suggested ? "border-black bg-black text-white" : "border-black/15 bg-white"
                 }`}
@@ -81,7 +77,7 @@ export const CountryPicker = ({ programs }: { programs: PickerProgram[] }) => {
                 </span>
                 <ArrowIcon className="h-5 w-5 transition-transform group-hover:translate-x-1" />
               </a>
-            </motion.li>
+            </li>
           ))}
         </ul>
         <p className="mt-8 font-body text-sm text-gray-700">

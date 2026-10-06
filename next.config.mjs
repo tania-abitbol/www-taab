@@ -3,6 +3,19 @@ const nextConfig = {
   async headers() {
     return [
       {
+        source: "/join",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "private, no-store",
+          },
+          {
+            key: "Vary",
+            value: "Accept-Language",
+          },
+        ],
+      },
+      {
         source: "/redirect",
         headers: [
           {

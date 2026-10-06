@@ -23,15 +23,19 @@ service cloud.firestore {
     }
 
     // Keep enums and limits in sync with src/config/creatorApplication.ts.
+    // Required keys are the current short form. Optional keys are what earlier
+    // versions of the page still send; they are checked only when present so
+    // both the new payload and cached clients stay valid.
     function isValidCreatorApplication(data) {
       let requiredKeys = [
-        'name', 'email', 'country', 'state', 'ageConfirmed',
-        'tiktokUsername', 'tiktokUrl', 'followers', 'averageViews',
-        'postingFrequency', 'contentCategories', 'whyCreator',
+        'name', 'email', 'country', 'ageConfirmed',
+        'tiktokUsername', 'tiktokUrl', 'followers',
         'informationConfirmed', 'status', 'source', 'locale', 'createdAt'
       ];
-      // Sent by earlier versions of the form; still validated when present.
-      let optionalKeys = ['videoUrls', 'contentDifference'];
+      let optionalKeys = [
+        'state', 'averageViews', 'postingFrequency', 'contentCategories',
+        'whyCreator', 'videoUrls', 'contentDifference'
+      ];
       let videoUrls = data.get('videoUrls', []);
       return data.keys().hasOnly(requiredKeys.concat(optionalKeys))
         && data.keys().hasAll(requiredKeys)
@@ -40,29 +44,31 @@ service cloud.firestore {
         && data.email.matches('^[^@ ]+@[^@ ]+[.][^@ ]+$')
         && data.country is string
         && data.country.matches('^[A-Z]{2}$')
-        && isBoundedString(data.state, 1, 100)
         && data.ageConfirmed == true
         && data.tiktokUsername is string
         && data.tiktokUsername.matches('^[A-Za-z0-9._]{2,24}$')
         && isTikTokUrl(data.tiktokUrl)
         && data.followers in ['under_1k', '1k_10k', '10k_50k', '50k_100k', '100k_500k', '500k_plus']
-        && data.averageViews in ['under_500', '500_2k', '2k_10k', '10k_50k', '50k_plus']
-        && data.postingFrequency in ['daily', 'few_per_week', 'weekly', 'few_per_month', 'occasionally']
-        && data.contentCategories is list
-        && data.contentCategories.size() >= 1
-        && data.contentCategories.size() <= 4
-        && data.contentCategories.hasOnly([
-          'comedy', 'storytelling', 'relationships', 'friends', 'lifestyle',
-          'pov_skits', 'trends', 'beauty_fashion', 'gaming', 'education',
-          'music_dance', 'other'
-        ])
+        && (!('state' in data) || isBoundedString(data.state, 1, 100))
+        && (!('averageViews' in data) || data.averageViews in ['under_500', '500_2k', '2k_10k', '10k_50k', '50k_plus'])
+        && (!('postingFrequency' in data) || data.postingFrequency in ['daily', 'few_per_week', 'weekly', 'few_per_month', 'occasionally'])
+        && (!('contentCategories' in data) || (
+          data.contentCategories is list
+          && data.contentCategories.size() >= 1
+          && data.contentCategories.size() <= 4
+          && data.contentCategories.hasOnly([
+            'comedy', 'storytelling', 'relationships', 'friends', 'lifestyle',
+            'pov_skits', 'trends', 'beauty_fashion', 'gaming', 'education',
+            'music_dance', 'other'
+          ])
+        ))
         && videoUrls is list
         && videoUrls.size() <= 3
         && (videoUrls.size() < 1 || isTikTokUrl(videoUrls[0]))
         && (videoUrls.size() < 2 || isTikTokUrl(videoUrls[1]))
         && (videoUrls.size() < 3 || isTikTokUrl(videoUrls[2]))
         && (!('contentDifference' in data) || isBoundedString(data.contentDifference, 10, 500))
-        && isBoundedString(data.whyCreator, 10, 1000)
+        && (!('whyCreator' in data) || isBoundedString(data.whyCreator, 10, 1000))
         && data.informationConfirmed == true
         && data.status == 'new'
         && data.source == 'creators_page'

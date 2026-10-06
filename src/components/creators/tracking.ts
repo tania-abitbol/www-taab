@@ -1,5 +1,8 @@
 import { initializeFirebase, trackEvent } from "~/utils/firebase";
 
+/** Written on /join before navigation so the click survives the page change. */
+export const COUNTRY_PICK_STORAGE_KEY = "taab:creator-country-picked";
+
 export const CREATOR_EVENTS = {
   pageView: "creator_page_view",
   ctaClick: "creator_cta_click",

@@ -21,7 +21,7 @@ import type { CreatorProgramContent } from "~/config/creatorProgram";
 import { ApplicationForm } from "./ApplicationForm";
 import { CreatorPhoneMock } from "./CreatorPhoneMock";
 import { EarningsEstimator } from "./EarningsEstimator";
-import { CREATOR_EVENTS, trackCreatorEvent } from "./tracking";
+import { COUNTRY_PICK_STORAGE_KEY, CREATOR_EVENTS, trackCreatorEvent } from "./tracking";
 
 const APPLY_SECTION_ID = "apply";
 
@@ -36,7 +36,7 @@ const ApplyButton = ({
   children: ReactNode;
   onClick: () => void;
   variant?: "dark" | "pink" | "light";
-  size?: "sm" | "lg";
+  size?: "sm" | "md" | "lg";
   className?: string;
   tabIndex?: number;
 }) => {
@@ -47,6 +47,7 @@ const ApplyButton = ({
   };
   const sizes = {
     sm: "h-10 px-4 text-sm",
+    md: "h-12 px-5 text-base",
     lg: "h-14 px-7 text-base md:text-lg",
   };
   return (
@@ -108,8 +109,8 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
   } = content;
   const program = content.country;
 
-  const heroRef = useRef<HTMLElement>(null);
-  const applyRef = useRef<HTMLElement>(null);
+  const heroRef = useRef<HTMLDivElement>(null);
+  const applyRef = useRef<HTMLDivElement>(null);
   const finalRef = useRef<HTMLElement>(null);
   const [heroInView, setHeroInView] = useState(true);
 
@@ -126,6 +127,19 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
 
   useEffect(() => {
     trackCreatorEvent(CREATOR_EVENTS.pageView, { program });
+    try {
+      const raw = sessionStorage.getItem(COUNTRY_PICK_STORAGE_KEY);
+      if (!raw) return;
+      sessionStorage.removeItem(COUNTRY_PICK_STORAGE_KEY);
+      const saved = JSON.parse(raw) as { program?: string; suggested?: string; ts?: number };
+      if (!saved.ts || Date.now() - saved.ts > 2 * 60 * 1000) return;
+      trackCreatorEvent(CREATOR_EVENTS.countryPicked, {
+        program: saved.program ?? program,
+        suggested: saved.suggested ?? "false",
+      });
+    } catch {
+      sessionStorage.removeItem(COUNTRY_PICK_STORAGE_KEY);
+    }
   }, [program]);
   usePageAnalytics(program === "us" ? "creators" : `creators_${program}`);
 
@@ -167,7 +181,7 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
           {ui.skipToApplication}
         </a>
 
-        <header className={`${container} flex items-center justify-between pt-8 md:pt-10`}>
+        <header className={`${container} flex items-center justify-between pt-3 md:pt-8`}>
           <a href="/" aria-label={ui.homeLabel} className="rounded font-title text-3xl tracking-tight focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-4">
             TAAB<span className="text-yellow">.</span>
           </a>
@@ -188,19 +202,29 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
         </header>
 
         <main>
-          {/* 1. Hero */}
-          <section ref={heroRef} aria-labelledby="hero-title" className={`${container} relative pb-20 pt-12 md:pb-32 md:pt-20`}>
-            <div className="grid items-center gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-10">
-              <div className="relative z-10">
-                <Eyebrow>{hero.eyebrow}</Eyebrow>
-                <h1 id="hero-title" className="isolate mb-7 font-title text-[3.4rem] leading-[1.02] tracking-tight sm:text-7xl lg:text-[6rem]">
+          {/* 1. Short hero + application. The form starts in the first screen. */}
+          <section aria-labelledby="hero-title" className={`${container} pb-8 pt-3 md:pb-20 md:pt-10`}>
+            <div className="grid items-start gap-4 lg:grid-cols-2 lg:gap-12">
+              <div ref={heroRef} className="relative z-10">
+                <div className="hidden md:block">
+                  <Eyebrow>{hero.eyebrow}</Eyebrow>
+                </div>
+                <h1 id="hero-title" className="isolate font-title text-[1.7rem] leading-[1.02] tracking-tight sm:text-5xl lg:text-6xl">
                   {hero.titleLead}{" "}
-                  <span className="rotating-background mt-2 sm:whitespace-nowrap">{hero.titleHighlight}</span>
+                  <span className="mt-1 block w-fit sm:mt-2">
+                    <span className="rotating-background">{hero.titleHighlight}</span>
+                  </span>
                 </h1>
-                <p className="mb-6 max-w-xl font-body text-lg leading-relaxed text-black md:text-xl">
+                <p className="mt-2 line-clamp-2 max-w-xl font-body text-sm leading-snug text-black md:mt-5 md:line-clamp-none md:text-xl md:leading-relaxed">
                   {hero.copy}
                 </p>
-                <ul className="mb-9 flex flex-wrap gap-2">
+                <div className="mt-3 flex flex-col items-stretch gap-1.5 sm:flex-row sm:items-center sm:gap-5 md:mt-8">
+                  <ApplyButton size="md" onClick={handleCta("hero")} className="w-full sm:w-auto">
+                    {hero.cta}
+                  </ApplyButton>
+                  <p className="text-center font-body text-xs text-gray-700 sm:text-left sm:text-sm">{hero.ctaNote}</p>
+                </div>
+                <ul className="mt-4 hidden flex-wrap gap-2 md:flex">
                   {hero.proofPoints.map((point) => (
                     <li key={point} className="flex items-center gap-2 rounded-full bg-white px-3.5 py-2 font-body text-sm font-bold shadow-[0_1px_0_rgba(0,0,0,0.06)] ring-1 ring-black/10">
                       <span aria-hidden="true" className="flex h-5 w-5 items-center justify-center rounded-full bg-yellow text-black">
@@ -210,13 +234,7 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
                     </li>
                   ))}
                 </ul>
-                <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:gap-5">
-                  <ApplyButton onClick={handleCta("hero")} className="w-full sm:w-auto">
-                    {hero.cta}
-                  </ApplyButton>
-                  <p className="text-center font-body text-sm text-gray-700 sm:text-left">{hero.ctaNote}</p>
-                </div>
-                <p className="mt-8 flex items-center gap-2 font-body text-sm font-bold">
+                <p className="mt-6 hidden items-center gap-2 font-body text-sm font-bold md:flex">
                   <span aria-hidden="true" className="relative flex h-2.5 w-2.5">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-yellow opacity-75" />
                     <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-yellow" />
@@ -225,8 +243,17 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
                 </p>
               </div>
 
-              <CreatorPhoneMock copy={ui.phoneMock} locale={locale} />
+              <div id={APPLY_SECTION_ID} ref={applyRef} className="scroll-mt-3">
+                <h2 id="apply-title" tabIndex={-1} className="sr-only">
+                  {application.title}
+                </h2>
+                <ApplicationForm content={content} onSubmitted={() => setSubmitted(true)} />
+              </div>
             </div>
+          </section>
+
+          <section aria-hidden="true" className={`${container} pb-10 md:pb-16`}>
+            <CreatorPhoneMock copy={ui.phoneMock} locale={locale} />
           </section>
 
           {/* 2. The deal */}
@@ -415,41 +442,7 @@ export const CreatorsLanding = ({ content }: { content: CreatorProgramContent })
             </div>
           </section>
 
-          {/* 7. Application */}
-          <section
-            id={APPLY_SECTION_ID}
-            ref={applyRef}
-            aria-labelledby="apply-title"
-            className="scroll-mt-4 px-3 pb-24 sm:px-5 md:pb-36"
-          >
-            <div className="relative mx-auto max-w-[1280px] overflow-clip rounded-[2rem] bg-black py-10 text-white md:rounded-[2.5rem] md:py-24">
-              <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-yellow/25 blur-3xl" />
-              <div className={`${container} relative grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16`}>
-                <div className="lg:sticky lg:top-12 lg:self-start">
-                  <Eyebrow inverted>{ui.applyEyebrow}</Eyebrow>
-                  <h2 id="apply-title" tabIndex={-1} className={`${sectionTitle} mb-4 focus:outline-none md:mb-6`}>
-                    {application.title}
-                  </h2>
-                  <p className="font-body text-base leading-relaxed text-white/80 md:text-xl lg:mb-8">
-                    {application.copy}
-                  </p>
-                  <ul className="hidden space-y-3 font-body text-base text-white/80 lg:block">
-                    {[...ui.applyChecklist, application.recruitingNote].map((item) => (
-                      <li key={item} className="flex items-start gap-3">
-                        <span aria-hidden="true" className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-yellow text-black">
-                          <CheckIcon className="h-3 w-3" />
-                        </span>
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <ApplicationForm content={content} onSubmitted={() => setSubmitted(true)} />
-              </div>
-            </div>
-          </section>
-
-          {/* 8. FAQ */}
+          {/* FAQ */}
           <section aria-labelledby="faq-title" className={`${container} pb-24 md:pb-36`}>
             <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
               <Reveal>

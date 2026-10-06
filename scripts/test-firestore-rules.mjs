@@ -31,20 +31,24 @@ const valid = () => ({
   name: "Jordan Lee",
   email: "jordan@example.com",
   country: "US",
-  state: "California",
   ageConfirmed: true,
   tiktokUsername: "jordan.makes_stuff",
   tiktokUrl: "https://www.tiktok.com/@jordan.makes_stuff",
   followers: "1k_10k",
-  averageViews: "2k_10k",
-  postingFrequency: "few_per_week",
-  contentCategories: ["comedy", "storytelling"],
-  whyCreator: "I love games with friends and want to turn that into content.",
   informationConfirmed: true,
   status: "new",
   source: "creators_page",
   locale: "en",
   createdAt: serverTimestamp(),
+});
+
+const legacy = () => ({
+  ...valid(),
+  state: "California",
+  averageViews: "2k_10k",
+  postingFrequency: "few_per_week",
+  contentCategories: ["comedy", "storytelling"],
+  whyCreator: "I love games with friends and want to turn that into content.",
 });
 
 const denied = async (promise) => {
@@ -68,21 +72,24 @@ await test("valid application can be created", async () => {
   createdId = ref.id;
 });
 await test("non-US country is accepted", async () => {
-  await addDoc(applications, { ...valid(), country: "GB", state: "London" });
+  await addDoc(applications, { ...valid(), country: "FR" });
+});
+await test("previous 3-step payload is still accepted", async () => {
+  await addDoc(applications, legacy());
 });
 await test("earlier form payload (videos + contentDifference) is accepted", async () => {
   await addDoc(applications, {
-    ...valid(),
+    ...legacy(),
     videoUrls: ["https://www.tiktok.com/@jordan.makes_stuff/video/1234567890"],
     contentDifference: "I write every skit around a real story from my week.",
   });
 });
 await test("empty video list is accepted", async () => {
-  await addDoc(applications, { ...valid(), videoUrls: [] });
+  await addDoc(applications, { ...legacy(), videoUrls: [] });
 });
 await test("up to 3 video URLs are accepted", async () => {
   const urls = [1, 2, 3].map((i) => `https://www.tiktok.com/@a/video/${i}`);
-  await addDoc(applications, { ...valid(), videoUrls: urls });
+  await addDoc(applications, { ...legacy(), videoUrls: urls });
 });
 
 await test("get is denied", () => denied(getDoc(doc(applications, createdId))));
@@ -127,10 +134,12 @@ for (const [name, override] of Object.entries(invalidCases)) {
     denied(addDoc(applications, { ...valid(), ...override })));
 }
 
-await test("create denied: missing field", () => {
-  const { whyCreator, ...rest } = valid();
+await test("create denied: missing followers", () => {
+  const { followers, ...rest } = valid();
   return denied(addDoc(applications, rest));
 });
+await test("create denied: empty legacy state", () =>
+  denied(addDoc(applications, { ...valid(), state: "" })));
 
 await test("other collections stay closed", () =>
   denied(setDoc(doc(db, "anything/else"), { a: 1 })));

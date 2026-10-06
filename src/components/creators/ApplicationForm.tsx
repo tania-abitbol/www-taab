@@ -5,43 +5,52 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 import {
   APPLICATION_STEPS,
-  AVERAGE_VIEWS_OPTIONS,
-  CONTENT_CATEGORY_OPTIONS,
   CreatorApplicationDraft,
   DraftField,
   FOLLOWER_OPTIONS,
   FieldErrors,
   LIMITS,
-  MAX_CONTENT_CATEGORIES,
-  POSTING_FREQUENCY_OPTIONS,
-  REGIONS_BY_COUNTRY,
   createEmptyDraft,
   getCountryOptions,
   normalizeUsername,
-  regionLabel,
   tiktokProfileUrl,
   validateFields,
 } from "~/config/creatorApplication";
 import { CREATOR_FORM_COPY } from "~/config/creatorFormCopy";
 import type { CreatorProgramContent } from "~/config/creatorProgram";
 
-import {
-  CheckboxField,
-  ChoiceGroup,
-  SelectField,
-  TextAreaField,
-  TextField,
-  fieldId,
-} from "./FormFields";
+import { CheckboxField, ChoiceGroup, SelectField, TextField, fieldId } from "./FormFields";
 import { submitCreatorApplication } from "./submitApplication";
 import { CREATOR_EVENTS, trackCreatorEvent } from "./tracking";
 
 const USERNAME_PREVIEW_PATTERN = /^[A-Za-z0-9._]{2,24}$/;
+const FOLLOWER_VALUES = FOLLOWER_OPTIONS.map((option) => option.value);
 
 interface ApplicationFormProps {
   content: CreatorProgramContent;
   onSubmitted?: () => void;
 }
+
+const restoreDraft = (
+  current: CreatorApplicationDraft,
+  saved: Partial<CreatorApplicationDraft>
+): CreatorApplicationDraft => ({
+  name: typeof saved.name === "string" ? saved.name : current.name,
+  email: typeof saved.email === "string" ? saved.email : current.email,
+  country:
+    typeof saved.country === "string" && /^[A-Z]{2}$/.test(saved.country)
+      ? saved.country
+      : current.country,
+  ageConfirmed: typeof saved.ageConfirmed === "boolean" ? saved.ageConfirmed : current.ageConfirmed,
+  tiktokUsername: typeof saved.tiktokUsername === "string" ? saved.tiktokUsername : current.tiktokUsername,
+  followers: FOLLOWER_VALUES.includes(saved.followers as (typeof FOLLOWER_VALUES)[number])
+    ? (saved.followers as CreatorApplicationDraft["followers"])
+    : current.followers,
+  informationConfirmed:
+    typeof saved.informationConfirmed === "boolean"
+      ? saved.informationConfirmed
+      : current.informationConfirmed,
+});
 
 export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) => {
   const { application, countryIsoCode, country: program, locale } = content;
@@ -49,9 +58,7 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
   const draftStorageKey = `taab:creator-application-draft:${program}`;
   const reduceMotion = useReducedMotion();
 
-  const [draft, setDraft] = useState<CreatorApplicationDraft>(() =>
-    createEmptyDraft(countryIsoCode)
-  );
+  const [draft, setDraft] = useState<CreatorApplicationDraft>(() => createEmptyDraft(countryIsoCode));
   const [stepIndex, setStepIndex] = useState(0);
   const [direction, setDirection] = useState(1);
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -67,21 +74,17 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
 
   const step = APPLICATION_STEPS[stepIndex];
   const stepCopy = copy.steps[step.id];
-  const localizedOptions = <T extends string>(options: readonly { value: T }[], labels: Record<T, string>) =>
-    options.map((option) => ({ value: option.value, label: labels[option.value] }));
   const isLastStep = stepIndex === APPLICATION_STEPS.length - 1;
   const pinnedCountryOptions = useMemo(
     () => getCountryOptions([countryIsoCode], locale).slice(0, 1),
     [countryIsoCode, locale]
   );
   // Country names come from Intl and differ between Node and browsers, so the
-  // full list is only built after hydration.
+  // full list is only built after hydration. The page's country stays selected.
   const [countryOptions, setCountryOptions] = useState(pinnedCountryOptions);
   useEffect(() => {
     setCountryOptions(getCountryOptions([countryIsoCode], locale));
   }, [countryIsoCode, locale]);
-  const regionOptions = REGIONS_BY_COUNTRY[draft.country];
-  const currentRegionLabel = regionLabel(copy, draft.country);
   const usernameLooksValid = USERNAME_PREVIEW_PATTERN.test(normalizeUsername(draft.tiktokUsername));
 
   useEffect(() => {
@@ -98,7 +101,9 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
       const saved = sessionStorage.getItem(draftStorageKey);
       if (saved) {
         const parsed = JSON.parse(saved);
-        setDraft((current) => ({ ...current, ...parsed.draft }));
+        if (parsed?.draft && typeof parsed.draft === "object") {
+          setDraft((current) => restoreDraft(current, parsed.draft));
+        }
         if (typeof parsed.stepIndex === "number") {
           setStepIndex(Math.min(Math.max(parsed.stepIndex, 0), APPLICATION_STEPS.length - 1));
         }
@@ -141,7 +146,6 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
     markStarted(field);
     setDraft((current) => {
       const next = { ...current, [field]: value };
-      if (field === "country" && current.country !== value) next.state = "";
       setErrors((currentErrors) => {
         if (!currentErrors[field]) return currentErrors;
         const { [field]: _cleared, ...rest } = currentErrors;
@@ -149,20 +153,6 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
       });
       return next;
     });
-  };
-
-  const toggleCategory = (value: CreatorApplicationDraft["contentCategories"][number]) => {
-    const current = draft.contentCategories;
-    if (current.includes(value)) {
-      update("contentCategories", current.filter((item) => item !== value));
-    } else if (current.length < MAX_CONTENT_CATEGORIES) {
-      update("contentCategories", [...current, value]);
-    } else {
-      setErrors((currentErrors) => ({
-        ...currentErrors,
-        contentCategories: copy.errors.categoriesSwap(MAX_CONTENT_CATEGORIES),
-      }));
-    }
   };
 
   const validateStep = () => {
@@ -214,7 +204,7 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (status === "submitting" || !validateStep()) return;
+    if (status === "submitting" || submittingRef.current || !validateStep()) return;
     trackCreatorEvent(CREATOR_EVENTS.applicationStepCompleted, {
       program,
       step: step.id,
@@ -229,7 +219,7 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
 
   if (status === "success") {
     return (
-      <div ref={rootRef} className="rounded-3xl bg-white p-6 text-black shadow-[0_24px_60px_-30px_rgba(0,0,0,0.5)] md:p-10">
+      <div ref={rootRef} className="rounded-3xl bg-white p-5 text-black shadow-[0_24px_60px_-30px_rgba(0,0,0,0.5)] md:p-10">
         <motion.div
           initial={reduceMotion ? false : { opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -254,18 +244,22 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
   }
 
   const progress = ((stepIndex + 1) / APPLICATION_STEPS.length) * 100;
+  const followerOptions = FOLLOWER_OPTIONS.map((option) => ({
+    value: option.value,
+    label: copy.options.followers[option.value],
+  }));
 
   return (
-    <div ref={rootRef} className="scroll-mt-6 rounded-3xl bg-white p-5 text-black shadow-[0_24px_60px_-30px_rgba(0,0,0,0.5)] sm:p-8 md:p-10">
-      <div className="mb-8">
-        <div className="mb-3 flex items-center justify-between font-body text-sm">
+    <div ref={rootRef} className="scroll-mt-3 rounded-3xl bg-white p-4 text-black shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)] sm:p-6 md:p-8">
+      <div className="mb-4">
+        <div className="mb-2 flex items-center justify-between gap-3 font-body text-sm">
           <p className="font-bold">
             {copy.progress.step(stepIndex + 1, APPLICATION_STEPS.length)[0]}{" "}
             <span className="font-normal text-gray-700">
               {copy.progress.step(stepIndex + 1, APPLICATION_STEPS.length)[1]}
             </span>
           </p>
-          <p className="text-gray-700" aria-hidden="true">
+          <p className="truncate text-gray-700" aria-hidden="true">
             {isLastStep
               ? copy.progress.finalStep
               : copy.progress.next(copy.steps[APPLICATION_STEPS[stepIndex + 1].id].title)}
@@ -320,13 +314,13 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
               id="creator-application-step-title"
               ref={stepHeadingRef}
               tabIndex={-1}
-              className="mb-1 font-title text-2xl tracking-tight focus:outline-none md:text-3xl"
+              className="mb-0.5 font-title text-xl tracking-tight focus:outline-none md:text-2xl"
             >
               {stepCopy.title}
             </h3>
-            <p className="mb-7 font-body text-base text-gray-700">{stepCopy.description}</p>
+            <p className="mb-4 font-body text-sm text-gray-700">{stepCopy.description}</p>
 
-            <div className="space-y-6">
+            <div className="space-y-4">
               {step.id === "about" && (
                 <>
                   <TextField
@@ -350,40 +344,16 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
                     maxLength={LIMITS.email}
                     error={errors.email}
                   />
-                  <div className="grid gap-6 sm:grid-cols-2">
-                    <SelectField
-                      name="country"
-                      label={copy.fields.country}
-                      autoComplete="country"
-                      hint={draft.country === countryIsoCode ? application.recruitingNote : undefined}
-                      value={draft.country}
-                      onChange={(value) => update("country", value)}
-                      options={countryOptions}
-                      error={errors.country}
-                    />
-                    {regionOptions ? (
-                      <SelectField
-                        name="state"
-                        label={currentRegionLabel}
-                        autoComplete="address-level1"
-                        placeholder={copy.fields.selectRegion(currentRegionLabel)}
-                        value={draft.state}
-                        onChange={(value) => update("state", value)}
-                        options={regionOptions.map((option) => ({ value: option, label: option }))}
-                        error={errors.state}
-                      />
-                    ) : (
-                      <TextField
-                        name="state"
-                        label={currentRegionLabel}
-                        autoComplete="address-level1"
-                        value={draft.state}
-                        onChange={(value) => update("state", value)}
-                        maxLength={LIMITS.state}
-                        error={errors.state}
-                      />
-                    )}
-                  </div>
+                  <SelectField
+                    name="country"
+                    label={copy.fields.country}
+                    autoComplete="country"
+                    hint={draft.country === countryIsoCode ? application.recruitingNote : undefined}
+                    value={draft.country}
+                    onChange={(value) => update("country", value)}
+                    options={countryOptions}
+                    error={errors.country}
+                  />
                   {draft.country !== countryIsoCode && (
                     <p className="rounded-xl bg-yellow/25 px-4 py-3 font-body text-sm leading-relaxed">
                       {application.outsideCountryNote}
@@ -428,52 +398,10 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
                     name="followers"
                     label={copy.fields.followers}
                     hint={copy.fields.followersHint}
-                    options={localizedOptions(FOLLOWER_OPTIONS, copy.options.followers)}
+                    options={followerOptions}
                     value={draft.followers}
                     onChange={(value) => update("followers", value)}
                     error={errors.followers}
-                  />
-                  <ChoiceGroup
-                    name="averageViews"
-                    label={copy.fields.averageViews}
-                    options={localizedOptions(AVERAGE_VIEWS_OPTIONS, copy.options.averageViews)}
-                    value={draft.averageViews}
-                    onChange={(value) => update("averageViews", value)}
-                    error={errors.averageViews}
-                  />
-                  <ChoiceGroup
-                    name="postingFrequency"
-                    label={copy.fields.postingFrequency}
-                    options={localizedOptions(POSTING_FREQUENCY_OPTIONS, copy.options.postingFrequency)}
-                    value={draft.postingFrequency}
-                    onChange={(value) => update("postingFrequency", value)}
-                    error={errors.postingFrequency}
-                  />
-                  <ChoiceGroup
-                    name="contentCategories"
-                    label={copy.fields.contentCategories}
-                    hint={copy.fields.contentCategoriesHint(MAX_CONTENT_CATEGORIES)}
-                    options={localizedOptions(CONTENT_CATEGORY_OPTIONS, copy.options.contentCategories)}
-                    value={draft.contentCategories}
-                    onChange={toggleCategory}
-                    multiple
-                    error={errors.contentCategories}
-                  />
-                </>
-              )}
-
-              {step.id === "motivation" && (
-                <>
-                  <TextAreaField
-                    name="whyCreator"
-                    label={copy.fields.whyCreator}
-                    hint={copy.fields.whyCreatorHint}
-                    placeholder={copy.fields.whyCreatorPlaceholder}
-                    value={draft.whyCreator}
-                    onChange={(value) => update("whyCreator", value)}
-                    maxLength={LIMITS.whyCreator}
-                    rows={4}
-                    error={errors.whyCreator}
                   />
                   <CheckboxField
                     name="informationConfirmed"
@@ -490,12 +418,12 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
         </AnimatePresence>
 
         {status === "error" && (
-          <p role="alert" className="mt-6 rounded-xl border border-[#C8102E] bg-[#C8102E]/5 px-4 py-3 font-body text-sm text-[#C8102E]">
+          <p role="alert" className="mt-4 rounded-xl border border-[#C8102E] bg-[#C8102E]/5 px-4 py-3 font-body text-sm text-[#C8102E]">
             {copy.errors.submit}
           </p>
         )}
 
-        <div className="mt-8 flex items-center gap-3">
+        <div className="mt-5 flex items-center gap-3">
           {stepIndex > 0 && (
             <button
               type="button"
