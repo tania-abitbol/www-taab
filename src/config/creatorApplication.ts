@@ -64,7 +64,12 @@ type ValueOf<T extends readonly OptionValue[]> = T[number]["value"];
 export const LIMITS = {
   name: 100,
   email: 254,
+  phone: 32,
 } as const;
+
+/** 8–15 digits, with the usual separators. Kept in sync with firestore.rules. */
+const PHONE_CHARACTERS = /^[+0-9 .()-]+$/;
+const PHONE_DIGIT_COUNT = /^[^0-9]*([0-9][^0-9]*){8,15}$/;
 
 const ISO_COUNTRY_CODES =
   "AD AE AF AG AI AL AM AO AR AS AT AU AW AZ BA BB BD BE BF BG BH BI BJ BM BN BO BR BS BT BW BY BZ CA CD CF CG CH CI CK CL CM CN CO CR CU CV CW CY CZ DE DJ DK DM DO DZ EC EE EG ER ES ET FI FJ FM FO FR GA GB GD GE GF GH GI GL GM GN GP GQ GR GT GU GW GY HK HN HR HT HU ID IE IL IN IQ IR IS IT JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MG MH MK ML MM MN MO MQ MR MT MU MV MW MX MY MZ NA NC NE NG NI NL NO NP NR NZ OM PA PE PF PG PH PK PL PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SI SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TG TH TJ TL TM TN TO TR TT TV TW TZ UA UG US UY UZ VA VC VE VG VI VN VU WS XK YE YT ZA ZM ZW".split(
@@ -91,6 +96,7 @@ export const getCountryOptions = (pinned: string[], locale = "en"): Option[] => 
 export interface CreatorApplicationDraft {
   name: string;
   email: string;
+  phone: string;
   country: string;
   ageConfirmed: boolean;
   tiktokUsername: string;
@@ -104,6 +110,7 @@ export type FieldErrors = Partial<Record<DraftField, string>>;
 export const createEmptyDraft = (country: string): CreatorApplicationDraft => ({
   name: "",
   email: "",
+  phone: "",
   country,
   ageConfirmed: false,
   tiktokUsername: "",
@@ -117,7 +124,7 @@ export interface ApplicationStep {
 }
 
 export const APPLICATION_STEPS: ApplicationStep[] = [
-  { id: "about", fields: ["name", "email", "country", "ageConfirmed"] },
+  { id: "about", fields: ["name", "email", "phone", "country", "ageConfirmed"] },
   { id: "tiktok", fields: ["tiktokUsername", "followers", "informationConfirmed"] },
 ];
 
@@ -125,6 +132,12 @@ const EMAIL_PATTERN = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const USERNAME_PATTERN = /^[A-Za-z0-9._]{2,24}$/;
 
 export const normalizeUsername = (value: string) => value.trim().replace(/^@+/, "");
+
+export const isPlausiblePhone = (value: string) =>
+  value.length >= 8 &&
+  value.length <= LIMITS.phone &&
+  PHONE_CHARACTERS.test(value) &&
+  PHONE_DIGIT_COUNT.test(value);
 
 export const tiktokProfileUrl = (username: string) =>
   `https://www.tiktok.com/@${normalizeUsername(username)}`;
@@ -141,6 +154,11 @@ const validators: Record<DraftField, Validator> = {
     const value = email.trim();
     if (!value) return copy.errors.emailEmpty;
     if (value.length > LIMITS.email || !EMAIL_PATTERN.test(value)) return copy.errors.emailInvalid;
+  },
+  phone: ({ phone }, copy) => {
+    const value = phone.trim();
+    if (!value) return copy.errors.phoneEmpty;
+    if (!isPlausiblePhone(value)) return copy.errors.phoneInvalid;
   },
   country: ({ country }, copy) => (/^[A-Z]{2}$/.test(country) ? undefined : copy.errors.country),
   ageConfirmed: ({ ageConfirmed }, copy) => (ageConfirmed ? undefined : copy.errors.ageConfirmed),
@@ -169,6 +187,7 @@ export const validateFields = (
 export const buildApplicationPayload = (draft: CreatorApplicationDraft, locale: CreatorLocale) => ({
   name: draft.name.trim(),
   email: draft.email.trim().toLowerCase(),
+  phone: draft.phone.trim(),
   country: draft.country,
   ageConfirmed: true,
   tiktokUsername: normalizeUsername(draft.tiktokUsername),

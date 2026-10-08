@@ -22,13 +22,22 @@ service cloud.firestore {
         && value.matches('^https://([a-z]+[.])?tiktok[.]com/.+$');
     }
 
+    // 8 to 15 digits, plus the usual separators. Same check as isPlausiblePhone.
+    function isPhone(value) {
+      return value is string
+        && value.size() >= 8
+        && value.size() <= 32
+        && value.matches('^[+0-9 .()-]+$')
+        && value.matches('^[^0-9]*([0-9][^0-9]*){8,15}$');
+    }
+
     // Keep enums and limits in sync with src/config/creatorApplication.ts.
     // Required keys are the current short form. Optional keys are what earlier
     // versions of the page still send; they are checked only when present so
     // both the new payload and cached clients stay valid.
     function isValidCreatorApplication(data) {
       let requiredKeys = [
-        'name', 'email', 'country', 'ageConfirmed',
+        'name', 'email', 'phone', 'country', 'ageConfirmed',
         'tiktokUsername', 'tiktokUrl', 'followers',
         'informationConfirmed', 'status', 'source', 'locale', 'createdAt'
       ];
@@ -42,6 +51,7 @@ service cloud.firestore {
         && isBoundedString(data.name, 1, 100)
         && isBoundedString(data.email, 3, 254)
         && data.email.matches('^[^@ ]+@[^@ ]+[.][^@ ]+$')
+        && isPhone(data.phone)
         && data.country is string
         && data.country.matches('^[A-Z]{2}$')
         && data.ageConfirmed == true

@@ -30,6 +30,7 @@ const applications = collection(db, "creatorApplications");
 const valid = () => ({
   name: "Jordan Lee",
   email: "jordan@example.com",
+  phone: "+1 415 555 0134",
   country: "US",
   ageConfirmed: true,
   tiktokUsername: "jordan.makes_stuff",
@@ -72,7 +73,10 @@ await test("valid application can be created", async () => {
   createdId = ref.id;
 });
 await test("non-US country is accepted", async () => {
-  await addDoc(applications, { ...valid(), country: "FR" });
+  await addDoc(applications, { ...valid(), country: "FR", phone: "06 12 34 56 78" });
+});
+await test("phone with parentheses is accepted", async () => {
+  await addDoc(applications, { ...valid(), phone: "(415) 555-0134" });
 });
 await test("previous 3-step payload is still accepted", async () => {
   await addDoc(applications, legacy());
@@ -108,6 +112,10 @@ const invalidCases = {
   "final confirmation missing": { informationConfirmed: false },
   "lowercase country code": { country: "us" },
   "invalid email": { email: "not-an-email" },
+  "phone with letters": { phone: "call-me-4155550134" },
+  "phone too short": { phone: "1234567" },
+  "phone too many digits": { phone: "1234567890123456" },
+  "phone as number": { phone: 14155550134 },
   "oversized name": { name: "x".repeat(101) },
   "oversized whyCreator": { whyCreator: "x".repeat(1001) },
   "short contentDifference": { contentDifference: "short" },
@@ -134,6 +142,10 @@ for (const [name, override] of Object.entries(invalidCases)) {
     denied(addDoc(applications, { ...valid(), ...override })));
 }
 
+await test("create denied: missing phone", () => {
+  const { phone, ...rest } = valid();
+  return denied(addDoc(applications, rest));
+});
 await test("create denied: missing followers", () => {
   const { followers, ...rest } = valid();
   return denied(addDoc(applications, rest));

@@ -18,6 +18,8 @@ export interface CreatorFormCopy {
     name: string;
     email: string;
     emailPlaceholder: string;
+    phone: string;
+    phonePlaceholder: string;
     country: string;
     ageConfirmed: string;
     tiktokUsername: string;
@@ -35,6 +37,8 @@ export interface CreatorFormCopy {
     nameEmpty: string;
     emailEmpty: string;
     emailInvalid: string;
+    phoneEmpty: string;
+    phoneInvalid: string;
     country: string;
     tooLong: (max: number) => string;
     ageConfirmed: string;
@@ -62,7 +66,7 @@ const followerLabels = {
 
 const en: CreatorFormCopy = {
   steps: {
-    about: { title: "About you", description: "Name, email, and country." },
+    about: { title: "About you", description: "Name, email, phone, and country." },
     tiktok: { title: "Your TikTok", description: "Your username and a follower range." },
   },
   progress: {
@@ -77,6 +81,8 @@ const en: CreatorFormCopy = {
     name: "Name",
     email: "Email",
     emailPlaceholder: "you@example.com",
+    phone: "Phone number",
+    phonePlaceholder: "415 555 2671",
     country: "Country",
     ageConfirmed: "I'm 18 or older.",
     tiktokUsername: "TikTok username",
@@ -95,6 +101,8 @@ const en: CreatorFormCopy = {
     nameEmpty: "What should we call you?",
     emailEmpty: "We need an email to get back to you.",
     emailInvalid: "That email doesn't look right.",
+    phoneEmpty: "Add a phone number.",
+    phoneInvalid: "Enter a phone number with 8 to 15 digits.",
     country: "Pick the country you're based in.",
     tooLong: (max) => `Keep it under ${max} characters.`,
     ageConfirmed: "You need to be 18 or older to apply.",
@@ -115,7 +123,7 @@ const en: CreatorFormCopy = {
 
 const fr: CreatorFormCopy = {
   steps: {
-    about: { title: "À propos de toi", description: "Nom, email et pays." },
+    about: { title: "À propos de toi", description: "Nom, email, téléphone et pays." },
     tiktok: { title: "Ton TikTok", description: "Ton pseudo et une tranche d'abonnés." },
   },
   progress: {
@@ -130,6 +138,8 @@ const fr: CreatorFormCopy = {
     name: "Nom",
     email: "Email",
     emailPlaceholder: "toi@exemple.com",
+    phone: "Numéro de téléphone",
+    phonePlaceholder: "06 12 34 56 78",
     country: "Pays",
     ageConfirmed: "J'ai 18 ans ou plus.",
     tiktokUsername: "Pseudo TikTok",
@@ -148,6 +158,8 @@ const fr: CreatorFormCopy = {
     nameEmpty: "Comment on t'appelle ?",
     emailEmpty: "On a besoin d'un email pour te répondre.",
     emailInvalid: "Cet email n'a pas l'air valide.",
+    phoneEmpty: "Ajoute un numéro de téléphone.",
+    phoneInvalid: "Indique un numéro de 8 à 15 chiffres.",
     country: "Choisis le pays où tu vis.",
     tooLong: (max) => `${max} caractères maximum.`,
     ageConfirmed: "Tu dois avoir 18 ans ou plus pour postuler.",

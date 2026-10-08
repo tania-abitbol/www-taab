@@ -37,6 +37,7 @@ const restoreDraft = (
 ): CreatorApplicationDraft => ({
   name: typeof saved.name === "string" ? saved.name : current.name,
   email: typeof saved.email === "string" ? saved.email : current.email,
+  phone: typeof saved.phone === "string" ? saved.phone : current.phone,
   country:
     typeof saved.country === "string" && /^[A-Z]{2}$/.test(saved.country)
       ? saved.country
@@ -343,6 +344,18 @@ export const ApplicationForm = ({ content, onSubmitted }: ApplicationFormProps) 
                     onChange={(value) => update("email", value)}
                     maxLength={LIMITS.email}
                     error={errors.email}
+                  />
+                  <TextField
+                    name="phone"
+                    label={copy.fields.phone}
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    placeholder={copy.fields.phonePlaceholder}
+                    value={draft.phone}
+                    onChange={(value) => update("phone", value)}
+                    maxLength={LIMITS.phone}
+                    error={errors.phone}
                   />
                   <SelectField
                     name="country"

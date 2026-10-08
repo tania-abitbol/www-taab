@@ -73,8 +73,8 @@ export const TextField = ({
 }: BaseFieldProps & {
   value: string;
   onChange: (value: string) => void;
-  type?: "text" | "email" | "url";
-  inputMode?: "text" | "email" | "url";
+  type?: "text" | "email" | "url" | "tel";
+  inputMode?: "text" | "email" | "url" | "tel";
   autoComplete?: string;
   placeholder?: string;
   maxLength?: number;
