@@ -5,29 +5,21 @@ export type CreatorLocale = "en" | "fr";
 type Labels<T extends readonly { value: string }[]> = Record<T[number]["value"], string>;
 
 export interface CreatorFormCopy {
-  steps: Record<"about" | "tiktok", { title: string; description: string }>;
-  progress: {
-    step: (current: number, total: number) => [string, string];
-    next: (title: string) => string;
-    finalStep: string;
-    ariaLabel: string;
-    ariaValue: (current: number, total: number, title: string) => string;
-    complete: (percent: number) => string;
-  };
+  title: string;
   fields: {
     name: string;
     email: string;
     emailPlaceholder: string;
-    phone: string;
-    phonePlaceholder: string;
-    country: string;
     ageConfirmed: string;
+    instagramUsername: string;
+    instagramUsernamePlaceholder: string;
     tiktokUsername: string;
     tiktokUsernamePlaceholder: string;
+    optional: string;
+    handlesHint: string;
     checkProfile: (username: string) => string;
     followers: string;
     followersHint: string;
-    informationConfirmed: string;
     privacyNote: string;
   };
   options: {
@@ -37,20 +29,16 @@ export interface CreatorFormCopy {
     nameEmpty: string;
     emailEmpty: string;
     emailInvalid: string;
-    phoneEmpty: string;
-    phoneInvalid: string;
     country: string;
     tooLong: (max: number) => string;
     ageConfirmed: string;
-    usernameEmpty: string;
+    handlesEmpty: string;
+    instagramInvalid: string;
     usernameInvalid: string;
     pickRange: string;
-    informationConfirmed: string;
     submit: string;
   };
   buttons: {
-    back: string;
-    continue: string;
     submit: string;
     sending: string;
   };
@@ -65,33 +53,21 @@ const followerLabels = {
 };
 
 const en: CreatorFormCopy = {
-  steps: {
-    about: { title: "About you", description: "Name, email, phone, and country." },
-    tiktok: { title: "Your TikTok", description: "Your username and a follower range." },
-  },
-  progress: {
-    step: (current, total) => [`Step ${current}`, `of ${total}`],
-    next: (title) => `Next: ${title}`,
-    finalStep: "Final step",
-    ariaLabel: "Application progress",
-    ariaValue: (current, total, title) => `Step ${current} of ${total}: ${title}`,
-    complete: (percent) => `${percent}% complete`,
-  },
+  title: "Your application",
   fields: {
     name: "Name",
     email: "Email",
     emailPlaceholder: "you@example.com",
-    phone: "Phone number",
-    phonePlaceholder: "415 555 2671",
-    country: "Country",
     ageConfirmed: "I'm 18 or older.",
-    tiktokUsername: "TikTok username",
+    instagramUsername: "Instagram",
+    instagramUsernamePlaceholder: "yourname",
+    tiktokUsername: "TikTok",
     tiktokUsernamePlaceholder: "yourname",
+    optional: "(optional)",
+    handlesHint: "Instagram, TikTok, or both.",
     checkProfile: (username) => `Check it's you: tiktok.com/@${username} ↗`,
     followers: "Followers",
     followersHint: "Any follower count is welcome.",
-    informationConfirmed:
-      "I confirm this information is accurate and that TAAB can contact me by email about the creator program.",
     privacyNote: "Your information is only used to review your application.",
   },
   options: {
@@ -101,54 +77,38 @@ const en: CreatorFormCopy = {
     nameEmpty: "What should we call you?",
     emailEmpty: "We need an email to get back to you.",
     emailInvalid: "That email doesn't look right.",
-    phoneEmpty: "Add a phone number.",
-    phoneInvalid: "Enter a phone number with 8 to 15 digits.",
     country: "Pick the country you're based in.",
     tooLong: (max) => `Keep it under ${max} characters.`,
     ageConfirmed: "You need to be 18 or older to apply.",
-    usernameEmpty: "Add your TikTok username.",
+    handlesEmpty: "Add your Instagram or your TikTok.",
+    instagramInvalid: "Instagram usernames use letters, numbers, periods and underscores (1–30 characters).",
     usernameInvalid: "Usernames use letters, numbers, periods and underscores (2–24 characters).",
     pickRange: "Pick a range.",
-    informationConfirmed: "Please confirm to submit your application.",
     submit:
       "Something went wrong while sending your application. Your answers are saved, so please try again.",
   },
   buttons: {
-    back: "Back",
-    continue: "Continue",
     submit: "Submit application",
     sending: "Sending…",
   },
 };
 
 const fr: CreatorFormCopy = {
-  steps: {
-    about: { title: "À propos de toi", description: "Nom, email, téléphone et pays." },
-    tiktok: { title: "Ton TikTok", description: "Ton pseudo et une tranche d'abonnés." },
-  },
-  progress: {
-    step: (current, total) => [`Étape ${current}`, `sur ${total}`],
-    next: (title) => `Ensuite : ${title}`,
-    finalStep: "Dernière étape",
-    ariaLabel: "Progression de la candidature",
-    ariaValue: (current, total, title) => `Étape ${current} sur ${total} : ${title}`,
-    complete: (percent) => `${percent} % terminé`,
-  },
+  title: "Ta candidature",
   fields: {
     name: "Nom",
     email: "Email",
     emailPlaceholder: "toi@exemple.com",
-    phone: "Numéro de téléphone",
-    phonePlaceholder: "06 12 34 56 78",
-    country: "Pays",
     ageConfirmed: "J'ai 18 ans ou plus.",
-    tiktokUsername: "Pseudo TikTok",
+    instagramUsername: "Instagram",
+    instagramUsernamePlaceholder: "tonpseudo",
+    tiktokUsername: "TikTok",
     tiktokUsernamePlaceholder: "tonpseudo",
+    optional: "(facultatif)",
+    handlesHint: "Instagram, TikTok, ou les deux.",
     checkProfile: (username) => `C'est bien toi : tiktok.com/@${username} ↗`,
     followers: "Abonnés",
     followersHint: "Tous les profils sont les bienvenus.",
-    informationConfirmed:
-      "Je confirme que ces informations sont exactes et que TAAB peut me contacter par email au sujet du programme créateurs.",
     privacyNote: "Tes informations servent uniquement à étudier ta candidature.",
   },
   options: {
@@ -158,20 +118,16 @@ const fr: CreatorFormCopy = {
     nameEmpty: "Comment on t'appelle ?",
     emailEmpty: "On a besoin d'un email pour te répondre.",
     emailInvalid: "Cet email n'a pas l'air valide.",
-    phoneEmpty: "Ajoute un numéro de téléphone.",
-    phoneInvalid: "Indique un numéro de 8 à 15 chiffres.",
     country: "Choisis le pays où tu vis.",
     tooLong: (max) => `${max} caractères maximum.`,
     ageConfirmed: "Tu dois avoir 18 ans ou plus pour postuler.",
-    usernameEmpty: "Ajoute ton pseudo TikTok.",
+    handlesEmpty: "Ajoute ton Instagram ou ton TikTok.",
+    instagramInvalid: "Lettres, chiffres, points et underscores uniquement (1 à 30 caractères).",
     usernameInvalid: "Lettres, chiffres, points et underscores uniquement (2 à 24 caractères).",
     pickRange: "Choisis une tranche.",
-    informationConfirmed: "Confirme pour envoyer ta candidature.",
     submit: "Un problème est survenu pendant l'envoi. Tes réponses sont sauvegardées, réessaie.",
   },
   buttons: {
-    back: "Retour",
-    continue: "Continuer",
     submit: "Envoyer ma candidature",
     sending: "Envoi…",
   },

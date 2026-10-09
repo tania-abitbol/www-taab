@@ -20,14 +20,18 @@ const Label = ({
   name,
   children,
   optional,
+  optionalLabel,
 }: {
   name: string;
   children: ReactNode;
   optional?: boolean;
+  optionalLabel?: string;
 }) => (
   <label htmlFor={fieldId(name)} className="mb-2 block font-body text-sm font-bold">
     {children}
-    {optional && <span className="ml-1 font-normal text-gray-700">(optional)</span>}
+    {optional && (
+      <span className="ml-1 font-normal text-gray-700">{optionalLabel ?? "(optional)"}</span>
+    )}
   </label>
 );
 
@@ -54,6 +58,7 @@ interface BaseFieldProps {
   error?: string;
   hint?: ReactNode;
   optional?: boolean;
+  optionalLabel?: string;
 }
 
 export const TextField = ({
@@ -62,6 +67,7 @@ export const TextField = ({
   error,
   hint,
   optional,
+  optionalLabel,
   value,
   onChange,
   type = "text",
@@ -81,7 +87,7 @@ export const TextField = ({
   prefix?: string;
 }) => (
   <div>
-    <Label name={name} optional={optional}>
+    <Label name={name} optional={optional} optionalLabel={optionalLabel}>
       {label}
     </Label>
     <div className="relative">

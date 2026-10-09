@@ -30,6 +30,21 @@ const applications = collection(db, "creatorApplications");
 const valid = () => ({
   name: "Jordan Lee",
   email: "jordan@example.com",
+  country: "US",
+  ageConfirmed: true,
+  instagramUsername: "jordan.makes",
+  tiktokUsername: "jordan.makes_stuff",
+  tiktokUrl: "https://www.tiktok.com/@jordan.makes_stuff",
+  followers: "1k_10k",
+  status: "new",
+  source: "creators_page",
+  locale: "en",
+  createdAt: serverTimestamp(),
+});
+
+const previousTwoStep = () => ({
+  name: "Jordan Lee",
+  email: "jordan@example.com",
   phone: "+1 415 555 0134",
   country: "US",
   ageConfirmed: true,
@@ -44,7 +59,7 @@ const valid = () => ({
 });
 
 const legacy = () => ({
-  ...valid(),
+  ...previousTwoStep(),
   state: "California",
   averageViews: "2k_10k",
   postingFrequency: "few_per_week",
@@ -72,11 +87,22 @@ await test("valid application can be created", async () => {
   const ref = await addDoc(applications, valid());
   createdId = ref.id;
 });
-await test("non-US country is accepted", async () => {
-  await addDoc(applications, { ...valid(), country: "FR", phone: "06 12 34 56 78" });
+await test("instagram only, without phone, is accepted", async () => {
+  const { tiktokUsername, tiktokUrl, ...rest } = valid();
+  await addDoc(applications, rest);
 });
-await test("phone with parentheses is accepted", async () => {
-  await addDoc(applications, { ...valid(), phone: "(415) 555-0134" });
+await test("tiktok only, without phone, is accepted", async () => {
+  const { instagramUsername, ...rest } = valid();
+  await addDoc(applications, rest);
+});
+await test("previous two-step payload with phone and no instagram is accepted", async () => {
+  await addDoc(applications, previousTwoStep());
+});
+await test("non-US country is accepted", async () => {
+  await addDoc(applications, { ...valid(), country: "FR" });
+});
+await test("phone with parentheses is accepted when present", async () => {
+  await addDoc(applications, { ...previousTwoStep(), phone: "(415) 555-0134" });
 });
 await test("previous 3-step payload is still accepted", async () => {
   await addDoc(applications, legacy());
@@ -120,6 +146,7 @@ const invalidCases = {
   "oversized whyCreator": { whyCreator: "x".repeat(1001) },
   "short contentDifference": { contentDifference: "short" },
   "non-TikTok profile URL": { tiktokUrl: "https://evil.example.com/@me" },
+  "invalid instagram username": { instagramUsername: "not a handle" },
   "unknown follower bucket": { followers: "1m_plus" },
   "unknown category": { contentCategories: ["crypto"] },
   "too many categories": {
@@ -142,8 +169,16 @@ for (const [name, override] of Object.entries(invalidCases)) {
     denied(addDoc(applications, { ...valid(), ...override })));
 }
 
-await test("create denied: missing phone", () => {
-  const { phone, ...rest } = valid();
+await test("create denied: neither handle", () => {
+  const { instagramUsername, tiktokUsername, tiktokUrl, ...rest } = valid();
+  return denied(addDoc(applications, rest));
+});
+await test("create denied: tiktok username without url", () => {
+  const { tiktokUrl, ...rest } = valid();
+  return denied(addDoc(applications, rest));
+});
+await test("create denied: tiktok url without a username", () => {
+  const { tiktokUsername, ...rest } = valid();
   return denied(addDoc(applications, rest));
 });
 await test("create denied: missing followers", () => {
