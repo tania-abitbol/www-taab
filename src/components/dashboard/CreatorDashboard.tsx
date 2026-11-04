@@ -1,28 +1,24 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 import {
-  MonthRow,
   VideoLedger,
   VideoObservation,
   applyObservation,
+  elapsedMonthCount,
+  eurosForViews,
   monthRows,
 } from "~/config/creatorPayout";
 
-const STORAGE_KEY = "taab:creator-video-stats:v1";
+const STORAGE_KEY = "taab:creator-video-stats:v2";
 
 const numberFormat = new Intl.NumberFormat("fr-FR");
 const euroFormat = new Intl.NumberFormat("fr-FR", {
   style: "currency",
   currency: "EUR",
-  maximumFractionDigits: 0,
-});
-const dateFormat = new Intl.DateTimeFormat("fr-FR", {
-  day: "numeric",
-  month: "short",
-  year: "numeric",
-  timeZone: "Europe/Paris",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
 });
 
 const ERRORS: Record<string, string> = {
@@ -30,15 +26,6 @@ const ERRORS: Record<string, string> = {
   "not-video": "Ce lien ne pointe pas vers une vidéo.",
   unavailable: "La page publique ne s'est pas ouverte. Réessaie dans un instant.",
   unauthorized: "Le code a expiré. Recharge la page et entre-le à nouveau.",
-};
-
-const viewsLabel = (views: number) => `${numberFormat.format(views)} ${views === 1 ? "vue" : "vues"}`;
-
-const basisLabel = (basis: MonthRow["basis"]) => {
-  if (basis === "opening") return "mesuré depuis aujourd'hui";
-  if (basis === "unmeasured") return "pas mesuré";
-  if (basis === "boundary") return "écart depuis le dernier relevé, sans découpage";
-  return "vues gagnées sur cette période";
 };
 
 const readLedgers = (): VideoLedger[] => {
@@ -56,38 +43,41 @@ const writeLedgers = (ledgers: VideoLedger[]) => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(ledgers));
 };
 
-const Stat = ({ label, value }: { label: string; value: string }) => (
-  <div className="min-w-0">
-    <dt className="font-body text-sm text-gray-700">{label}</dt>
-    <dd className="font-title text-2xl tabular-nums tracking-tight">{value}</dd>
-  </div>
-);
+const formatCount = (value: number | null) => (value == null ? "—" : numberFormat.format(value));
 
 export const CreatorDashboard = () => {
   const [url, setUrl] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [error, setError] = useState("");
   const [ledgers, setLedgers] = useState<VideoLedger[]>([]);
-  const [activeId, setActiveId] = useState<string | null>(null);
+  const [pendingUrl, setPendingUrl] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const submittingRef = useRef(false);
+  const now = Date.now();
 
   useEffect(() => {
-    const saved = readLedgers();
-    setLedgers(saved);
-    setActiveId(saved[0]?.id ?? null);
+    setLedgers(readLedgers());
     setReady(true);
   }, []);
 
-  const active = ledgers.find((ledger) => ledger.id === activeId) ?? null;
-  const rows = useMemo(() => (active ? monthRows(active, active.updatedAt ?? Date.now()) : []), [active]);
-  const openRow = rows.find((row) => row.open) ?? rows[rows.length - 1];
-  const earlier = rows.filter((row) => row !== openRow);
+  const monthCount = useMemo(
+    () => ledgers.reduce((max, ledger) => Math.max(max, elapsedMonthCount(ledger, ledger.updatedAt ?? now)), 0),
+    [ledgers, now]
+  );
+  const months = useMemo(() => Array.from({ length: monthCount }, (_, index) => index + 1), [monthCount]);
+
+  const persist = (next: VideoLedger[]) => {
+    setLedgers(next);
+    writeLedgers(next);
+  };
 
   const submitUrl = async (nextUrl: string) => {
     const trimmed = nextUrl.trim();
-    if (!trimmed || status === "loading") return;
+    if (!trimmed || submittingRef.current) return;
+    submittingRef.current = true;
     setStatus("loading");
     setError("");
+    setPendingUrl(trimmed);
     try {
       const response = await fetch("/dashboard/creator/stats", {
         method: "POST",
@@ -102,18 +92,18 @@ export const CreatorDashboard = () => {
       }
       setLedgers((current) => {
         const previous = current.find((ledger) => ledger.id === payload.id) ?? null;
-        const next = applyObservation(previous, payload);
-        const rest = current.filter((ledger) => ledger.id !== next.id);
-        const saved = [next, ...rest].slice(0, 30);
-        writeLedgers(saved);
-        return saved;
+        const next = [applyObservation(previous, payload), ...current.filter((ledger) => ledger.id !== payload.id)].slice(0, 40);
+        writeLedgers(next);
+        return next;
       });
-      setActiveId(payload.id);
-      setUrl(trimmed);
+      setUrl("");
       setStatus("idle");
     } catch {
       setError(ERRORS.unavailable);
       setStatus("error");
+    } finally {
+      submittingRef.current = false;
+      setPendingUrl(null);
     }
   };
 
@@ -122,157 +112,185 @@ export const CreatorDashboard = () => {
     void submitUrl(url);
   };
 
-  return (
-    <main lang="fr" className="mx-auto min-h-dvh w-full max-w-lg px-4 py-8 selection:bg-yellow selection:text-black sm:py-12">
-      <a href="/" className="font-title text-3xl tracking-tight">
-        TAAB
-      </a>
-      <h1 className="mb-3 mt-8 font-title text-4xl tracking-tight">Suivi des vues</h1>
-      <p className="mb-6 max-w-[40ch] font-body text-base leading-relaxed text-gray-700">
-        1&nbsp;€ par vue, compté par période de 30&nbsp;jours à partir de la date du post.
-      </p>
+  const removeLedger = (id: string) => {
+    persist(ledgers.filter((ledger) => ledger.id !== id));
+  };
 
-      <form onSubmit={onSubmit} className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)] sm:p-6">
-        <label htmlFor="video-url" className="mb-2 block font-body text-sm font-bold">
-          Lien de la vidéo
-        </label>
-        <input
-          id="video-url"
-          name="url"
-          type="url"
-          inputMode="url"
-          autoCapitalize="none"
-          autoCorrect="off"
-          spellCheck={false}
-          required
-          placeholder="https://www.tiktok.com/…"
-          value={url}
-          onChange={(event) => setUrl(event.target.value)}
-          className="block h-12 w-full rounded-xl border border-gray-300 bg-white px-4 font-body text-base text-black placeholder:text-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-1"
-        />
+  return (
+    <main lang="fr" className="min-h-dvh px-3 py-6 selection:bg-yellow selection:text-black sm:px-6 sm:py-8">
+      <div className="mx-auto max-w-[100rem]">
+        <a href="/" className="font-title text-3xl tracking-tight">
+          TAAB
+        </a>
+        <div className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h1 className="font-title text-4xl tracking-tight">Suivi</h1>
+            <p className="mt-2 max-w-xl font-body text-sm leading-relaxed text-gray-700">
+              1&nbsp;€ pour 1&nbsp;000 vues. Le total est le chiffre public depuis la publication. Un mois n&apos;affiche
+              des euros que pour les vues gagnées entre deux relevés.
+            </p>
+          </div>
+          <form onSubmit={onSubmit} className="flex w-full max-w-xl flex-col gap-2 sm:flex-row">
+            <label htmlFor="video-url" className="sr-only">
+              Lien de la vidéo
+            </label>
+            <input
+              id="video-url"
+              name="url"
+              type="url"
+              inputMode="url"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              required
+              placeholder="Coller un lien TikTok ou Instagram"
+              value={url}
+              onChange={(event) => setUrl(event.target.value)}
+              className="h-12 min-w-0 flex-1 rounded-xl border border-gray-300 bg-white px-4 font-body text-base text-black placeholder:text-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-1"
+            />
+            <button
+              type="submit"
+              disabled={status === "loading"}
+              aria-busy={status === "loading"}
+              className="h-12 shrink-0 rounded-xl bg-black px-5 font-body text-base font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-80"
+            >
+              {status === "loading" ? "Ajout…" : "Ajouter"}
+            </button>
+          </form>
+        </div>
         {status === "error" && (
           <p role="alert" className="mt-3 font-body text-sm text-[#C8102E]">
             {error}
           </p>
         )}
-        <button
-          type="submit"
-          disabled={status === "loading"}
-          aria-busy={status === "loading"}
-          className="mt-4 flex h-12 w-full items-center justify-center rounded-xl bg-black px-6 font-body text-base font-bold text-white transition-transform hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 active:translate-y-0 disabled:cursor-wait disabled:opacity-80 disabled:hover:translate-y-0"
-        >
-          {status === "loading" ? "Lecture…" : "Lire la vidéo"}
-        </button>
-      </form>
 
-      {active && (
-        <article aria-live="polite" className="mt-6">
-          <header className="mb-4">
-            <h2 className="font-title text-2xl tracking-tight">{active.author ?? "Vidéo"}</h2>
-            {active.postedAt != null && (
-              <p className="mt-1 font-body text-sm text-gray-700">
-                Publiée le {dateFormat.format(active.postedAt)}
-                {active.dateSource === "media-id" ? " · date lue depuis l'identifiant public" : ""}
-              </p>
-            )}
-            {active.postedAt == null && (
-              <p className="mt-1 font-body text-sm text-gray-700">
-                La date du post n&apos;est pas sur la page publique. Les périodes ne peuvent pas être calculées.
-              </p>
-            )}
-            {active.caption && (
-              <p className="mt-3 line-clamp-3 font-body text-sm leading-relaxed">{active.caption}</p>
-            )}
-          </header>
-
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-5">
-            <Stat label="Vues" value={active.views == null ? "non public" : numberFormat.format(active.views)} />
-            <Stat label="J'aime" value={active.likes == null ? "non public" : numberFormat.format(active.likes)} />
-            <Stat
-              label="Commentaires"
-              value={active.comments == null ? "non public" : numberFormat.format(active.comments)}
-            />
-            {active.shares != null && <Stat label="Partages" value={numberFormat.format(active.shares)} />}
-            {active.saves != null && <Stat label="Enregistrements" value={numberFormat.format(active.saves)} />}
-          </dl>
-
-          {openRow && (
-            <section className="mt-8" aria-labelledby="open-month-title">
-              <h3 id="open-month-title" className="mb-3 font-title text-xl tracking-tight">
-                Mois {openRow.month}
-                <span className="ml-2 font-body text-sm font-normal text-gray-700">en cours</span>
-              </h3>
-              <div className="rounded-3xl bg-yellow px-5 py-5 text-black">
-                <p className="font-title text-4xl tabular-nums tracking-tight">{euroFormat.format(openRow.euros)}</p>
-                <p className="mt-1 font-body text-base">{viewsLabel(openRow.views)}</p>
-                <p className="mt-3 font-body text-sm">{basisLabel(openRow.basis)}</p>
-                <p className="mt-1 font-body text-sm text-black/70">
-                  {dateFormat.format(openRow.start)} – {dateFormat.format(openRow.end - 1)}
-                </p>
-              </div>
-            </section>
-          )}
-
-          {earlier.length > 0 && (
-            <section className="mt-8" aria-labelledby="earlier-months-title">
-              <h3 id="earlier-months-title" className="mb-3 font-title text-xl tracking-tight">
-                Mois précédents
-              </h3>
-              {earlier.every((row) => row.basis === "unmeasured") && (
-                <p className="mb-3 font-body text-sm leading-relaxed text-gray-700">
-                  Mois 1 à {earlier[earlier.length - 1].month}&nbsp;: 0&nbsp;€. Pas mesuré avant aujourd&apos;hui.
-                </p>
-              )}
-              <ol className="max-h-[28rem] divide-y divide-gray-200 overflow-y-auto rounded-3xl bg-white shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
-                {earlier.map((row) => (
-                  <li key={row.month} className="flex items-baseline justify-between gap-4 px-4 py-3">
-                    <div className="min-w-0">
-                      <p className="font-body text-sm font-bold">Mois {row.month}</p>
-                      <p className="font-body text-sm text-gray-700">{basisLabel(row.basis)}</p>
-                    </div>
-                    <p className="shrink-0 text-right font-body text-sm tabular-nums">
-                      <span className="block font-bold">{euroFormat.format(row.euros)}</span>
-                      <span className="text-gray-700">{viewsLabel(row.views)}</span>
-                    </p>
-                  </li>
+        <div className="mt-6 overflow-x-auto rounded-2xl bg-white shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
+          <table className="w-max min-w-full border-collapse text-left">
+            <caption className="sr-only">Vidéos suivies, totaux publics et euros par mois mesuré</caption>
+            <thead>
+              <tr className="border-b border-gray-200 font-body text-xs font-bold text-gray-700">
+                <th scope="col" className="sticky left-0 z-10 bg-white px-4 py-3 text-black">
+                  Vidéo
+                </th>
+                <th scope="col" className="px-3 py-3 text-right">
+                  Vues
+                </th>
+                <th scope="col" className="px-3 py-3 text-right">
+                  J&apos;aime
+                </th>
+                <th scope="col" className="px-3 py-3 text-right">
+                  Commentaires
+                </th>
+                <th scope="col" className="px-3 py-3 text-right">
+                  Partages
+                </th>
+                <th scope="col" className="px-3 py-3 text-right">
+                  Enregistrements
+                </th>
+                <th scope="col" className="px-3 py-3 text-right text-black" title="Total public depuis la publication, pas un mois">
+                  Total €
+                </th>
+                {months.map((month) => (
+                  <th key={month} scope="col" className="border-l border-gray-200 px-3 py-3 text-right first:border-l-0">
+                    Mois {month}
+                  </th>
                 ))}
-              </ol>
-            </section>
-          )}
-        </article>
-      )}
-
-      {ready && ledgers.length > 1 && (
-        <section className="mt-10" aria-labelledby="saved-videos-title">
-          <h2 id="saved-videos-title" className="mb-3 font-title text-xl tracking-tight">
-            Déjà lues
-          </h2>
-          <ul className="space-y-2">
-            {ledgers.map((ledger) => (
-              <li key={ledger.id}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveId(ledger.id);
-                    setUrl(ledger.url);
-                  }}
-                  className="w-full rounded-2xl px-1 py-2 text-left font-body text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
-                >
-                  <span className="font-bold">{ledger.author ?? ledger.url}</span>
-                  <span className="mt-0.5 block text-gray-700">
-                    {ledger.views == null ? "vues non publiques" : viewsLabel(ledger.views)}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      <p className="mt-10 font-body text-sm leading-relaxed text-gray-700">
-        Les relevés restent dans ce navigateur. Un nouveau passage ajoute seulement les vues gagnées depuis le dernier
-        chiffre.
-      </p>
+              </tr>
+            </thead>
+            <tbody className="font-body text-sm">
+              {pendingUrl && (
+                <tr className="border-b border-gray-200">
+                  <th scope="row" className="sticky left-0 z-10 bg-white px-4 py-3 text-left font-normal">
+                    <span className="block max-w-[14rem] truncate font-bold">{pendingUrl}</span>
+                    <span className="text-gray-700">Lecture…</span>
+                  </th>
+                  <td colSpan={6 + months.length} className="px-3 py-3 text-gray-700">
+                    …
+                  </td>
+                </tr>
+              )}
+              {ready && ledgers.length === 0 && !pendingUrl && (
+                <tr>
+                  <td colSpan={7} className="px-4 py-8 text-gray-700">
+                    Aucune vidéo. Ajoute un lien pour ouvrir une ligne.
+                  </td>
+                </tr>
+              )}
+              {ledgers.map((ledger) => {
+                const rows = monthRows(ledger, ledger.updatedAt ?? now);
+                const byMonth = new Map(rows.map((row) => [row.month, row]));
+                return (
+                  <tr key={ledger.id} className="group border-b border-gray-200 last:border-b-0">
+                    <th scope="row" className="sticky left-0 z-10 bg-white px-4 py-3 text-left align-top font-normal group-hover:bg-gray-100">
+                      <a
+                        href={ledger.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block max-w-[16rem] truncate font-bold underline decoration-gray-300 underline-offset-2"
+                      >
+                        {ledger.author ?? "Vidéo"}
+                      </a>
+                      {ledger.caption && (
+                        <p className="mt-0.5 line-clamp-2 max-w-[16rem] font-normal text-gray-700">{ledger.caption}</p>
+                      )}
+                      <span className="mt-2 flex gap-3">
+                        <button
+                          type="button"
+                          onClick={() => void submitUrl(ledger.url)}
+                          disabled={status === "loading"}
+                          className="font-normal text-gray-700 underline decoration-gray-300 underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
+                        >
+                          Actualiser
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeLedger(ledger.id)}
+                          className="font-normal text-gray-700 underline decoration-gray-300 underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
+                        >
+                          Retirer
+                        </button>
+                      </span>
+                      {ledger.unassignedViews > 0 && (
+                        <p className="mt-2 max-w-[16rem] font-normal text-gray-700">
+                          {numberFormat.format(ledger.unassignedViews)} vues gagnées à cheval sur deux mois, non
+                          réparties.
+                        </p>
+                      )}
+                    </th>
+                    <td className="px-3 py-3 text-right align-top tabular-nums">{formatCount(ledger.views)}</td>
+                    <td className="px-3 py-3 text-right align-top tabular-nums">{formatCount(ledger.likes)}</td>
+                    <td className="px-3 py-3 text-right align-top tabular-nums">{formatCount(ledger.comments)}</td>
+                    <td className="px-3 py-3 text-right align-top tabular-nums">{formatCount(ledger.shares)}</td>
+                    <td className="px-3 py-3 text-right align-top tabular-nums">{formatCount(ledger.saves)}</td>
+                    <td className="px-3 py-3 text-right align-top font-bold tabular-nums">
+                      {ledger.views == null ? "—" : euroFormat.format(eurosForViews(ledger.views))}
+                    </td>
+                    {months.map((month) => {
+                      const row = byMonth.get(month);
+                      let label = "";
+                      if (row) label = row.euros == null ? "non mesuré" : euroFormat.format(row.euros);
+                      return (
+                        <td
+                          key={month}
+                          className={`border-l border-gray-200 px-3 py-3 text-right align-top tabular-nums ${
+                            row?.open ? "font-bold" : ""
+                          } ${row && row.euros == null ? "text-gray-700" : ""}`}
+                        >
+                          {label}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-3 max-w-3xl font-body text-sm leading-relaxed text-gray-700">
+          Les relevés restent dans ce navigateur. Actualiser une ligne ajoute au mois en cours seulement les vues
+          gagnées depuis le relevé précédent, si les deux relevés sont dans le même mois.
+        </p>
+      </div>
     </main>
   );
 };

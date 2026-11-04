@@ -1,13 +1,11 @@
-/** 30-day payout windows. 1 € per view gained while that window is open. */
+/** 30-day windows. 1 € per 1 000 views gained inside a window we actually measured. */
 
 export const PAYOUT_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
-export const EUROS_PER_VIEW = 1;
-
-export type MonthBasis = "unmeasured" | "opening" | "delta" | "boundary";
+export const VIEWS_PER_EURO = 1000;
 
 export type MonthCell = {
+  /** Views gained between two snapshots that both fell in this month. */
   views: number;
-  basis: MonthBasis;
 };
 
 export type VideoLedger = {
@@ -24,12 +22,13 @@ export type VideoLedger = {
   shares: number | null;
   saves: number | null;
   missing: string[];
-  /** Highest view count already assigned, so a later dip is not counted twice. */
+  /** Last public total already used as the baseline for a later diff. */
   watermark: number | null;
   watermarkMonth: number | null;
-  /** True once an opening dump has been placed on the then-current month. */
-  openingPlaced: boolean;
+  /** Measured gains only. Months with no entry were never measured. */
   months: Record<string, MonthCell>;
+  /** Gain observed across a month boundary. Not assigned to a month. */
+  unassignedViews: number;
   updatedAt: number | null;
 };
 
@@ -55,10 +54,12 @@ export type MonthRow = {
   start: number;
   end: number;
   open: boolean;
-  views: number;
-  euros: number;
-  basis: MonthBasis;
+  /** null when this month has no measurement. Never a stand-in zero. */
+  views: number | null;
+  euros: number | null;
 };
+
+export const eurosForViews = (views: number) => views / VIEWS_PER_EURO;
 
 /** Month 1 is days 0–29 after the post, month 2 is days 30–59, and so on. */
 export const monthIndex = (postedAt: number, at: number) => {
@@ -87,19 +88,12 @@ const fillIdentity = (base: VideoLedger, obs: VideoObservation): VideoLedger => 
   updatedAt: obs.fetchedAt,
 });
 
-const ensureUnmeasured = (months: Record<string, MonthCell>, through: number) => {
-  for (let month = 1; month < through; month += 1) {
-    const key = String(month);
-    if (!months[key]) months[key] = { views: 0, basis: "unmeasured" };
-  }
-};
-
 /**
- * First observation: the public total cannot be split across past months, so it
- * lands on the month that is open now. Earlier months stay at 0.
- * Later observations add only the views gained since the previous watermark.
- * A gain that crosses a month boundary cannot be split, so it lands on the
- * month open at the new observation.
+ * The public page only exposes a lifetime total. The first snapshot records
+ * that total and leaves every month unmeasured. A later snapshot adds only
+ * the views gained since then, and only when both snapshots sit in the same
+ * 30-day window. A gain that crosses a window is kept aside, not painted
+ * onto the current month.
  */
 export const applyObservation = (
   previous: VideoLedger | null,
@@ -121,59 +115,56 @@ export const applyObservation = (
     missing: [],
     watermark: null,
     watermarkMonth: null,
-    openingPlaced: false,
     months: {},
+    unassignedViews: 0,
     updatedAt: null,
   };
 
   const next = fillIdentity(base, obs);
-  if (obs.views == null || next.postedAt == null) {
-    if (obs.views != null) next.views = obs.views;
+  if (obs.views == null) return next;
+  next.views = obs.views;
+  if (next.postedAt == null) return next;
+
+  const current = monthIndex(next.postedAt, obs.fetchedAt);
+  if (next.watermark == null) {
+    next.watermark = obs.views;
+    next.watermarkMonth = current;
     return next;
   }
 
-  const current = monthIndex(next.postedAt, obs.fetchedAt);
-  const months = { ...next.months };
-  ensureUnmeasured(months, current);
-
-  if (!next.openingPlaced || next.watermark == null) {
-    months[String(current)] = { views: obs.views, basis: "opening" };
-    next.openingPlaced = true;
-    next.watermark = obs.views;
-    next.watermarkMonth = current;
-  } else if (obs.views > next.watermark) {
+  if (obs.views > next.watermark) {
     const delta = obs.views - next.watermark;
-    const key = String(current);
-    const cell = months[key] ?? { views: 0, basis: "unmeasured" };
-    const crossed = next.watermarkMonth != null && next.watermarkMonth !== current;
-    months[key] = {
-      views: cell.views + delta,
-      basis: crossed ? "boundary" : cell.basis === "opening" ? "opening" : "delta",
-    };
+    if (next.watermarkMonth === current) {
+      const key = String(current);
+      const already = next.months[key]?.views ?? 0;
+      next.months = { ...next.months, [key]: { views: already + delta } };
+    } else {
+      next.unassignedViews += delta;
+    }
     next.watermark = obs.views;
     next.watermarkMonth = current;
   }
 
-  next.months = months;
-  next.views = obs.views;
   return next;
 };
 
+export const elapsedMonthCount = (ledger: VideoLedger, now: number) =>
+  ledger.postedAt == null ? 0 : monthIndex(ledger.postedAt, now);
+
 export const monthRows = (ledger: VideoLedger, now: number): MonthRow[] => {
-  if (ledger.postedAt == null) return [];
-  const count = monthIndex(ledger.postedAt, now);
+  const count = elapsedMonthCount(ledger, now);
+  if (ledger.postedAt == null || count === 0) return [];
   const rows: MonthRow[] = [];
   for (let month = 1; month <= count; month += 1) {
-    const cell = ledger.months[String(month)] ?? { views: 0, basis: "unmeasured" as const };
+    const cell = ledger.months[String(month)];
     const { start, end } = monthWindow(ledger.postedAt, month);
     rows.push({
       month,
       start,
       end,
       open: now >= start && now < end,
-      views: cell.views,
-      euros: cell.views * EUROS_PER_VIEW,
-      basis: cell.basis,
+      views: cell ? cell.views : null,
+      euros: cell ? eurosForViews(cell.views) : null,
     });
   }
   return rows;
