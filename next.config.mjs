@@ -1,7 +1,25 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async redirects() {
+    return [
+      {
+        source: "/dashboard/creators",
+        destination: "/dashboard/creator",
+        permanent: false,
+      },
+    ];
+  },
   async headers() {
     return [
+      {
+        source: "/dashboard/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "private, no-store",
+          },
+        ],
+      },
       {
         source: "/join",
         headers: [
