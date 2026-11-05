@@ -14,6 +14,13 @@ export const MONDAY_POST_MINUTES = 5;
 export const MONDAY_WARM_AFTER = 8;
 export const MONDAY_COMPTE2_MINUTES = 20;
 export const MONDAY_COMPTE3_MINUTES = 19;
+export const TUESDAY_WARM_BEFORE = 8;
+export const TUESDAY_POST_MINUTES = 5;
+export const TUESDAY_WARM_AFTER = 8;
+export const TUESDAY_COMPTE2_WARM = 5;
+export const TUESDAY_COMPTE2_PROFILE = 5;
+export const TUESDAY_COMPTE2_WARM_AFTER = 5;
+export const TUESDAY_COMPTE3_MINUTES = 24;
 
 export const SLOTS = [
   { id: "17-18", label: "17:00–18:00", short: "17–18" },
@@ -102,7 +109,7 @@ export const DAY_PLANS: DayPlan[] = [
   { date: "2026-11-07", index: 2, kind: "saturday", repeatsDay7: false, publishers: [] },
   { date: "2026-11-08", index: 3, kind: "sunday", repeatsDay7: false, publishers: [] },
   post("2026-11-09", 4, ["fr"]),
-  post("2026-11-10", 5, ["fr", "es"]),
+  post("2026-11-10", 5, ["fr"]),
   post("2026-11-11", 6, ["es", "us"]),
   post("2026-11-12", 7, ["fr", "es", "us"]),
   post("2026-11-13", 7, ["fr", "es", "us"], true),
@@ -196,6 +203,21 @@ export const checksFor = (plan: DayPlan): CheckItem[] => {
       { id: "warm-after", label: warmLine(MONDAY_WARM_AFTER, `Chauffer le compte après · ${compte1.task}`) },
       { id: "warm-2", label: warmLine(MONDAY_COMPTE2_MINUTES, `Chauffer le ${compte2.task.toLowerCase()}`) },
       { id: "warm-3", label: warmLine(MONDAY_COMPTE3_MINUTES, `Chauffer le ${compte3.task.toLowerCase()}`) },
+    ];
+  }
+  if (plan.date === "2026-11-10") {
+    const [compte1, compte2, compte3] = ACCOUNTS;
+    return [
+      { id: "warm-before-1", label: warmLine(TUESDAY_WARM_BEFORE, `Chauffer le compte · ${compte1.task}`) },
+      { id: "post-1", label: `${formatMinutes(TUESDAY_POST_MINUTES)} · Poster · ${compte1.task}` },
+      { id: "warm-after-1", label: warmLine(TUESDAY_WARM_AFTER, `Chauffer le compte · ${compte1.task}`) },
+      { id: "warm-before-2", label: warmLine(TUESDAY_COMPTE2_WARM, `Chauffer le compte · ${compte2.task}`) },
+      {
+        id: "profile-2",
+        label: `${formatMinutes(TUESDAY_COMPTE2_PROFILE)} · Nouvelle bio et nouvelle photo de profil · ${compte2.task}. Bio intéressante, personnelle, normale, gentille et sympathique. Photo d'une fille normale, Pinterest ou une photo que tu as déjà, pas de photo IA`,
+      },
+      { id: "warm-after-2", label: warmLine(TUESDAY_COMPTE2_WARM_AFTER, `Chauffer le compte · ${compte2.task}`) },
+      { id: "warm-3", label: warmLine(TUESDAY_COMPTE3_MINUTES, `Chauffer le ${compte3.task.toLowerCase()}`) },
     ];
   }
   if (plan.kind === "saturday") {

@@ -10,6 +10,13 @@ const {
   MONDAY_POST_MINUTES,
   MONDAY_WARM_AFTER,
   MONDAY_WARM_BEFORE,
+  TUESDAY_COMPTE2_PROFILE,
+  TUESDAY_COMPTE2_WARM,
+  TUESDAY_COMPTE2_WARM_AFTER,
+  TUESDAY_COMPTE3_MINUTES,
+  TUESDAY_POST_MINUTES,
+  TUESDAY_WARM_AFTER,
+  TUESDAY_WARM_BEFORE,
   PROFILES,
   SATURDAY_ACCOUNT_MINUTES,
   SUNDAY_BIO_MINUTES,
@@ -120,10 +127,36 @@ assert.equal(monday.some((item) => /\b(FR|ES|US)\b|16 min 40/.test(item.label)),
 
 assert.equal(accountRole(DAY_PLANS[3], "fr"), "publie");
 assert.equal(accountRole(DAY_PLANS[3], "es"), "échauffement");
+const tuesday = checksFor(DAY_PLANS[4]);
 assert.deepEqual(
-  DAY_PLANS[4].publishers,
-  ["fr", "es"]
+  tuesday.map((item) => item.label.split(" (")[0].split(". ")[0]),
+  [
+    "8 min · Chauffer le compte · Compte 1",
+    "5 min · Poster · Compte 1",
+    "8 min · Chauffer le compte · Compte 1",
+    "5 min · Chauffer le compte · Compte 2",
+    "5 min · Nouvelle bio et nouvelle photo de profil · Compte 2",
+    "5 min · Chauffer le compte · Compte 2",
+    "24 min · Chauffer le compte 3",
+  ]
 );
+assert.ok(tuesday[4].label.includes("gentille et sympathique"));
+assert.ok(tuesday[4].label.includes("fille normale"));
+assert.ok(tuesday[4].label.includes("Pinterest"));
+assert.ok(tuesday[4].label.includes("pas de photo IA"));
+assert.equal(tuesday.some((item) => /échauffement/i.test(item.label)), false);
+assert.equal(
+  TUESDAY_WARM_BEFORE +
+    TUESDAY_POST_MINUTES +
+    TUESDAY_WARM_AFTER +
+    TUESDAY_COMPTE2_WARM +
+    TUESDAY_COMPTE2_PROFILE +
+    TUESDAY_COMPTE2_WARM_AFTER +
+    TUESDAY_COMPTE3_MINUTES,
+  60
+);
+assert.equal(tuesday.some((item) => /\b(FR|ES|US)\b|16 min 40/.test(item.label)), false);
+assert.deepEqual(DAY_PLANS[4].publishers, ["fr"]);
 assert.deepEqual(DAY_PLANS[5].publishers, ["es", "us"]);
 assert.equal(DAY_PLANS.find((plan) => plan.date === "2026-11-15")?.publishers.length, 3);
 
