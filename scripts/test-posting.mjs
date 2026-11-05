@@ -52,7 +52,7 @@ assert.equal(FRIDAY_CONNECT_MINUTES + FRIDAY_ACCOUNT_MINUTES * 3, 58);
 assert.ok(FRIDAY_CONNECT_MINUTES + FRIDAY_ACCOUNT_MINUTES * 3 <= 60);
 
 const friday = checksFor(DAY_PLANS[0]);
-assert.equal(friday[0].label, "10 min · Se connecter au compte reçu");
+assert.equal(friday[0].label, "10 min · Se connecter au compte reçu sur WhatsApp");
 assert.equal(friday.filter((item) => item.label.startsWith("16 min ·")).length, 3);
 assert.equal(friday.some((item) => item.label.includes("16 min 40")), false);
 assert.ok(friday[1].label.includes("s'abonner à des gens intéressants"));
@@ -62,6 +62,7 @@ const saturday = checksFor(DAY_PLANS[1]);
 assert.equal(saturday.length, 3);
 assert.ok(saturday.every((item) => item.label.startsWith("20 min")));
 assert.equal(saturday.some((item) => item.id === "connect"), false);
+assert.equal(saturday.some((item) => /whatsapp/i.test(item.label)), false);
 
 const sunday = checksFor(DAY_PLANS[2]);
 assert.ok(sunday.some((item) => item.id === "connect"));

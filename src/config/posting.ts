@@ -155,7 +155,10 @@ const accountLine = (minutes: number, account: AccountName) =>
 export const checksFor = (plan: DayPlan): CheckItem[] => {
   if (plan.kind === "friday" || plan.kind === "sunday") {
     const items: CheckItem[] = [
-      { id: "connect", label: `${formatMinutes(FRIDAY_CONNECT_MINUTES)} · Se connecter au compte reçu` },
+      {
+        id: "connect",
+        label: `${formatMinutes(FRIDAY_CONNECT_MINUTES)} · Se connecter au compte reçu${plan.kind === "friday" ? " sur WhatsApp" : ""}`,
+      },
       ...ACCOUNTS.map((account) => ({ id: `min-${account.id}`, label: accountLine(FRIDAY_ACCOUNT_MINUTES, account) })),
     ];
     if (plan.kind === "sunday") {
