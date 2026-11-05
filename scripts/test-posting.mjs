@@ -5,6 +5,11 @@ const {
   DAY_PLANS,
   FRIDAY_ACCOUNT_MINUTES,
   FRIDAY_CONNECT_MINUTES,
+  MONDAY_COMPTE2_MINUTES,
+  MONDAY_COMPTE3_MINUTES,
+  MONDAY_POST_MINUTES,
+  MONDAY_WARM_AFTER,
+  MONDAY_WARM_BEFORE,
   PROFILES,
   SATURDAY_ACCOUNT_MINUTES,
   SUNDAY_BIO_MINUTES,
@@ -92,6 +97,26 @@ assert.deepEqual(
 );
 assert.equal(SUNDAY_PHOTO_MINUTES + SUNDAY_BIO_MINUTES + SUNDAY_WARM_MINUTES.reduce((sum, minutes) => sum + minutes, 0), 60);
 assert.equal(sunday.some((item) => /\b(FR|ES|US)\b|16 min 40/.test(item.label)), false);
+
+const monday = checksFor(DAY_PLANS[3]);
+assert.deepEqual(
+  monday.map((item) => item.label.split(" (")[0]),
+  [
+    "8 min · Chauffer le compte · Compte 1",
+    "5 min · Poster · Compte 1",
+    "8 min · Chauffer le compte après · Compte 1",
+    "20 min · Chauffer le compte 2",
+    "19 min · Chauffer le compte 3",
+  ]
+);
+assert.equal(monday.some((item) => /échauffement/i.test(item.label)), false);
+assert.ok(monday[0].label.includes("les regarder en entier sauf si ça n'intéresse pas"));
+assert.ok(monday[0].label.includes("s'abonner à des gens intéressants"));
+assert.equal(
+  MONDAY_WARM_BEFORE + MONDAY_POST_MINUTES + MONDAY_WARM_AFTER + MONDAY_COMPTE2_MINUTES + MONDAY_COMPTE3_MINUTES,
+  60
+);
+assert.equal(monday.some((item) => /\b(FR|ES|US)\b|16 min 40/.test(item.label)), false);
 
 assert.equal(accountRole(DAY_PLANS[3], "fr"), "publie");
 assert.equal(accountRole(DAY_PLANS[3], "es"), "échauffement");

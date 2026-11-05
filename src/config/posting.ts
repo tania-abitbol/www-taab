@@ -9,6 +9,11 @@ export const SUNDAY_PHOTO_MINUTES = 5;
 export const SUNDAY_BIO_MINUTES = 5;
 /** 50 minutes left in the hour, in whole minutes. */
 export const SUNDAY_WARM_MINUTES = [17, 17, 16] as const;
+export const MONDAY_WARM_BEFORE = 8;
+export const MONDAY_POST_MINUTES = 5;
+export const MONDAY_WARM_AFTER = 8;
+export const MONDAY_COMPTE2_MINUTES = 20;
+export const MONDAY_COMPTE3_MINUTES = 19;
 
 export const SLOTS = [
   { id: "17-18", label: "17:00–18:00", short: "17–18" },
@@ -148,6 +153,11 @@ export const formatMinutes = (minutes: number) => `${Math.round(minutes)} min`;
 const ACCOUNT_ACTIONS =
   "échauffer le compte, commenter des TikToks, les regarder en entier sauf si ça n'intéresse pas, s'abonner à des gens intéressants, chauffer le compte comme si tu y étais naturellement";
 
+const WARM_ACTIONS =
+  "commenter des TikToks, les regarder en entier sauf si ça n'intéresse pas, s'abonner à des gens intéressants";
+
+const warmLine = (minutes: number, title: string) => `${formatMinutes(minutes)} · ${title} (${WARM_ACTIONS})`;
+
 const accountLine = (minutes: number, account: AccountName) =>
   `${formatMinutes(minutes)} · ${account.task} (${ACCOUNT_ACTIONS})`;
 
@@ -176,6 +186,16 @@ export const checksFor = (plan: DayPlan): CheckItem[] => {
         id: `min-${account.id}`,
         label: accountLine(SUNDAY_WARM_MINUTES[index], account),
       })),
+    ];
+  }
+  if (plan.date === "2026-11-09") {
+    const [compte1, compte2, compte3] = ACCOUNTS;
+    return [
+      { id: "warm-before", label: warmLine(MONDAY_WARM_BEFORE, `Chauffer le compte · ${compte1.task}`) },
+      { id: "post", label: `${formatMinutes(MONDAY_POST_MINUTES)} · Poster · ${compte1.task}` },
+      { id: "warm-after", label: warmLine(MONDAY_WARM_AFTER, `Chauffer le compte après · ${compte1.task}`) },
+      { id: "warm-2", label: warmLine(MONDAY_COMPTE2_MINUTES, `Chauffer le ${compte2.task.toLowerCase()}`) },
+      { id: "warm-3", label: warmLine(MONDAY_COMPTE3_MINUTES, `Chauffer le ${compte3.task.toLowerCase()}`) },
     ];
   }
   if (plan.kind === "saturday") {
