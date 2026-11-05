@@ -1,101 +1,66 @@
 import assert from "node:assert/strict";
 
 const {
-  POSTING_START,
-  dayProgress,
-  diffDays,
-  durationLabel,
-  groupVideos,
-  isTikTokLink,
-  phaseFor,
-  weekOf,
+  CALENDAR_START,
+  CALENDAR_END,
+  DAY_PLANS,
+  checksFor,
+  dayReady,
+  emptyDayState,
+  othersValidated,
+  slideshowSplit,
 } = await import("../src/config/posting.ts");
 
-assert.equal(POSTING_START, "2026-11-06");
-assert.equal(diffDays("2026-11-06", "2026-11-05"), -1);
-assert.equal(phaseFor("2026-11-05").label, "Avant J1");
-assert.equal(phaseFor("2026-11-06").label, "J1");
-assert.equal(phaseFor("2026-11-07").label, "J2");
-assert.equal(phaseFor("2026-11-08").label, "J3");
-assert.equal(phaseFor("2026-11-09").label, "Routine");
-assert.equal(durationLabel(phaseFor("2026-11-06")), "40 min");
-assert.equal(durationLabel(phaseFor("2026-11-08")), "40 min");
-assert.equal(durationLabel(phaseFor("2026-11-09")), "1 h");
+assert.equal(CALENDAR_START, "2026-11-05");
+assert.equal(CALENDAR_END, "2026-11-15");
+assert.equal(DAY_PLANS[0].date, "2026-11-06");
+assert.equal(DAY_PLANS[0].kind, "warmup");
+assert.equal(DAY_PLANS[2].kind, "warmup-profile");
+assert.equal(DAY_PLANS[3].kind, "slideshow");
+assert.equal(DAY_PLANS[4].kind, "two-publish");
+assert.equal(DAY_PLANS[6].date, "2026-11-12");
+assert.equal(DAY_PLANS.at(-1).date, "2026-11-15");
+assert.equal(DAY_PLANS.at(-1).repeatsDay7, true);
 
-const week = weekOf("2026-11-06");
-assert.deepEqual(week, [
-  "2026-11-02",
-  "2026-11-03",
-  "2026-11-04",
-  "2026-11-05",
-  "2026-11-06",
-  "2026-11-07",
-  "2026-11-08",
-]);
+const day1 = checksFor(DAY_PLANS[0], emptyDayState(), 1);
+assert.ok(day1.some((item) => item.label === "20 min · Compte 1"));
+assert.ok(day1.some((item) => item.label === "20 min · Compte 2"));
+assert.ok(day1.some((item) => item.label === "20 min · Compte 3"));
+assert.equal(day1.some((item) => /lien/i.test(item.label)), false);
 
-const accounts = [
-  { id: "es-1", name: "Compte 1" },
-  { id: "es-2", name: "Compte 2" },
-  { id: "es-3", name: "Compte 3" },
-];
-const open = dayProgress(undefined, accounts);
-assert.equal(open.done, false);
-assert.equal(open.links, 0);
-assert.equal(isTikTokLink("https://vm.tiktok.com/Zabc/"), true);
-assert.equal(isTikTokLink("https://example.com/a"), false);
+const profile = checksFor(DAY_PLANS[2], emptyDayState(), 1);
+assert.ok(profile.some((item) => item.label.includes("Pas générée par IA")));
+assert.ok(profile.some((item) => item.label.includes("Bio dans ta langue")));
 
-const done = dayProgress(
-  {
-    slot: "18-19",
-    proofName: "session.mp4",
-    tasks: {
-      "es-1": { browsed: true, engaged: true, published: true, link: "https://www.tiktok.com/@a/video/1" },
-      "es-2": { browsed: true, engaged: false, published: true, link: "https://www.tiktok.com/@b/video/2" },
-      "es-3": { browsed: false, engaged: false, published: true, link: "https://www.tiktok.com/@c/video/3" },
-    },
-  },
-  accounts
+assert.deepEqual(slideshowSplit(1), { remaining: 40, each: 20 });
+assert.deepEqual(slideshowSplit(0), { remaining: 0, each: 0 });
+const slide = checksFor(DAY_PLANS[3], { ...emptyDayState(), slideshowAccount: "es-1" }, 1);
+assert.ok(slide.some((item) => item.label === "10 min d'échauffement avant la publication"));
+assert.ok(slide.some((item) => item.label === "20 min d'échauffement · Compte 2"));
+assert.ok(slide.some((item) => item.label === "20 min d'échauffement · Compte 3"));
+
+const two = checksFor(DAY_PLANS[4], { ...emptyDayState(), publishers: ["es-1", "es-3"] }, 1);
+assert.deepEqual(
+  two.map((item) => item.label),
+  ["Publier · Compte 1", "Publier · Compte 3", "Échauffement seulement · Compte 2"]
 );
-assert.equal(done.done, true);
-assert.equal(done.links, 3);
-assert.equal(done.proof, true);
+assert.equal(checksFor(DAY_PLANS[6], emptyDayState(), 0).length, 3);
 
-const missingSlot = dayProgress(
-  {
-    slot: null,
-    proofName: null,
-    tasks: done.tasks ? {} : {},
-  },
-  accounts
-);
-assert.equal(missingSlot.done, false);
+const state = emptyDayState();
+state.proofName = "session.mp4";
+for (const check of day1) state.checks[check.id] = true;
+assert.equal(dayReady(DAY_PLANS[0], state, 1), true);
+state.proofName = null;
+assert.equal(dayReady(DAY_PLANS[0], state, 1), false);
 
-const groups = groupVideos(
-  [
-    {
-      id: "1",
-      accountId: "es-2",
-      date: "2026-11-07",
-      caption: "b",
-      hashtags: "#b",
-      sourceUrl: "",
-      fileName: null,
-      createdAt: 2,
-    },
-    {
-      id: "2",
-      accountId: "es-1",
-      date: "2026-11-06",
-      caption: "a",
-      hashtags: "#a",
-      sourceUrl: "https://example.com/a.mp4",
-      fileName: "a.mp4",
-      createdAt: 1,
-    },
+const desk = {
+  people: [
+    { id: "p1", name: "A" },
+    { id: "p2", name: "B" },
   ],
-  accounts
-);
-assert.equal(groups[0].date, "2026-11-06");
-assert.equal(groups[0].rows[0].account.id, "es-1");
-assert.equal(groups[1].rows[0].account.id, "es-2");
-console.log("posting rules ok");
+  weekValidated: { p1: true },
+};
+assert.equal(othersValidated(desk), false);
+desk.weekValidated.p2 = true;
+assert.equal(othersValidated(desk), true);
+console.log("posting plan ok");

@@ -1,49 +1,45 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 import {
-  AccountTask,
-  DayRecord,
-  POSTING_START,
-  PostingMeta,
-  PreparedVideo,
+  ACCOUNTS,
+  DAY_PLANS,
+  DayState,
+  Desk,
   SLOTS,
   SlotId,
-  dayProgress,
-  durationLabel,
+  calendarDates,
+  checksFor,
+  dayHeading,
+  dayReady,
+  emptyDayState,
   formatDay,
-  formatShortDay,
-  groupVideos,
-  isTikTokLink,
   madridToday,
-  phaseFor,
-  taskFor,
-  videosFor,
-  weekOf,
+  othersValidated,
+  planFor,
+  slideshowSplit,
+  slotsFor,
 } from "~/config/posting";
-import { emptyDay, loadBlob, readMeta, saveBlob, writeMeta } from "~/components/posting/storage";
+import { loadBlob, readDesk, saveBlob, writeDesk } from "~/components/posting/storage";
 
 const fieldClass =
   "h-12 w-full rounded-xl border border-gray-300 bg-white px-4 font-body text-base text-black placeholder:text-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-1";
 
-const blobKey = {
-  video: (id: string) => `video:${id}`,
-  proof: (date: string) => `proof:${date}`,
-};
+const proofKey = (personId: string, date: string) => `proof:${personId}:${date}`;
+const TANIA_FILE = "tania:slideshow";
 
 export const PostingDashboard = () => {
   const today = madridToday();
-  const [meta, setMeta] = useState<PostingMeta | null>(null);
-  const [activeDate, setActiveDate] = useState(today);
+  const [desk, setDesk] = useState<Desk | null>(null);
+  const [viewer, setViewer] = useState("p1");
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [fileError, setFileError] = useState("");
-  const [depositError, setDepositError] = useState("");
-  const [depositNote, setDepositNote] = useState("");
+  const [newName, setNewName] = useState("");
 
   useEffect(() => {
-    const loaded = readMeta();
-    setMeta(loaded);
+    const loaded = readDesk();
+    setDesk(loaded);
     let cancelled = false;
     const created: string[] = [];
     const remember = (key: string, blob: Blob) => {
@@ -53,18 +49,20 @@ export const PostingDashboard = () => {
     };
     void (async () => {
       try {
-        for (const video of loaded.videos) {
-          if (!video.fileName) continue;
-          const blob = await loadBlob(blobKey.video(video.id));
-          if (blob) remember(blobKey.video(video.id), blob);
+        for (const person of loaded.people) {
+          for (const plan of DAY_PLANS) {
+            const name = loaded.days[person.id]?.[plan.date]?.proofName;
+            if (!name) continue;
+            const blob = await loadBlob(proofKey(person.id, plan.date));
+            if (blob) remember(proofKey(person.id, plan.date), blob);
+          }
         }
-        for (const [date, day] of Object.entries(loaded.days)) {
-          if (!day.proofName) continue;
-          const blob = await loadBlob(blobKey.proof(date));
-          if (blob) remember(blobKey.proof(date), blob);
+        if (loaded.taniaFileName) {
+          const blob = await loadBlob(TANIA_FILE);
+          if (blob) remember(TANIA_FILE, blob);
         }
       } catch {
-        if (!cancelled) setFileError("Les fichiers de ce navigateur ne se sont pas ouverts. Les liens restent utilisables.");
+        if (!cancelled) setFileError("Les fichiers de ce navigateur ne se sont pas ouverts.");
       }
     })();
     return () => {
@@ -73,107 +71,16 @@ export const PostingDashboard = () => {
     };
   }, []);
 
-  const commit = (next: PostingMeta) => {
-    setMeta(next);
-    writeMeta(next);
-  };
-
-  const day = meta?.days[activeDate] ?? emptyDay();
-  const phase = phaseFor(activeDate);
-  const progress = meta ? dayProgress(day, meta.accounts) : null;
-  const week = useMemo(() => weekOf(activeDate), [activeDate]);
-  const grouped = useMemo(() => (meta ? groupVideos(meta.videos, meta.accounts) : []), [meta]);
-
-  const updateDay = (recipe: (current: DayRecord) => DayRecord) => {
-    if (!meta) return;
-    const current = meta.days[activeDate] ?? emptyDay();
-    commit({ ...meta, days: { ...meta.days, [activeDate]: recipe(current) } });
-  };
-
-  const setSlot = (slot: SlotId) => updateDay((current) => ({ ...current, slot }));
-
-  const setTask = (accountId: string, patch: Partial<AccountTask>) =>
-    updateDay((current) => ({
-      ...current,
-      tasks: { ...current.tasks, [accountId]: { ...taskFor(current, accountId), ...patch } },
-    }));
-
-  const renameAccount = (accountId: string, name: string) => {
-    if (!meta) return;
-    commit({
-      ...meta,
-      accounts: meta.accounts.map((account) => (account.id === accountId ? { ...account, name } : account)),
+  const update = (recipe: (current: Desk) => Desk) => {
+    setDesk((current) => {
+      if (!current) return current;
+      const next = recipe(current);
+      writeDesk(next);
+      return next;
     });
   };
 
-  const onProof = async (file: File | undefined) => {
-    if (!file || !meta) return;
-    setFileError("");
-    try {
-      await saveBlob(blobKey.proof(activeDate), file);
-      const url = URL.createObjectURL(file);
-      setUrls((current) => ({ ...current, [blobKey.proof(activeDate)]: url }));
-      updateDay((current) => ({ ...current, proofName: file.name }));
-    } catch {
-      setFileError("La capture n'a pas été gardée. Réessaie, ou un fichier plus léger.");
-    }
-  };
-
-  const onDeposit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!meta) return;
-    const form = event.currentTarget;
-    const data = new FormData(form);
-    const accountId = String(data.get("account") ?? "");
-    const date = String(data.get("date") ?? "");
-    const caption = String(data.get("caption") ?? "").trim();
-    const hashtags = String(data.get("hashtags") ?? "").trim();
-    const sourceUrl = String(data.get("sourceUrl") ?? "").trim();
-    const file = data.get("file");
-    const videoFile = file instanceof File && file.size > 0 ? file : null;
-    if (!meta.accounts.some((account) => account.id === accountId) || !date) {
-      setDepositError("Choisis un compte et une date.");
-      setDepositNote("");
-      return;
-    }
-    if (!videoFile && !sourceUrl) {
-      setDepositError("Ajoute un fichier ou une URL.");
-      setDepositNote("");
-      return;
-    }
-    const video: PreparedVideo = {
-      id: crypto.randomUUID(),
-      accountId,
-      date,
-      caption,
-      hashtags,
-      sourceUrl,
-      fileName: videoFile?.name ?? null,
-      createdAt: Date.now(),
-    };
-    try {
-      if (videoFile) await saveBlob(blobKey.video(video.id), videoFile);
-    } catch {
-      setDepositError("Le fichier n'a pas été gardé dans ce navigateur. Colle une URL à la place.");
-      setDepositNote("");
-      return;
-    }
-    if (videoFile) {
-      const url = URL.createObjectURL(videoFile);
-      setUrls((current) => ({ ...current, [blobKey.video(video.id)]: url }));
-    }
-    commit({ ...meta, videos: [...meta.videos, video] });
-    form.reset();
-    setDepositError("");
-    setDepositNote("Vidéo déposée.");
-  };
-
-  const removeVideo = (id: string) => {
-    if (!meta) return;
-    commit({ ...meta, videos: meta.videos.filter((video) => video.id !== id) });
-  };
-
-  if (!meta || !progress) {
+  if (!desk) {
     return (
       <main lang="fr" className="min-h-dvh px-4 py-6">
         <p className="font-body text-base text-gray-700">Ouverture…</p>
@@ -181,7 +88,79 @@ export const PostingDashboard = () => {
     );
   }
 
-  const proofUrl = urls[blobKey.proof(activeDate)];
+  const person = desk.people.find((item) => item.id === viewer) ?? null;
+  const weekOpen = othersValidated(desk);
+
+  const toggleSlot = (date: string, slotId: SlotId) => {
+    if (!person) return;
+    update((current) => {
+      const chosen = new Set(slotsFor(current, person.id, date));
+      if (chosen.has(slotId)) chosen.delete(slotId);
+      else chosen.add(slotId);
+      const ordered = SLOTS.map((slot) => slot.id).filter((id) => chosen.has(id));
+      return {
+        ...current,
+        slots: { ...current.slots, [person.id]: { ...current.slots[person.id], [date]: ordered } },
+        weekValidated: { ...current.weekValidated, [person.id]: false },
+        taniaValidated: false,
+      };
+    });
+  };
+
+  const patchDay = (date: string, recipe: (day: DayState) => DayState) => {
+    if (!person) return;
+    update((current) => {
+      const existing = current.days[person.id]?.[date] ?? emptyDayState();
+      const next = recipe(existing);
+      const plan = planFor(date);
+      const ready = plan ? dayReady(plan, next, slotsFor(current, person.id, date).length) : false;
+      const saved = { ...next, validated: next.validated && ready };
+      return {
+        ...current,
+        days: { ...current.days, [person.id]: { ...current.days[person.id], [date]: saved } },
+      };
+    });
+  };
+
+  const onProof = async (date: string, file: File | undefined) => {
+    if (!file || !person) return;
+    setFileError("");
+    try {
+      await saveBlob(proofKey(person.id, date), file);
+      const url = URL.createObjectURL(file);
+      setUrls((current) => ({ ...current, [proofKey(person.id, date)]: url }));
+      patchDay(date, (day) => ({ ...day, proofName: file.name, validated: day.validated }));
+    } catch {
+      setFileError("La capture n'a pas été gardée. Réessaie avec un fichier plus léger.");
+    }
+  };
+
+  const onTaniaFile = async (file: File | undefined) => {
+    if (!file) return;
+    setFileError("");
+    try {
+      await saveBlob(TANIA_FILE, file);
+      const url = URL.createObjectURL(file);
+      setUrls((current) => ({ ...current, [TANIA_FILE]: url }));
+      update((current) => ({ ...current, taniaFileName: file.name }));
+    } catch {
+      setFileError("Le fichier n'a pas été gardé dans ce navigateur.");
+    }
+  };
+
+  const addPerson = (event: FormEvent) => {
+    event.preventDefault();
+    const name = newName.trim();
+    if (!name) return;
+    const id = `p-${Date.now().toString(36)}`;
+    update((current) => ({
+      ...current,
+      people: [...current.people, { id, name }],
+      taniaValidated: false,
+    }));
+    setNewName("");
+    setViewer(id);
+  };
 
   return (
     <main lang="fr" className="min-h-dvh px-4 py-6 selection:bg-yellow selection:text-black sm:px-6 sm:py-8">
@@ -189,339 +168,314 @@ export const PostingDashboard = () => {
         <a href="/" className="font-title text-3xl tracking-tight">
           TAAB
         </a>
-
-        <header className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)] sm:p-6">
-          <p className="font-body text-sm text-gray-700">{formatDay(activeDate)}</p>
-          <div className="mt-1 flex items-end justify-between gap-4">
-            <h1 className="font-title text-4xl tracking-tight">{phase.label}</h1>
-            <p className="font-body text-base font-bold">{durationLabel(phase)}</p>
-          </div>
-          {phase.id === "before" && (
-            <p className="mt-2 font-body text-sm leading-relaxed text-gray-700">
-              J1 commence le {formatDay(POSTING_START)}. Le créneau et les liens se souviennent déjà par jour.
-            </p>
-          )}
-          {activeDate !== today && (
-            <button
-              type="button"
-              onClick={() => setActiveDate(today)}
-              className="mt-3 font-body text-sm underline decoration-gray-300 underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
-            >
-              Revenir à aujourd&apos;hui
-            </button>
-          )}
-
-          <fieldset className="mt-5">
-            <legend className="font-body text-sm font-bold">Créneau du jour</legend>
-            <div role="radiogroup" aria-required="true" aria-label="Créneau du jour" className="mt-2 grid grid-cols-2 gap-2">
-              {SLOTS.map((slot) => {
-                const selected = day.slot === slot.id;
-                return (
-                  <button
-                    key={slot.id}
-                    id={`slot-${slot.id}`}
-                    type="button"
-                    role="radio"
-                    aria-checked={selected}
-                    onClick={() => setSlot(slot.id)}
-                    className={`h-12 rounded-xl border px-2 font-body text-sm font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 ${
-                      selected ? "border-black bg-black text-white" : "border-gray-300 bg-white text-black"
-                    }`}
-                  >
-                    {slot.label}
-                  </button>
-                );
-              })}
-            </div>
-          </fieldset>
-
-          <p id="day-status" className={`mt-4 font-body text-base ${progress.done ? "font-bold" : "text-gray-700"}`}>
-            {progress.done ? "Journée faite" : `Journée incomplète · ${progress.links}/${progress.total} liens`}
-            {!progress.slot ? " · créneau manquant" : ""}
+        <header>
+          <h1 className="font-title text-4xl tracking-tight">Publication</h1>
+          <p className="mt-2 max-w-prose font-body text-sm leading-relaxed text-gray-700">
+            Du jeudi 5 novembre au dimanche 15 novembre. Chacun coche ses créneaux, puis Tania les poste sur Upwork.
           </p>
         </header>
 
-        <section className="flex flex-col gap-3">
-          <h2 className="font-title text-2xl tracking-tight">Aujourd&apos;hui</h2>
-          {meta.accounts.map((account) => {
-            const task = taskFor(day, account.id);
-            const ready = videosFor(meta.videos, activeDate, account.id);
-            const linkInvalid = task.link.trim().length > 0 && !isTikTokLink(task.link);
-            return (
-              <article key={account.id} className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
-                <h3 className="font-title text-xl tracking-tight">{account.name}</h3>
-                {ready.length === 0 ? (
-                  <p className="mt-3 rounded-2xl bg-gray-100 px-3 py-3 font-body text-sm leading-relaxed text-gray-700">
-                    Pas de vidéo déposée pour ce jour. La légende, les hashtags et le fichier apparaîtront ici dès
-                    qu&apos;ils sont ajoutés plus bas.
-                  </p>
-                ) : (
-                  <ul className="mt-3 flex flex-col gap-3">
-                    {ready.map((video) => (
-                      <li key={video.id} className="rounded-2xl bg-gray-100 px-3 py-3">
-                        <VideoActions video={video} fileUrl={urls[blobKey.video(video.id)]} />
-                        {video.caption && <p className="mt-2 font-body text-sm leading-relaxed">{video.caption}</p>}
-                        {video.hashtags && <p className="mt-1 font-body text-sm text-gray-700">{video.hashtags}</p>}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <div className="mt-4 flex flex-col gap-2">
-                  <Check
-                    id={`browsed-${account.id}`}
-                    label="Parcouru"
-                    checked={task.browsed}
-                    onChange={(browsed) => setTask(account.id, { browsed })}
-                  />
-                  <Check
-                    id={`engaged-${account.id}`}
-                    label="Aimé ou commenté"
-                    checked={task.engaged}
-                    onChange={(engaged) => setTask(account.id, { engaged })}
-                  />
-                  <Check
-                    id={`published-${account.id}`}
-                    label="Publié"
-                    checked={task.published}
-                    onChange={(published) => setTask(account.id, { published })}
-                  />
-                </div>
-                <label htmlFor={`link-${account.id}`} className="mt-4 block font-body text-sm font-bold">
-                  Lien TikTok publié
-                </label>
-                <input
-                  id={`link-${account.id}`}
-                  value={task.link}
-                  inputMode="url"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  placeholder="https://www.tiktok.com/…"
-                  onChange={(event) => setTask(account.id, { link: event.target.value })}
-                  className={`mt-2 ${fieldClass}`}
-                />
-                {linkInvalid && (
-                  <p className="mt-2 font-body text-sm text-[#C8102E]">Colle un lien tiktok.com.</p>
-                )}
-              </article>
-            );
-          })}
-        </section>
-
         <section className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)] sm:p-6">
-          <h2 className="font-title text-2xl tracking-tight">Vidéos à poster</h2>
-          {grouped.length === 0 ? (
-            <p className="mt-3 font-body text-sm leading-relaxed text-gray-700">
-              Rien à télécharger pour l&apos;instant. Demain, chaque compte reste vide tant qu&apos;un fichier ou une
-              URL n&apos;est pas déposé, avec la légende, les hashtags et la date.
-            </p>
-          ) : (
-            <div className="mt-4 flex flex-col gap-5">
-              {grouped.map((group) => (
-                <div key={group.date}>
-                  <h3 className="font-body text-sm font-bold">{formatDay(group.date)}</h3>
-                  {group.rows.map((row) => (
-                    <div key={row.account.id} className="mt-2">
-                      <p className="font-body text-sm">{row.account.name}</p>
-                      <ul className="mt-1 flex flex-col gap-2">
-                        {row.videos.map((video) => (
-                          <li key={video.id} className="rounded-2xl bg-gray-100 px-3 py-3">
-                            <VideoActions video={video} fileUrl={urls[blobKey.video(video.id)]} />
-                            {video.caption && <p className="mt-2 font-body text-sm leading-relaxed">{video.caption}</p>}
-                            {video.hashtags && <p className="mt-1 font-body text-sm text-gray-700">{video.hashtags}</p>}
-                            <button
-                              type="button"
-                              onClick={() => removeVideo(video.id)}
-                              className="mt-2 font-body text-sm text-gray-700 underline decoration-gray-300 underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
-                            >
-                              Retirer
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          )}
-
-          <form key={activeDate} onSubmit={(event) => void onDeposit(event)} className="mt-5 border-t border-gray-200 pt-4">
-            <details>
-            <summary className="cursor-pointer font-body text-base font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-black">
-              Déposer une vidéo
-            </summary>
-            <div className="mt-3 flex flex-col gap-3">
-            <label htmlFor="deposit-account" className="font-body text-sm font-bold">
-              Compte
-            </label>
-            <select id="deposit-account" name="account" className={fieldClass} defaultValue={meta.accounts[0].id}>
-              {meta.accounts.map((account) => (
-                <option key={account.id} value={account.id}>
-                  {account.name}
-                </option>
-              ))}
-            </select>
-            <label htmlFor="deposit-date" className="font-body text-sm font-bold">
-              Date
-            </label>
-            <input id="deposit-date" name="date" type="date" required defaultValue={activeDate} className={fieldClass} />
-            <label htmlFor="deposit-caption" className="font-body text-sm font-bold">
-              Légende
-            </label>
-            <textarea
-              id="deposit-caption"
-              name="caption"
-              rows={3}
-              placeholder="Texte sous la vidéo"
-              className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 font-body text-base text-black placeholder:text-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-1"
-            />
-            <label htmlFor="deposit-tags" className="font-body text-sm font-bold">
-              Hashtags
-            </label>
-            <input id="deposit-tags" name="hashtags" placeholder="#soirée" className={fieldClass} />
-            <label htmlFor="deposit-file" className="font-body text-sm font-bold">
-              Fichier
-            </label>
-            <input id="deposit-file" name="file" type="file" accept="video/*" className="font-body text-sm" />
-            <label htmlFor="deposit-url" className="font-body text-sm font-bold">
-              ou URL
-            </label>
-            <input id="deposit-url" name="sourceUrl" type="url" inputMode="url" placeholder="https://" className={fieldClass} />
-            {meta.accounts.map((account) => (
-              <label key={account.id} className="font-body text-sm">
-                <span className="mb-1 block font-bold">Nom affiché · {account.id === "es-1" ? "compte 1" : account.id === "es-2" ? "compte 2" : "compte 3"}</span>
-                <input
-                  value={account.name}
-                  onChange={(event) => renameAccount(account.id, event.target.value)}
-                  className={fieldClass}
-                />
-              </label>
+          <label htmlFor="viewer" className="font-body text-sm font-bold">
+            Je suis
+          </label>
+          <select id="viewer" value={viewer} onChange={(event) => setViewer(event.target.value)} className={`mt-2 ${fieldClass}`}>
+            {desk.people.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
             ))}
-            {depositError && <p className="font-body text-sm text-[#C8102E]">{depositError}</p>}
-            {depositNote && <p className="font-body text-sm">{depositNote}</p>}
+            <option value="tania">Tania</option>
+          </select>
+          {person && (
+            <label htmlFor="person-name" className="mt-3 block font-body text-sm font-bold">
+              Nom affiché
+              <input
+                id="person-name"
+                value={person.name}
+                onChange={(event) =>
+                  update((current) => ({
+                    ...current,
+                    people: current.people.map((item) => (item.id === person.id ? { ...item, name: event.target.value } : item)),
+                  }))
+                }
+                className={`mt-2 ${fieldClass}`}
+              />
+            </label>
+          )}
+          <form onSubmit={addPerson} className="mt-3 flex gap-2">
+            <label htmlFor="new-person" className="sr-only">
+              Ajouter une personne
+            </label>
+            <input
+              id="new-person"
+              value={newName}
+              onChange={(event) => setNewName(event.target.value)}
+              placeholder="Ajouter une personne"
+              className={fieldClass}
+            />
             <button
               type="submit"
-              className="h-12 rounded-xl bg-black px-5 font-body text-base font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
+              className="h-12 shrink-0 rounded-xl bg-black px-4 font-body text-sm font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
             >
-              Déposer
+              Ajouter
             </button>
-            </div>
-            </details>
           </form>
         </section>
 
+        <section aria-label="Calendrier de la semaine" className="flex flex-col gap-3">
+          <h2 className="font-title text-2xl tracking-tight">Créneaux</h2>
+          {calendarDates().map((date) => (
+            <article key={date} className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
+              <h3 className="font-body text-base font-bold">
+                {formatDay(date)}
+                {date === today ? " · aujourd'hui" : ""}
+              </h3>
+              {person && (
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  {SLOTS.map((slot) => {
+                    const selected = slotsFor(desk, person.id, date).includes(slot.id);
+                    return (
+                      <button
+                        key={slot.id}
+                        id={`slot-${date}-${slot.id}`}
+                        type="button"
+                        aria-pressed={selected}
+                        onClick={() => toggleSlot(date, slot.id)}
+                        className={`h-12 rounded-xl border px-2 font-body text-sm font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 ${
+                          selected ? "border-black bg-black text-white" : "border-gray-300 bg-white text-black"
+                        }`}
+                      >
+                        {slot.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              <ul className="mt-3 flex flex-col gap-1">
+                {desk.people.map((item) => {
+                  const labels = slotsFor(desk, item.id, date).map((id) => SLOTS.find((slot) => slot.id === id)?.label);
+                  return (
+                    <li key={item.id} className="font-body text-sm text-gray-700">
+                      {item.name} · {labels.length > 0 ? labels.join(", ") : "aucun créneau"}
+                    </li>
+                  );
+                })}
+              </ul>
+            </article>
+          ))}
+        </section>
+
         <section className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)] sm:p-6">
-          <h2 className="font-title text-2xl tracking-tight">Preuve du jour</h2>
-          <p className="mt-2 font-body text-sm leading-relaxed text-gray-700">
-            Une capture filmée de la session. Une par jour.
+          <h2 className="font-title text-2xl tracking-tight">Validation</h2>
+          {person && (
+            <button
+              id="validate-week"
+              type="button"
+              disabled={desk.weekValidated[person.id] === true}
+              onClick={() => update((current) => ({ ...current, weekValidated: { ...current.weekValidated, [person.id]: true } }))}
+              className="mt-3 h-12 w-full rounded-xl bg-black px-4 font-body text-base font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:opacity-40"
+            >
+              {desk.weekValidated[person.id] ? "Semaine validée" : "Valider ma semaine"}
+            </button>
+          )}
+          <p className="mt-4 font-body text-sm leading-relaxed text-gray-700">
+            Quand les autres ont validé, Tania valide à son tour. Elle poste ensuite les créneaux sur Upwork.
           </p>
-          <label htmlFor="proof-file" className="mt-3 block font-body text-sm font-bold">
-            Enregistrement
-          </label>
-          <input
-            id="proof-file"
-            type="file"
-            accept="video/*"
-            onChange={(event) => void onProof(event.target.files?.[0])}
-            className="mt-2 font-body text-sm"
-          />
-          {day.proofName && <p className="mt-3 font-body text-sm">{day.proofName}</p>}
-          {proofUrl && <video src={proofUrl} controls className="mt-3 w-full rounded-2xl bg-black" />}
-          {fileError && <p className="mt-2 font-body text-sm text-[#C8102E]">{fileError}</p>}
+          <button
+            id="validate-tania"
+            type="button"
+            disabled={!weekOpen || desk.taniaValidated}
+            onClick={() => update((current) => ({ ...current, taniaValidated: true }))}
+            className="mt-3 h-12 w-full rounded-xl border border-black bg-white px-4 font-body text-base font-bold text-black focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:opacity-40"
+          >
+            {desk.taniaValidated ? "Créneaux validés, à poster sur Upwork" : "Valider les créneaux"}
+          </button>
+          {!weekOpen && <p className="mt-2 font-body text-sm text-gray-700">En attente de la validation de chaque personne.</p>}
         </section>
 
-        <section className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)] sm:p-6">
-          <h2 className="font-title text-2xl tracking-tight">Semaine</h2>
-          <ol className="mt-3 divide-y divide-gray-200">
-            {week.map((date) => {
-              const record = meta.days[date];
-              const item = dayProgress(record, meta.accounts);
-              const itemPhase = phaseFor(date);
-              const selected = date === activeDate;
-              return (
-                <li key={date}>
+        {DAY_PLANS.map((plan) => {
+          const state = person ? desk.days[person.id]?.[plan.date] ?? emptyDayState() : emptyDayState();
+          const slotCount = person ? slotsFor(desk, person.id, plan.date).length : 0;
+          const checks = checksFor(plan, state, slotCount);
+          const ready = person ? dayReady(plan, state, slotCount) : false;
+          const split = slideshowSplit(slotCount);
+          return (
+            <section key={plan.date} className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)] sm:p-6">
+              <p className="font-body text-sm text-gray-700">{dayHeading(plan)}</p>
+              <h2 className="font-title text-2xl tracking-tight">{formatDay(plan.date)}</h2>
+              {plan.kind === "warmup" || plan.kind === "warmup-profile" ? (
+                <p className="mt-2 font-body text-sm leading-relaxed text-gray-700">1 h pour les trois comptes, soit 20 min chacun.</p>
+              ) : null}
+              {plan.kind === "slideshow" && (
+                <div className="mt-3">
+                  <p className="font-body text-sm leading-relaxed text-gray-700">
+                    Un compte publie un diaporama. 10 min d&apos;échauffement avant, 10 min après.
+                    {slotCount > 0
+                      ? ` Temps restant ${split.remaining} min, soit ${split.each} min sur chacun des deux autres comptes.`
+                      : " Coche tes créneaux pour voir le temps restant en minutes."}
+                  </p>
+                  <div role="radiogroup" aria-label="Compte du diaporama" className="mt-3 grid gap-2">
+                    {ACCOUNTS.map((account) => {
+                      const selected = state.slideshowAccount === account.id;
+                      return (
+                        <button
+                          key={account.id}
+                          type="button"
+                          role="radio"
+                          aria-checked={selected}
+                          disabled={!person}
+                          onClick={() => patchDay(plan.date, (day) => ({ ...day, slideshowAccount: account.id }))}
+                          className={`h-12 rounded-xl border px-3 text-left font-body text-sm font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-black ${
+                            selected ? "border-black bg-black text-white" : "border-gray-300 bg-white"
+                          }`}
+                        >
+                          Diaporama · {account.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <label htmlFor="tania-file" className="mt-4 block font-body text-sm font-bold">
+                    Fichier de Tania
+                  </label>
+                  <input
+                    id="tania-file"
+                    type="file"
+                    onChange={(event) => void onTaniaFile(event.target.files?.[0])}
+                    className="mt-2 font-body text-sm"
+                  />
+                  {desk.taniaFileName && <p className="mt-2 font-body text-sm">{desk.taniaFileName}</p>}
+                  {urls[TANIA_FILE] && (
+                    <a href={urls[TANIA_FILE]} download={desk.taniaFileName || "diaporama"} className="mt-2 inline-block font-body text-sm font-bold underline">
+                      Télécharger
+                    </a>
+                  )}
+                </div>
+              )}
+              {plan.kind === "two-publish" && person && (
+                <div className="mt-3">
+                  <p className="font-body text-sm leading-relaxed text-gray-700">
+                    Deux comptes publient. Le troisième ne fait que l&apos;échauffement.
+                  </p>
+                  <div className="mt-3 grid gap-2">
+                    {ACCOUNTS.map((account) => {
+                      const selected = state.publishers.includes(account.id);
+                      return (
+                        <button
+                          key={account.id}
+                          type="button"
+                          aria-pressed={selected}
+                          onClick={() =>
+                            patchDay(plan.date, (day) => ({
+                              ...day,
+                              publishers: selected
+                                ? day.publishers.filter((id) => id !== account.id)
+                                : [...day.publishers, account.id],
+                            }))
+                          }
+                          className={`h-12 rounded-xl border px-3 text-left font-body text-sm font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-black ${
+                            selected ? "border-black bg-black text-white" : "border-gray-300 bg-white"
+                          }`}
+                        >
+                          {account.name} publie
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {state.publishers.length !== 2 && (
+                    <p className="mt-2 font-body text-sm text-gray-700">Choisis exactement deux comptes.</p>
+                  )}
+                </div>
+              )}
+              {plan.kind === "all-publish" && (
+                <p className="mt-2 font-body text-sm leading-relaxed text-gray-700">Les trois comptes publient.</p>
+              )}
+
+              {person ? (
+                <ul className="mt-4 flex flex-col gap-2">
+                  {checks.map((check) => (
+                    <li key={check.id}>
+                      <label htmlFor={`check-${plan.date}-${check.id}`} className="flex min-h-11 items-start gap-3 font-body text-base">
+                        <input
+                          id={`check-${plan.date}-${check.id}`}
+                          type="checkbox"
+                          checked={state.checks[check.id] === true}
+                          onChange={(event) =>
+                            patchDay(plan.date, (day) => ({
+                              ...day,
+                              checks: { ...day.checks, [check.id]: event.target.checked },
+                            }))
+                          }
+                          className="mt-1 h-5 w-5 accent-black"
+                        />
+                        <span>{check.label}</span>
+                      </label>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <ul className="mt-4 flex flex-col gap-2">
+                  {desk.people.map((item) => {
+                    const itemState = desk.days[item.id]?.[plan.date] ?? emptyDayState();
+                    const itemReady = dayReady(plan, itemState, slotsFor(desk, item.id, plan.date).length);
+                    return (
+                      <li key={item.id} className="font-body text-sm">
+                        {item.name} · {itemState.validated ? "journée validée" : itemReady ? "prête à valider" : "en cours"}
+                        {itemState.proofName ? ` · ${itemState.proofName}` : " · sans preuve"}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+
+              {person && (
+                <div className="mt-5 rounded-2xl bg-gray-100 p-3">
+                  <h3 className="font-body text-base font-bold">Preuve du jour</h3>
+                  <p className="mt-1 font-body text-sm leading-relaxed text-gray-700">
+                    Enregistrement filmé de la session. C&apos;est la seule preuve de publication.
+                  </p>
+                  <label htmlFor={`proof-${plan.date}`} className="mt-3 block font-body text-sm font-bold">
+                    Fichier
+                  </label>
+                  <input
+                    id={`proof-${plan.date}`}
+                    type="file"
+                    accept="video/*"
+                    onChange={(event) => void onProof(plan.date, event.target.files?.[0])}
+                    className="mt-2 font-body text-sm"
+                  />
+                  {state.proofName && <p className="mt-2 font-body text-sm">{state.proofName}</p>}
+                  {urls[proofKey(person.id, plan.date)] && (
+                    <video src={urls[proofKey(person.id, plan.date)]} controls className="mt-3 w-full rounded-2xl bg-black" />
+                  )}
+                </div>
+              )}
+
+              {person && (
+                <div className="mt-4">
                   <button
+                    id={`validate-day-${plan.date}`}
                     type="button"
-                    onClick={() => setActiveDate(date)}
-                    aria-current={selected ? "date" : undefined}
-                    className={`flex w-full flex-col gap-1 py-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-black ${
-                      selected ? "font-bold" : ""
-                    }`}
+                    disabled={!ready || state.validated}
+                    onClick={() => patchDay(plan.date, (day) => ({ ...day, validated: true }))}
+                    className="h-12 w-full rounded-xl bg-black px-4 font-body text-base font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:opacity-40"
                   >
-                    <span className="flex items-baseline justify-between gap-3 font-body text-base">
-                      <span>
-                        {formatShortDay(date)}
-                        {date === today ? " · aujourd'hui" : ""}
-                      </span>
-                      <span>{itemPhase.label}</span>
-                    </span>
-                    <span className="font-body text-sm font-normal text-gray-700">
-                      {record?.slot ? slotText(record.slot) : "Créneau —"} · {item.links}/{item.total} liens ·{" "}
-                      {item.proof ? "Preuve" : "Sans preuve"}
-                      {item.done ? " · faite" : ""}
-                    </span>
+                    {state.validated ? "Journée validée" : "Valider la journée"}
                   </button>
-                </li>
-              );
-            })}
-          </ol>
-        </section>
+                  {!state.validated && (
+                    <p className="mt-2 font-body text-sm text-gray-700">
+                      {ready ? "Cases et preuve sont là." : "Il manque des cases ou la preuve."}
+                    </p>
+                  )}
+                </div>
+              )}
+            </section>
+          );
+        })}
 
-        <p className="font-body text-sm leading-relaxed text-gray-700">
-          Créneaux, cases, liens et fichiers restent dans ce navigateur.
-        </p>
+        {fileError && <p className="font-body text-sm text-[#C8102E]">{fileError}</p>}
+        <p className="font-body text-sm leading-relaxed text-gray-700">Créneaux, cases et fichiers restent dans ce navigateur.</p>
       </div>
     </main>
   );
 };
-
-const slotText = (id: SlotId) => SLOTS.find((slot) => slot.id === id)?.label ?? "";
-
-const Check = ({
-  id,
-  label,
-  checked,
-  onChange,
-}: {
-  id: string;
-  label: string;
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-}) => (
-  <label htmlFor={id} className="flex min-h-11 items-center gap-3 font-body text-base">
-    <input
-      id={id}
-      type="checkbox"
-      checked={checked}
-      onChange={(event) => onChange(event.target.checked)}
-      className="h-5 w-5 accent-black"
-    />
-    {label}
-  </label>
-);
-
-const VideoActions = ({ video, fileUrl }: { video: PreparedVideo; fileUrl?: string }) => (
-  <span className="flex flex-wrap gap-3">
-    {fileUrl && (
-      <a
-        href={fileUrl}
-        download={video.fileName || "video"}
-        className="font-body text-sm font-bold underline decoration-gray-300 underline-offset-2"
-      >
-        Télécharger
-      </a>
-    )}
-    {video.sourceUrl && (
-      <a
-        href={video.sourceUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="font-body text-sm font-bold underline decoration-gray-300 underline-offset-2"
-      >
-        Ouvrir
-      </a>
-    )}
-    {!fileUrl && video.fileName && <span className="font-body text-sm text-gray-700">{video.fileName}</span>}
-  </span>
-);

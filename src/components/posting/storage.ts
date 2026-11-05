@@ -1,65 +1,99 @@
-import { DayRecord, PostingMeta, emptyMeta, isIsoDate, isSlotId } from "~/config/posting";
+import {
+  ACCOUNTS,
+  DayState,
+  Desk,
+  Person,
+  SlotId,
+  emptyDayState,
+  emptyDesk,
+  isIsoDate,
+  isSlotId,
+} from "~/config/posting";
 
-export const POSTING_STORAGE_KEY = "taab:posting:v1";
+export const POSTING_STORAGE_KEY = "taab:posting:v2";
 const DB_NAME = "taab-posting";
 const STORE = "blobs";
 
-const emptyDay = (): DayRecord => ({ slot: null, tasks: {}, proofName: null });
+const asPeople = (value: unknown, fallback: Person[]) => {
+  if (!Array.isArray(value)) return fallback;
+  const people = value
+    .filter((item) => item && typeof item.id === "string" && typeof item.name === "string")
+    .map((item) => ({ id: item.id, name: item.name.trim() || "Personne" }));
+  return people.length > 0 ? people : fallback;
+};
 
-const asRecord = (value: unknown): DayRecord => {
-  const source = value && typeof value === "object" ? (value as Partial<DayRecord>) : {};
-  const tasks = source.tasks && typeof source.tasks === "object" ? source.tasks : {};
+const asDay = (value: unknown): DayState => {
+  const source = value && typeof value === "object" ? (value as Partial<DayState>) : {};
+  const checks: Record<string, boolean> = {};
+  if (source.checks && typeof source.checks === "object") {
+    for (const [id, on] of Object.entries(source.checks)) if (on === true) checks[id] = true;
+  }
+  const publishers = Array.isArray(source.publishers)
+    ? source.publishers.filter((id): id is string => ACCOUNTS.some((account) => account.id === id))
+    : [];
   return {
-    slot: typeof source.slot === "string" && isSlotId(source.slot) ? source.slot : null,
-    tasks,
+    checks,
     proofName: typeof source.proofName === "string" && source.proofName ? source.proofName : null,
+    validated: source.validated === true,
+    slideshowAccount: ACCOUNTS.some((account) => account.id === source.slideshowAccount) ? String(source.slideshowAccount) : null,
+    publishers,
   };
 };
 
-export const parseMeta = (raw: string | null): PostingMeta => {
-  const base = emptyMeta();
+export const parseDesk = (raw: string | null): Desk => {
+  const base = emptyDesk();
   if (!raw) return base;
   try {
-    const parsed = JSON.parse(raw) as Partial<PostingMeta>;
-    const accounts = Array.isArray(parsed.accounts) ? parsed.accounts : [];
-    const named = base.accounts.map((account) => {
-      const found = accounts.find((item) => item && item.id === account.id && typeof item.name === "string");
-      const name = found?.name.trim();
-      return { id: account.id, name: name || account.name };
-    });
-    const days: PostingMeta["days"] = {};
-    if (parsed.days && typeof parsed.days === "object") {
-      for (const [date, record] of Object.entries(parsed.days)) {
-        if (isIsoDate(date)) days[date] = asRecord(record);
+    const parsed = JSON.parse(raw) as Partial<Desk>;
+    const people = asPeople(parsed.people, base.people);
+    const slots: Desk["slots"] = {};
+    if (parsed.slots && typeof parsed.slots === "object") {
+      for (const [personId, byDate] of Object.entries(parsed.slots)) {
+        if (!people.some((person) => person.id === personId) || !byDate || typeof byDate !== "object") continue;
+        slots[personId] = {};
+        for (const [date, chosen] of Object.entries(byDate)) {
+          if (!isIsoDate(date) || !Array.isArray(chosen)) continue;
+          slots[personId][date] = chosen.filter((id): id is SlotId => typeof id === "string" && isSlotId(id));
+        }
       }
     }
-    const videos = Array.isArray(parsed.videos)
-      ? parsed.videos.filter(
-          (video) =>
-            video &&
-            typeof video.id === "string" &&
-            typeof video.accountId === "string" &&
-            typeof video.date === "string" &&
-            isIsoDate(video.date) &&
-            named.some((account) => account.id === video.accountId)
-        )
-      : [];
-    return { accounts: named, days, videos };
+    const weekValidated: Record<string, boolean> = {};
+    if (parsed.weekValidated && typeof parsed.weekValidated === "object") {
+      for (const person of people) if (parsed.weekValidated[person.id] === true) weekValidated[person.id] = true;
+    }
+    const days: Desk["days"] = {};
+    if (parsed.days && typeof parsed.days === "object") {
+      for (const [personId, byDate] of Object.entries(parsed.days)) {
+        if (!people.some((person) => person.id === personId) || !byDate || typeof byDate !== "object") continue;
+        days[personId] = {};
+        for (const [date, record] of Object.entries(byDate)) {
+          if (isIsoDate(date)) days[personId][date] = asDay(record);
+        }
+      }
+    }
+    return {
+      people,
+      slots,
+      weekValidated,
+      taniaValidated: parsed.taniaValidated === true && people.every((person) => weekValidated[person.id]),
+      days,
+      taniaFileName: typeof parsed.taniaFileName === "string" && parsed.taniaFileName ? parsed.taniaFileName : null,
+    };
   } catch {
     return base;
   }
 };
 
-export const readMeta = (): PostingMeta => {
+export const readDesk = (): Desk => {
   try {
-    return parseMeta(localStorage.getItem(POSTING_STORAGE_KEY));
+    return parseDesk(localStorage.getItem(POSTING_STORAGE_KEY));
   } catch {
-    return emptyMeta();
+    return emptyDesk();
   }
 };
 
-export const writeMeta = (meta: PostingMeta) => {
-  localStorage.setItem(POSTING_STORAGE_KEY, JSON.stringify(meta));
+export const writeDesk = (desk: Desk) => {
+  localStorage.setItem(POSTING_STORAGE_KEY, JSON.stringify(desk));
 };
 
 const openDb = () =>
@@ -95,4 +129,4 @@ export const loadBlob = async (key: string) => {
   return blob;
 };
 
-export { emptyDay };
+export { emptyDayState };
