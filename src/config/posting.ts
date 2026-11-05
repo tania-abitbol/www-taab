@@ -194,6 +194,10 @@ export const slotsFor = (desk: Desk, personId: string, date: string): SlotId[] =
   return SLOTS.map((slot) => slot.id).filter((id) => chosen.includes(id));
 };
 
+/** One slot per day. Picking another replaces the previous one; picking the same one clears it. */
+export const chooseSlot = (chosen: SlotId[], slotId: SlotId): SlotId[] =>
+  chosen.length === 1 && chosen[0] === slotId ? [] : [slotId];
+
 export const dayHeading = (plan: DayPlan) => (plan.repeatsDay7 ? "Même programme que le jour 7" : `Jour ${plan.index}`);
 
 export const accountRole = (plan: DayPlan, accountId: string) =>

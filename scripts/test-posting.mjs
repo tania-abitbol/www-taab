@@ -9,6 +9,7 @@ const {
   SATURDAY_ACCOUNT_MINUTES,
   accountRole,
   checksFor,
+  chooseSlot,
   dayReady,
   emptyDayState,
   formatMinutes,
@@ -79,5 +80,9 @@ for (const check of friday) state.checks[check.id] = true;
 assert.equal(dayReady(DAY_PLANS[0], state), true);
 state.proofName = null;
 assert.equal(dayReady(DAY_PLANS[0], state), false);
+assert.deepEqual(chooseSlot([], "17-18"), ["17-18"]);
+assert.deepEqual(chooseSlot(["17-18"], "18-19"), ["18-19"]);
+assert.deepEqual(chooseSlot(["17-18", "19-20"], "20-21"), ["20-21"]);
+assert.deepEqual(chooseSlot(["18-19"], "18-19"), []);
 assert.equal(ACCOUNTS.map((account) => account.name).join(","), "FR,ES,US");
 console.log("posting codes ok");

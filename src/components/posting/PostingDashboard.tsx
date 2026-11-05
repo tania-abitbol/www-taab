@@ -8,6 +8,7 @@ import {
   DayState,
   Desk,
   SLOTS,
+  chooseSlot,
   SlotId,
   accountRole,
   calendarDates,
@@ -101,16 +102,13 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
 
   const toggleSlot = (date: string, slotId: SlotId) => {
     if (!person) return;
-    update((current) => {
-      const chosen = new Set(slotsFor(current, person.id, date));
-      if (chosen.has(slotId)) chosen.delete(slotId);
-      else chosen.add(slotId);
-      const ordered = SLOTS.map((slot) => slot.id).filter((id) => chosen.has(id));
-      return {
-        ...current,
-        slots: { ...current.slots, [person.id]: { ...current.slots[person.id], [date]: ordered } },
-      };
-    });
+    update((current) => ({
+      ...current,
+      slots: {
+        ...current.slots,
+        [person.id]: { ...current.slots[person.id], [date]: chooseSlot(slotsFor(current, person.id, date), slotId) },
+      },
+    }));
   };
 
   const patchDay = (date: string, recipe: (day: DayState) => DayState) => {
