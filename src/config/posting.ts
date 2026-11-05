@@ -2,9 +2,8 @@
 
 export const CALENDAR_START = "2026-11-05";
 export const CALENDAR_END = "2026-11-15";
-export const HOUR_MINUTES = 60;
 export const FRIDAY_CONNECT_MINUTES = 10;
-export const FRIDAY_ACCOUNT_MINUTES = (HOUR_MINUTES - FRIDAY_CONNECT_MINUTES) / 3;
+export const FRIDAY_ACCOUNT_MINUTES = 16;
 export const SATURDAY_ACCOUNT_MINUTES = 20;
 
 export const SLOTS = [
@@ -139,7 +138,7 @@ export const madridToday = (now = new Date()) =>
     day: "2-digit",
   }).format(now);
 
-/** 16 min 40 when the value is 50/3. Whole minutes stay “20 min”. */
+/** Whole minutes, as in “16 min” or “20 min”. */
 export const formatMinutes = (minutes: number) => {
   const whole = Math.floor(minutes + 1e-9);
   const seconds = Math.round((minutes - whole) * 60);

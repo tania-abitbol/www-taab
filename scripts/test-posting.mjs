@@ -46,13 +46,15 @@ assert.equal(readSession(worker, 1_000)?.role, "p1");
 assert.equal(readSession(createSessionValue("p-essai", 1_000), 1_000)?.role, "p-essai");
 
 assert.equal(FRIDAY_CONNECT_MINUTES, 10);
-assert.equal(formatMinutes(FRIDAY_ACCOUNT_MINUTES), "16 min 40");
+assert.equal(formatMinutes(FRIDAY_ACCOUNT_MINUTES), "16 min");
 assert.equal(formatMinutes(SATURDAY_ACCOUNT_MINUTES), "20 min");
-assert.equal(FRIDAY_CONNECT_MINUTES + FRIDAY_ACCOUNT_MINUTES * 3, 60);
+assert.equal(FRIDAY_CONNECT_MINUTES + FRIDAY_ACCOUNT_MINUTES * 3, 58);
+assert.ok(FRIDAY_CONNECT_MINUTES + FRIDAY_ACCOUNT_MINUTES * 3 <= 60);
 
 const friday = checksFor(DAY_PLANS[0]);
 assert.equal(friday[0].label, "10 min · Se connecter au compte reçu");
-assert.equal(friday.filter((item) => item.label.startsWith("16 min 40")).length, 3);
+assert.equal(friday.filter((item) => item.label.startsWith("16 min ·")).length, 3);
+assert.equal(friday.some((item) => item.label.includes("16 min 40")), false);
 assert.ok(friday[1].label.includes("s'abonner à des gens intéressants"));
 assert.equal(friday.some((item) => /lien tiktok/i.test(item.label)), false);
 
