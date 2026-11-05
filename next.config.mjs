@@ -21,6 +21,15 @@ const nextConfig = {
         ],
       },
       {
+        source: "/posting",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "private, no-store",
+          },
+        ],
+      },
+      {
         source: "/join",
         headers: [
           {

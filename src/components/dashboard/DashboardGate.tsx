@@ -1,15 +1,24 @@
 import { unlockDashboard } from "~/app/dashboard/creator/actions";
 
-export const DashboardGate = ({ refused }: { refused: boolean }) => (
+export const DashboardGate = ({
+  refused,
+  next = "/dashboard/creator",
+  title = "Tableau créateurs",
+  lede = "Entre le code pour ouvrir le suivi des vues.",
+}: {
+  refused: boolean;
+  next?: string;
+  title?: string;
+  lede?: string;
+}) => (
   <main lang="fr" className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-4 py-10 selection:bg-yellow selection:text-black">
     <a href="/" className="mb-10 font-title text-3xl tracking-tight">
       TAAB
     </a>
-    <h1 className="mb-3 font-title text-4xl tracking-tight">Tableau créateurs</h1>
-    <p className="mb-8 font-body text-base leading-relaxed text-gray-700">
-      Entre le code pour ouvrir le suivi des vues.
-    </p>
+    <h1 className="mb-3 font-title text-4xl tracking-tight">{title}</h1>
+    <p className="mb-8 font-body text-base leading-relaxed text-gray-700">{lede}</p>
     <form action={unlockDashboard} className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)] sm:p-6">
+      <input type="hidden" name="next" value={next} />
       <label htmlFor="dashboard-code" className="mb-2 block font-body text-sm font-bold">
         Code d&apos;accès
       </label>
