@@ -15,12 +15,12 @@ export const SLOTS = [
 
 export type SlotId = (typeof SLOTS)[number]["id"];
 
-export type AccountName = { id: string; name: string };
+export type AccountName = { id: string; name: string; task: string };
 
 export const ACCOUNTS: AccountName[] = [
-  { id: "fr", name: "FR" },
-  { id: "es", name: "ES" },
-  { id: "us", name: "US" },
+  { id: "fr", name: "FR", task: "Compte 1" },
+  { id: "es", name: "ES", task: "Compte 2" },
+  { id: "us", name: "US", task: "Compte 3" },
 ];
 
 export type Person = { id: string; name: string };
@@ -150,7 +150,7 @@ const ACCOUNT_ACTIONS =
   "échauffer le compte, commenter des TikToks, les regarder en entier sauf si ça n'intéresse pas, s'abonner à des gens intéressants, chauffer le compte comme si tu y étais naturellement";
 
 const accountLine = (minutes: number, account: AccountName) =>
-  `${formatMinutes(minutes)} · ${account.name} (${ACCOUNT_ACTIONS})`;
+  `${formatMinutes(minutes)} · ${account.task} (${ACCOUNT_ACTIONS})`;
 
 export const checksFor = (plan: DayPlan): CheckItem[] => {
   if (plan.kind === "friday" || plan.kind === "sunday") {
@@ -165,11 +165,11 @@ export const checksFor = (plan: DayPlan): CheckItem[] => {
       for (const account of ACCOUNTS) {
         items.push({
           id: `photo-${account.id}`,
-          label: `Photo de profil · ${account.name}. Pas générée par IA, une autre source convient`,
+          label: `Photo de profil · ${account.task}. Pas générée par IA, une autre source convient`,
         });
         items.push({
           id: `bio-${account.id}`,
-          label: `Bio dans ta langue, sur le thème du compte · ${account.name}`,
+          label: `Bio dans ta langue, sur le thème du compte · ${account.task}`,
         });
       }
     }
@@ -180,8 +180,8 @@ export const checksFor = (plan: DayPlan): CheckItem[] => {
   }
   return ACCOUNTS.map((account) =>
     plan.publishers.includes(account.id)
-      ? { id: `pub-${account.id}`, label: `Publier · ${account.name}` }
-      : { id: `warm-${account.id}`, label: `Échauffement seulement · ${account.name}` }
+      ? { id: `pub-${account.id}`, label: `Publier · ${account.task}` }
+      : { id: `warm-${account.id}`, label: `Échauffement seulement · ${account.task}` }
   );
 };
 

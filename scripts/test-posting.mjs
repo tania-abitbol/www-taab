@@ -53,7 +53,10 @@ assert.ok(FRIDAY_CONNECT_MINUTES + FRIDAY_ACCOUNT_MINUTES * 3 <= 60);
 
 const friday = checksFor(DAY_PLANS[0]);
 assert.equal(friday[0].label, "10 min · Se connecter au compte reçu sur WhatsApp");
-assert.equal(friday.filter((item) => item.label.startsWith("16 min ·")).length, 3);
+assert.equal(friday[1].label.startsWith("16 min · Compte 1"), true);
+assert.equal(friday[2].label.startsWith("16 min · Compte 2"), true);
+assert.equal(friday[3].label.startsWith("16 min · Compte 3"), true);
+assert.equal(friday.some((item) => /\b(FR|ES|US)\b/.test(item.label)), false);
 assert.equal(friday.some((item) => item.label.includes("16 min 40")), false);
 assert.ok(friday[1].label.includes("s'abonner à des gens intéressants"));
 assert.equal(friday.some((item) => /lien tiktok/i.test(item.label)), false);
@@ -61,6 +64,11 @@ assert.equal(friday.some((item) => /lien tiktok/i.test(item.label)), false);
 const saturday = checksFor(DAY_PLANS[1]);
 assert.equal(saturday.length, 3);
 assert.ok(saturday.every((item) => item.label.startsWith("20 min")));
+assert.deepEqual(
+  saturday.map((item) => item.label.split(" (")[0]),
+  ["20 min · Compte 1", "20 min · Compte 2", "20 min · Compte 3"]
+);
+assert.equal(saturday.some((item) => /\b(FR|ES|US)\b/.test(item.label)), false);
 assert.equal(saturday.some((item) => item.id === "connect"), false);
 assert.equal(saturday.some((item) => /whatsapp/i.test(item.label)), false);
 
@@ -88,4 +96,6 @@ assert.deepEqual(chooseSlot(["17-18"], "18-19"), ["18-19"]);
 assert.deepEqual(chooseSlot(["17-18", "19-20"], "20-21"), ["20-21"]);
 assert.deepEqual(chooseSlot(["18-19"], "18-19"), []);
 assert.equal(ACCOUNTS.map((account) => account.name).join(","), "FR,ES,US");
+assert.equal(ACCOUNTS.map((account) => account.task).join(","), "Compte 1,Compte 2,Compte 3");
+assert.equal(checksFor(DAY_PLANS[3]).some((item) => /\b(FR|ES|US)\b/.test(item.label)), false);
 console.log("posting codes ok");
