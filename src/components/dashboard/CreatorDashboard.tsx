@@ -1,7 +1,8 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, Fragment, useEffect, useMemo, useRef, useState } from "react";
 
+import { accountRef } from "~/components/dashboard/accounts";
 import {
   VideoLedger,
   VideoObservation,
@@ -45,12 +46,100 @@ const writeLedgers = (ledgers: VideoLedger[]) => {
 
 const formatCount = (value: number | null) => (value == null ? "—" : numberFormat.format(value));
 
+const platformLabel = (platform: VideoLedger["platform"]) => (platform === "tiktok" ? "TikTok" : "Instagram");
+
+const Chevron = ({ open }: { open: boolean }) => (
+  <svg viewBox="0 0 16 16" aria-hidden="true" className={`h-4 w-4 shrink-0 transition-transform duration-150 ${open ? "rotate-90" : ""}`}>
+    <path d="M6 3.5 11 8 6 12.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+type VideoRowProps = {
+  ledger: VideoLedger;
+  months: number[];
+  now: number;
+  nested: boolean;
+  busy: boolean;
+  rowId?: string;
+  onRefresh: (url: string) => void;
+  onRemove: (id: string) => void;
+};
+
+const VideoRow = ({ ledger, months, now, nested, busy, rowId, onRefresh, onRemove }: VideoRowProps) => {
+  const rows = monthRows(ledger, ledger.updatedAt ?? now);
+  const byMonth = new Map(rows.map((row) => [row.month, row]));
+  const title = nested ? ledger.caption || "Vidéo" : ledger.author || ledger.caption || "Vidéo";
+  return (
+    <tr id={rowId} className="group border-b border-gray-200 last:border-b-0">
+      <th scope="row" className={`sticky left-0 z-10 bg-white text-left align-top font-normal group-hover:bg-gray-100 ${nested ? "py-3 pl-10 pr-4" : "px-4 py-3"}`}>
+        <a
+          href={ledger.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`block max-w-[16rem] font-bold underline decoration-gray-300 underline-offset-2 ${nested ? "line-clamp-2" : "truncate"}`}
+        >
+          {title}
+        </a>
+        {!nested && ledger.caption && (
+          <p className="mt-0.5 line-clamp-2 max-w-[16rem] font-normal text-gray-700">{ledger.caption}</p>
+        )}
+        <span className="mt-2 flex gap-3">
+          <button
+            type="button"
+            onClick={() => onRefresh(ledger.url)}
+            disabled={busy}
+            className="font-normal text-gray-700 underline decoration-gray-300 underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
+          >
+            Actualiser
+          </button>
+          <button
+            type="button"
+            onClick={() => onRemove(ledger.id)}
+            className="font-normal text-gray-700 underline decoration-gray-300 underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
+          >
+            Retirer
+          </button>
+        </span>
+        {ledger.unassignedViews > 0 && (
+          <p className="mt-2 max-w-[16rem] font-normal text-gray-700">
+            {numberFormat.format(ledger.unassignedViews)} vues gagnées à cheval sur deux mois, non réparties.
+          </p>
+        )}
+      </th>
+      <td className="px-3 py-3 text-right align-top tabular-nums">{formatCount(ledger.views)}</td>
+      <td className="px-3 py-3 text-right align-top tabular-nums">{formatCount(ledger.likes)}</td>
+      <td className="px-3 py-3 text-right align-top tabular-nums">{formatCount(ledger.comments)}</td>
+      <td className="px-3 py-3 text-right align-top tabular-nums">{formatCount(ledger.shares)}</td>
+      <td className="px-3 py-3 text-right align-top tabular-nums">{formatCount(ledger.saves)}</td>
+      <td className="px-3 py-3 text-right align-top font-bold tabular-nums">
+        {ledger.views == null ? "—" : euroFormat.format(eurosForViews(ledger.views))}
+      </td>
+      {months.map((month) => {
+        const row = byMonth.get(month);
+        let label = "";
+        if (row) label = row.euros == null ? "non mesuré" : euroFormat.format(row.euros);
+        return (
+          <td
+            key={month}
+            className={`border-l border-gray-200 px-3 py-3 text-right align-top tabular-nums ${row?.open ? "font-bold" : ""} ${
+              row && row.euros == null ? "text-gray-700" : ""
+            }`}
+          >
+            {label}
+          </td>
+        );
+      })}
+    </tr>
+  );
+};
+
 export const CreatorDashboard = () => {
   const [url, setUrl] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [error, setError] = useState("");
   const [ledgers, setLedgers] = useState<VideoLedger[]>([]);
   const [pendingUrl, setPendingUrl] = useState<string | null>(null);
+  const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
   const [ready, setReady] = useState(false);
   const submittingRef = useRef(false);
   const now = Date.now();
@@ -65,6 +154,31 @@ export const CreatorDashboard = () => {
     [ledgers, now]
   );
   const months = useMemo(() => Array.from({ length: monthCount }, (_, index) => index + 1), [monthCount]);
+  const groups = useMemo(() => {
+    const order: { key: string; handle: string | null; label: string; platform: VideoLedger["platform"]; ledgers: VideoLedger[] }[] = [];
+    const byKey = new Map<string, (typeof order)[number]>();
+    for (const ledger of ledgers) {
+      const account = accountRef(ledger);
+      let group = byKey.get(account.key);
+      if (!group) {
+        group = {
+          key: account.key,
+          handle: account.handle,
+          label: ledger.author?.trim() || (account.handle ? `@${account.handle}` : "Compte"),
+          platform: ledger.platform,
+          ledgers: [],
+        };
+        byKey.set(account.key, group);
+        order.push(group);
+      }
+      group.ledgers.push(ledger);
+      if (!group.label || group.label.startsWith("@")) {
+        const name = ledger.author?.trim();
+        if (name) group.label = name;
+      }
+    }
+    return order;
+  }, [ledgers]);
 
   const persist = (next: VideoLedger[]) => {
     setLedgers(next);
@@ -96,6 +210,7 @@ export const CreatorDashboard = () => {
         writeLedgers(next);
         return next;
       });
+      setOpenFolders((current) => ({ ...current, [accountRef(payload).key]: true }));
       setUrl("");
       setStatus("idle");
     } catch {
@@ -216,71 +331,64 @@ export const CreatorDashboard = () => {
                   </td>
                 </tr>
               )}
-              {ledgers.map((ledger) => {
-                const rows = monthRows(ledger, ledger.updatedAt ?? now);
-                const byMonth = new Map(rows.map((row) => [row.month, row]));
+              {groups.map((group) => {
+                if (group.ledgers.length < 2) {
+                  return (
+                    <VideoRow
+                      key={group.ledgers[0].id}
+                      ledger={group.ledgers[0]}
+                      months={months}
+                      now={now}
+                      nested={false}
+                      busy={status === "loading"}
+                      onRefresh={(next) => void submitUrl(next)}
+                      onRemove={removeLedger}
+                    />
+                  );
+                }
+                const open = openFolders[group.key] === true;
+                const folderId = `compte-${group.key.replace(/[^a-z0-9_-]/gi, "-")}`;
+                const sameName = group.handle && group.label.replace(/^@/, "").toLowerCase() === group.handle.toLowerCase();
                 return (
-                  <tr key={ledger.id} className="group border-b border-gray-200 last:border-b-0">
-                    <th scope="row" className="sticky left-0 z-10 bg-white px-4 py-3 text-left align-top font-normal group-hover:bg-gray-100">
-                      <a
-                        href={ledger.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block max-w-[16rem] truncate font-bold underline decoration-gray-300 underline-offset-2"
-                      >
-                        {ledger.author ?? "Vidéo"}
-                      </a>
-                      {ledger.caption && (
-                        <p className="mt-0.5 line-clamp-2 max-w-[16rem] font-normal text-gray-700">{ledger.caption}</p>
-                      )}
-                      <span className="mt-2 flex gap-3">
+                  <Fragment key={group.key}>
+                    <tr className="border-b border-gray-200 bg-gray-100">
+                      <th scope="row" className="sticky left-0 z-10 bg-gray-100 px-4 py-3 text-left font-normal">
                         <button
                           type="button"
-                          onClick={() => void submitUrl(ledger.url)}
-                          disabled={status === "loading"}
-                          className="font-normal text-gray-700 underline decoration-gray-300 underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
+                          aria-expanded={open}
+                          aria-controls={folderId}
+                          onClick={() => setOpenFolders((current) => ({ ...current, [group.key]: !open }))}
+                          className="flex max-w-[20rem] items-center gap-2 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
                         >
-                          Actualiser
+                          <Chevron open={open} />
+                          <span className="min-w-0">
+                            <span className="block truncate font-bold">
+                              {platformLabel(group.platform)} · {group.label}
+                            </span>
+                            <span className="block truncate text-gray-700">
+                              {group.ledgers.length} vidéos
+                              {!sameName && group.handle ? ` · @${group.handle}` : ""}
+                            </span>
+                          </span>
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => removeLedger(ledger.id)}
-                          className="font-normal text-gray-700 underline decoration-gray-300 underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
-                        >
-                          Retirer
-                        </button>
-                      </span>
-                      {ledger.unassignedViews > 0 && (
-                        <p className="mt-2 max-w-[16rem] font-normal text-gray-700">
-                          {numberFormat.format(ledger.unassignedViews)} vues gagnées à cheval sur deux mois, non
-                          réparties.
-                        </p>
-                      )}
-                    </th>
-                    <td className="px-3 py-3 text-right align-top tabular-nums">{formatCount(ledger.views)}</td>
-                    <td className="px-3 py-3 text-right align-top tabular-nums">{formatCount(ledger.likes)}</td>
-                    <td className="px-3 py-3 text-right align-top tabular-nums">{formatCount(ledger.comments)}</td>
-                    <td className="px-3 py-3 text-right align-top tabular-nums">{formatCount(ledger.shares)}</td>
-                    <td className="px-3 py-3 text-right align-top tabular-nums">{formatCount(ledger.saves)}</td>
-                    <td className="px-3 py-3 text-right align-top font-bold tabular-nums">
-                      {ledger.views == null ? "—" : euroFormat.format(eurosForViews(ledger.views))}
-                    </td>
-                    {months.map((month) => {
-                      const row = byMonth.get(month);
-                      let label = "";
-                      if (row) label = row.euros == null ? "non mesuré" : euroFormat.format(row.euros);
-                      return (
-                        <td
-                          key={month}
-                          className={`border-l border-gray-200 px-3 py-3 text-right align-top tabular-nums ${
-                            row?.open ? "font-bold" : ""
-                          } ${row && row.euros == null ? "text-gray-700" : ""}`}
-                        >
-                          {label}
-                        </td>
-                      );
-                    })}
-                  </tr>
+                      </th>
+                      <td colSpan={6 + months.length} />
+                    </tr>
+                    {open &&
+                      group.ledgers.map((ledger, index) => (
+                        <VideoRow
+                          key={ledger.id}
+                          ledger={ledger}
+                          months={months}
+                          now={now}
+                          nested
+                          rowId={index === 0 ? folderId : undefined}
+                          busy={status === "loading"}
+                          onRefresh={(next) => void submitUrl(next)}
+                          onRemove={removeLedger}
+                        />
+                      ))}
+                  </Fragment>
                 );
               })}
             </tbody>
