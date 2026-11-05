@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 
 import { DashboardGate } from "~/components/dashboard/DashboardGate";
-import { DASHBOARD_COOKIE, verifySession } from "~/server/dashboardSession";
+import { DASHBOARD_COOKIE, readSession } from "~/server/dashboardSession";
 
 export const dynamic = "force-dynamic";
 
@@ -12,16 +12,17 @@ export const metadata: Metadata = {
 };
 
 export default async function PostingPage({ searchParams }: { searchParams: { refus?: string } }) {
-  if (!verifySession(cookies().get(DASHBOARD_COOKIE)?.value)) {
+  const session = readSession(cookies().get(DASHBOARD_COOKIE)?.value);
+  if (!session) {
     return (
       <DashboardGate
         refused={searchParams.refus === "1"}
         next="/posting"
         title="Publication"
-        lede="Entre le code pour ouvrir la journée TikTok."
+        lede="Entre ton code."
       />
     );
   }
   const { PostingDashboard } = await import("~/components/posting/PostingDashboard");
-  return <PostingDashboard />;
-};
+  return <PostingDashboard role={session.role} />;
+}

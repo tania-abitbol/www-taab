@@ -1,13 +1,17 @@
-/** Posting desk, 5–15 Nov 2026. Slots are chosen per person. A day is proven by its checks and the recording. */
+/** Posting desk, 5–15 Nov 2026. Three profiles plus Tania. Proof is the recording, never a link. */
 
 export const CALENDAR_START = "2026-11-05";
 export const CALENDAR_END = "2026-11-15";
+export const HOUR_MINUTES = 60;
+export const FRIDAY_CONNECT_MINUTES = 10;
+export const FRIDAY_ACCOUNT_MINUTES = (HOUR_MINUTES - FRIDAY_CONNECT_MINUTES) / 3;
+export const SATURDAY_ACCOUNT_MINUTES = 20;
 
 export const SLOTS = [
-  { id: "17-18", label: "17:00–18:00" },
-  { id: "18-19", label: "18:00–19:00" },
-  { id: "19-20", label: "19:00–20:00" },
-  { id: "20-21", label: "20:00–21:00" },
+  { id: "17-18", label: "17:00–18:00", short: "17–18" },
+  { id: "18-19", label: "18:00–19:00", short: "18–19" },
+  { id: "19-20", label: "19:00–20:00", short: "19–20" },
+  { id: "20-21", label: "20:00–21:00", short: "20–21" },
 ] as const;
 
 export type SlotId = (typeof SLOTS)[number]["id"];
@@ -15,21 +19,30 @@ export type SlotId = (typeof SLOTS)[number]["id"];
 export type AccountName = { id: string; name: string };
 
 export const ACCOUNTS: AccountName[] = [
-  { id: "es-1", name: "Compte 1" },
-  { id: "es-2", name: "Compte 2" },
-  { id: "es-3", name: "Compte 3" },
+  { id: "fr", name: "FR" },
+  { id: "es", name: "ES" },
+  { id: "us", name: "US" },
 ];
 
 export type Person = { id: string; name: string };
 
-export type DayKind = "warmup" | "warmup-profile" | "slideshow" | "two-publish" | "all-publish";
+export const PROFILES: Person[] = [
+  { id: "p1", name: "Profil 1" },
+  { id: "p2", name: "Profil 2" },
+  { id: "p3", name: "Profil 3" },
+];
+
+export type DeskRole = "tania" | "p1" | "p2" | "p3";
+
+export type DayKind = "friday" | "saturday" | "sunday" | "post";
 
 export type DayPlan = {
   date: string;
   index: number;
   kind: DayKind;
-  /** Days after jour 7 repeat that programme. */
   repeatsDay7: boolean;
+  /** Account ids that publish. The others only warm up. Empty before Monday. */
+  publishers: string[];
 };
 
 export type CheckItem = { id: string; label: string };
@@ -38,17 +51,14 @@ export type DayState = {
   checks: Record<string, boolean>;
   proofName: string | null;
   validated: boolean;
-  slideshowAccount: string | null;
-  publishers: string[];
 };
 
 export type Desk = {
   people: Person[];
   slots: Record<string, Record<string, SlotId[]>>;
   weekValidated: Record<string, boolean>;
-  taniaValidated: boolean;
   days: Record<string, Record<string, DayState>>;
-  taniaFileName: string | null;
+  taniaFiles: Record<string, Record<string, string>>;
 };
 
 const DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
@@ -71,38 +81,39 @@ export const calendarDates = () => {
   return dates;
 };
 
+const post = (date: string, index: number, publishers: string[], repeatsDay7 = false): DayPlan => ({
+  date,
+  index,
+  kind: "post",
+  repeatsDay7,
+  publishers,
+});
+
 export const DAY_PLANS: DayPlan[] = [
-  { date: "2026-11-06", index: 1, kind: "warmup", repeatsDay7: false },
-  { date: "2026-11-07", index: 2, kind: "warmup", repeatsDay7: false },
-  { date: "2026-11-08", index: 3, kind: "warmup-profile", repeatsDay7: false },
-  { date: "2026-11-09", index: 4, kind: "slideshow", repeatsDay7: false },
-  { date: "2026-11-10", index: 5, kind: "two-publish", repeatsDay7: false },
-  { date: "2026-11-11", index: 6, kind: "two-publish", repeatsDay7: false },
-  { date: "2026-11-12", index: 7, kind: "all-publish", repeatsDay7: false },
-  { date: "2026-11-13", index: 7, kind: "all-publish", repeatsDay7: true },
-  { date: "2026-11-14", index: 7, kind: "all-publish", repeatsDay7: true },
-  { date: "2026-11-15", index: 7, kind: "all-publish", repeatsDay7: true },
+  { date: "2026-11-06", index: 1, kind: "friday", repeatsDay7: false, publishers: [] },
+  { date: "2026-11-07", index: 2, kind: "saturday", repeatsDay7: false, publishers: [] },
+  { date: "2026-11-08", index: 3, kind: "sunday", repeatsDay7: false, publishers: [] },
+  post("2026-11-09", 4, ["fr"]),
+  post("2026-11-10", 5, ["fr", "es"]),
+  post("2026-11-11", 6, ["es", "us"]),
+  post("2026-11-12", 7, ["fr", "es", "us"]),
+  post("2026-11-13", 7, ["fr", "es", "us"], true),
+  post("2026-11-14", 7, ["fr", "es", "us"], true),
+  post("2026-11-15", 7, ["fr", "es", "us"], true),
 ];
 
 export const planFor = (date: string) => DAY_PLANS.find((plan) => plan.date === date) ?? null;
 
 export const isSlotId = (value: string): value is SlotId => SLOTS.some((slot) => slot.id === value);
 
-export const emptyDayState = (): DayState => ({
-  checks: {},
-  proofName: null,
-  validated: false,
-  slideshowAccount: null,
-  publishers: [],
-});
+export const emptyDayState = (): DayState => ({ checks: {}, proofName: null, validated: false });
 
 export const emptyDesk = (): Desk => ({
-  people: [{ id: "p1", name: "Personne 1" }],
+  people: PROFILES.map((person) => ({ ...person })),
   slots: {},
   weekValidated: {},
-  taniaValidated: false,
   days: {},
-  taniaFileName: null,
+  taniaFiles: {},
 });
 
 export const formatDay = (iso: string) => {
@@ -115,6 +126,11 @@ export const formatDay = (iso: string) => {
   return label.charAt(0).toUpperCase() + label.slice(1);
 };
 
+export const formatShortDay = (iso: string) =>
+  new Intl.DateTimeFormat("fr-FR", { weekday: "short", day: "numeric", timeZone: "UTC" }).format(
+    new Date(`${iso}T00:00:00Z`)
+  );
+
 export const madridToday = (now = new Date()) =>
   new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/Madrid",
@@ -123,68 +139,53 @@ export const madridToday = (now = new Date()) =>
     day: "2-digit",
   }).format(now);
 
-/** Minutes left for the two accounts that do not post the slideshow, after 10 min before and 10 min after. */
-export const slideshowSplit = (slotCount: number) => {
-  const remaining = Math.max(0, slotCount * 60 - 20);
-  return { remaining, each: remaining / 2 };
+/** 16 min 40 when the value is 50/3. Whole minutes stay “20 min”. */
+export const formatMinutes = (minutes: number) => {
+  const whole = Math.floor(minutes + 1e-9);
+  const seconds = Math.round((minutes - whole) * 60);
+  if (seconds === 0) return `${whole} min`;
+  return `${whole} min ${seconds.toString().padStart(2, "0")}`;
 };
 
-const warmupChecks = (withProfile: boolean): CheckItem[] => {
-  const items: CheckItem[] = [
-    { id: "connect", label: "Se connecter au compte reçu" },
-    { id: "comment", label: "Échauffement : commenter des TikToks" },
-    { id: "watch", label: "Regarder les TikToks en entier, sauf si ça ne m'intéresse pas" },
-    ...ACCOUNTS.map((account) => ({ id: `min-${account.id}`, label: `20 min · ${account.name}` })),
-  ];
-  if (withProfile) {
-    for (const account of ACCOUNTS) {
-      items.push({
-        id: `photo-${account.id}`,
-        label: `Photo de profil · ${account.name}. Pas générée par IA, une autre source convient`,
-      });
-      items.push({
-        id: `bio-${account.id}`,
-        label: `Bio dans ta langue, sur le thème du compte · ${account.name}`,
-      });
+const ACCOUNT_ACTIONS =
+  "échauffer le compte, commenter des TikToks, les regarder en entier sauf si ça n'intéresse pas, s'abonner à des gens intéressants, chauffer le compte comme si tu y étais naturellement";
+
+const accountLine = (minutes: number, account: AccountName) =>
+  `${formatMinutes(minutes)} · ${account.name} (${ACCOUNT_ACTIONS})`;
+
+export const checksFor = (plan: DayPlan): CheckItem[] => {
+  if (plan.kind === "friday" || plan.kind === "sunday") {
+    const items: CheckItem[] = [
+      { id: "connect", label: `${formatMinutes(FRIDAY_CONNECT_MINUTES)} · Se connecter au compte reçu` },
+      ...ACCOUNTS.map((account) => ({ id: `min-${account.id}`, label: accountLine(FRIDAY_ACCOUNT_MINUTES, account) })),
+    ];
+    if (plan.kind === "sunday") {
+      for (const account of ACCOUNTS) {
+        items.push({
+          id: `photo-${account.id}`,
+          label: `Photo de profil · ${account.name}. Pas générée par IA, une autre source convient`,
+        });
+        items.push({
+          id: `bio-${account.id}`,
+          label: `Bio dans ta langue, sur le thème du compte · ${account.name}`,
+        });
+      }
     }
+    return items;
   }
-  return items;
+  if (plan.kind === "saturday") {
+    return ACCOUNTS.map((account) => ({ id: `min-${account.id}`, label: accountLine(SATURDAY_ACCOUNT_MINUTES, account) }));
+  }
+  return ACCOUNTS.map((account) =>
+    plan.publishers.includes(account.id)
+      ? { id: `pub-${account.id}`, label: `Publier · ${account.name}` }
+      : { id: `warm-${account.id}`, label: `Échauffement seulement · ${account.name}` }
+  );
 };
 
-export const checksFor = (plan: DayPlan, state: DayState, slotCount: number): CheckItem[] => {
-  if (plan.kind === "warmup") return warmupChecks(false);
-  if (plan.kind === "warmup-profile") return warmupChecks(true);
-  if (plan.kind === "slideshow") {
-    const poster = ACCOUNTS.find((account) => account.id === state.slideshowAccount);
-    const others = ACCOUNTS.filter((account) => account.id !== poster?.id);
-    const { each } = slideshowSplit(slotCount);
-    const warmLabel = (account: AccountName) =>
-      slotCount > 0 ? `${each} min d'échauffement · ${account.name}` : `Échauffement du temps restant · ${account.name}`;
-    return [
-      { id: "music", label: "Choisir la musique" },
-      { id: "publish", label: poster ? `Publier le diaporama · ${poster.name}` : "Publier le diaporama" },
-      { id: "before", label: "10 min d'échauffement avant la publication" },
-      { id: "after", label: "10 min d'échauffement après la publication" },
-      ...others.map((account) => ({ id: `warm-${account.id}`, label: warmLabel(account) })),
-    ];
-  }
-  if (plan.kind === "two-publish") {
-    const publishers = ACCOUNTS.filter((account) => state.publishers.includes(account.id));
-    const warming = ACCOUNTS.filter((account) => !state.publishers.includes(account.id));
-    if (publishers.length !== 2) return [];
-    return [
-      ...publishers.map((account) => ({ id: `pub-${account.id}`, label: `Publier · ${account.name}` })),
-      ...warming.map((account) => ({ id: `warm-${account.id}`, label: `Échauffement seulement · ${account.name}` })),
-    ];
-  }
-  return ACCOUNTS.map((account) => ({ id: `pub-${account.id}`, label: `Publier · ${account.name}` }));
-};
-
-export const dayReady = (plan: DayPlan, state: DayState, slotCount: number) => {
+export const dayReady = (plan: DayPlan, state: DayState) => {
   if (!state.proofName) return false;
-  if (plan.kind === "slideshow" && !ACCOUNTS.some((account) => account.id === state.slideshowAccount)) return false;
-  if (plan.kind === "two-publish" && state.publishers.length !== 2) return false;
-  const checks = checksFor(plan, state, slotCount);
+  const checks = checksFor(plan);
   return checks.length > 0 && checks.every((check) => state.checks[check.id] === true);
 };
 
@@ -193,8 +194,13 @@ export const slotsFor = (desk: Desk, personId: string, date: string): SlotId[] =
   return SLOTS.map((slot) => slot.id).filter((id) => chosen.includes(id));
 };
 
-export const othersValidated = (desk: Desk) =>
-  desk.people.length > 0 && desk.people.every((person) => desk.weekValidated[person.id] === true);
+export const dayHeading = (plan: DayPlan) => (plan.repeatsDay7 ? "Même programme que le jour 7" : `Jour ${plan.index}`);
 
-export const dayHeading = (plan: DayPlan) =>
-  plan.repeatsDay7 ? "Même programme que le jour 7" : `Jour ${plan.index}`;
+export const accountRole = (plan: DayPlan, accountId: string) =>
+  plan.publishers.includes(accountId) ? "publie" : "échauffement";
+
+export const personMark = (person: Person) => {
+  const profile = person.name.match(/^Profil\s+(\d+)$/);
+  if (profile) return profile[1];
+  return person.name.slice(0, 2);
+};

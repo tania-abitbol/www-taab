@@ -1,26 +1,8 @@
-import {
-  ACCOUNTS,
-  DayState,
-  Desk,
-  Person,
-  SlotId,
-  emptyDayState,
-  emptyDesk,
-  isIsoDate,
-  isSlotId,
-} from "~/config/posting";
+import { DayState, Desk, PROFILES, SlotId, emptyDayState, emptyDesk, isIsoDate, isSlotId } from "~/config/posting";
 
-export const POSTING_STORAGE_KEY = "taab:posting:v2";
+export const POSTING_STORAGE_KEY = "taab:posting:v3";
 const DB_NAME = "taab-posting";
 const STORE = "blobs";
-
-const asPeople = (value: unknown, fallback: Person[]) => {
-  if (!Array.isArray(value)) return fallback;
-  const people = value
-    .filter((item) => item && typeof item.id === "string" && typeof item.name === "string")
-    .map((item) => ({ id: item.id, name: item.name.trim() || "Personne" }));
-  return people.length > 0 ? people : fallback;
-};
 
 const asDay = (value: unknown): DayState => {
   const source = value && typeof value === "object" ? (value as Partial<DayState>) : {};
@@ -28,15 +10,10 @@ const asDay = (value: unknown): DayState => {
   if (source.checks && typeof source.checks === "object") {
     for (const [id, on] of Object.entries(source.checks)) if (on === true) checks[id] = true;
   }
-  const publishers = Array.isArray(source.publishers)
-    ? source.publishers.filter((id): id is string => ACCOUNTS.some((account) => account.id === id))
-    : [];
   return {
     checks,
     proofName: typeof source.proofName === "string" && source.proofName ? source.proofName : null,
     validated: source.validated === true,
-    slideshowAccount: ACCOUNTS.some((account) => account.id === source.slideshowAccount) ? String(source.slideshowAccount) : null,
-    publishers,
   };
 };
 
@@ -44,8 +21,13 @@ export const parseDesk = (raw: string | null): Desk => {
   const base = emptyDesk();
   if (!raw) return base;
   try {
-    const parsed = JSON.parse(raw) as Partial<Desk>;
-    const people = asPeople(parsed.people, base.people);
+    const parsed = JSON.parse(raw) as Partial<Desk> & { people?: { id?: string; name?: string }[] };
+    const extras = Array.isArray(parsed.people)
+      ? parsed.people
+          .filter((item) => item && typeof item.id === "string" && typeof item.name === "string" && !PROFILES.some((profile) => profile.id === item.id))
+          .map((item) => ({ id: item.id as string, name: item.name?.trim() || "Personne" }))
+      : [];
+    const people = [...PROFILES.map((person) => ({ ...person })), ...extras];
     const slots: Desk["slots"] = {};
     if (parsed.slots && typeof parsed.slots === "object") {
       for (const [personId, byDate] of Object.entries(parsed.slots)) {
@@ -71,14 +53,17 @@ export const parseDesk = (raw: string | null): Desk => {
         }
       }
     }
-    return {
-      people,
-      slots,
-      weekValidated,
-      taniaValidated: parsed.taniaValidated === true && people.every((person) => weekValidated[person.id]),
-      days,
-      taniaFileName: typeof parsed.taniaFileName === "string" && parsed.taniaFileName ? parsed.taniaFileName : null,
-    };
+    const taniaFiles: Desk["taniaFiles"] = {};
+    if (parsed.taniaFiles && typeof parsed.taniaFiles === "object") {
+      for (const [date, files] of Object.entries(parsed.taniaFiles)) {
+        if (!isIsoDate(date) || !files || typeof files !== "object") continue;
+        taniaFiles[date] = {};
+        for (const [accountId, name] of Object.entries(files)) {
+          if (typeof name === "string" && name) taniaFiles[date][accountId] = name;
+        }
+      }
+    }
+    return { people, slots, weekValidated, days, taniaFiles };
   } catch {
     return base;
   }
