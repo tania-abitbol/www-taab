@@ -12,8 +12,8 @@ export const SUNDAY_WARM_MINUTES = [17, 17, 16] as const;
 export const MONDAY_WARM_BEFORE = 8;
 export const MONDAY_POST_MINUTES = 5;
 export const MONDAY_WARM_AFTER = 8;
-export const MONDAY_COMPTE2_MINUTES = 20;
-export const MONDAY_COMPTE3_MINUTES = 19;
+export const MONDAY_COMPTE2_MINUTES = 19;
+export const MONDAY_COMPTE3_MINUTES = 20;
 export const TUESDAY_WARM_BEFORE = 8;
 export const TUESDAY_POST_MINUTES = 5;
 export const TUESDAY_WARM_AFTER = 8;
@@ -85,6 +85,10 @@ export const isIsoDate = (value: string) => {
   return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
 };
 
+export const openDates = (today: string) => calendarDates().filter((date) => date >= today);
+
+export const openPlans = (today: string) => DAY_PLANS.filter((plan) => plan.date >= today && plan.date <= PLANNED_THROUGH);
+
 export const calendarDates = () => {
   const dates: string[] = [];
   let cursor = Date.parse(`${CALENDAR_START}T00:00:00Z`);
@@ -110,12 +114,10 @@ export const DAY_PLANS: DayPlan[] = [
   { date: "2026-11-08", index: 3, kind: "sunday", repeatsDay7: false, publishers: [] },
   post("2026-11-09", 4, ["fr"]),
   post("2026-11-10", 5, ["fr"]),
-  post("2026-11-11", 6, ["es", "us"]),
-  post("2026-11-12", 7, ["fr", "es", "us"]),
-  post("2026-11-13", 7, ["fr", "es", "us"], true),
-  post("2026-11-14", 7, ["fr", "es", "us"], true),
-  post("2026-11-15", 7, ["fr", "es", "us"], true),
 ];
+
+/** Day tasks are written through this date. Later days stay on the planner only. */
+export const PLANNED_THROUGH = "2026-11-10";
 
 export const planFor = (date: string) => DAY_PLANS.find((plan) => plan.date === date) ?? null;
 
@@ -221,7 +223,10 @@ export const checksFor = (plan: DayPlan): CheckItem[] => {
     ];
   }
   if (plan.kind === "saturday") {
-    return ACCOUNTS.map((account) => ({ id: `min-${account.id}`, label: accountLine(SATURDAY_ACCOUNT_MINUTES, account) }));
+    return ACCOUNTS.map((account) => ({
+      id: `min-${account.id}`,
+      label: `${formatMinutes(SATURDAY_ACCOUNT_MINUTES)} · ${account.task} (commenter, regarder en entier sauf si ça n'intéresse pas, s'abonner, chauffer naturellement)`,
+    }));
   }
   return ACCOUNTS.map((account) =>
     plan.publishers.includes(account.id)

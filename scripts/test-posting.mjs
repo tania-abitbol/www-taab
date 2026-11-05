@@ -28,6 +28,7 @@ const {
   dayReady,
   emptyDayState,
   formatMinutes,
+  openDates,
 } = await import("../src/config/posting.ts");
 const { createSessionValue, readSession, verifySession } = await import("../src/server/dashboardSession.ts");
 const { DEFAULT_PROFILES, addProfile, deleteProfile, profileIdForCode, updateProfile } = await import(
@@ -84,6 +85,7 @@ assert.deepEqual(
   ["20 min · Compte 1", "20 min · Compte 2", "20 min · Compte 3"]
 );
 assert.equal(saturday.some((item) => /\b(FR|ES|US)\b/.test(item.label)), false);
+assert.ok(saturday[0].label.includes("commenter, regarder en entier sauf si ça n'intéresse pas, s'abonner, chauffer naturellement"));
 assert.equal(saturday.some((item) => item.id === "connect"), false);
 assert.equal(saturday.some((item) => /whatsapp/i.test(item.label)), false);
 
@@ -112,8 +114,8 @@ assert.deepEqual(
     "8 min · Chauffer le compte · Compte 1",
     "5 min · Poster · Compte 1",
     "8 min · Chauffer le compte après · Compte 1",
-    "20 min · Chauffer le compte 2",
-    "19 min · Chauffer le compte 3",
+    "19 min · Chauffer le compte 2",
+    "20 min · Chauffer le compte 3",
   ]
 );
 assert.equal(monday.some((item) => /échauffement/i.test(item.label)), false);
@@ -157,8 +159,11 @@ assert.equal(
 );
 assert.equal(tuesday.some((item) => /\b(FR|ES|US)\b|16 min 40/.test(item.label)), false);
 assert.deepEqual(DAY_PLANS[4].publishers, ["fr"]);
-assert.deepEqual(DAY_PLANS[5].publishers, ["es", "us"]);
-assert.equal(DAY_PLANS.find((plan) => plan.date === "2026-11-15")?.publishers.length, 3);
+assert.equal(DAY_PLANS.some((plan) => plan.date > "2026-11-10"), false);
+const saturdayOpen = openDates("2026-11-07");
+assert.equal(saturdayOpen.includes("2026-11-06"), false);
+assert.equal(saturdayOpen[0], "2026-11-07");
+assert.equal(saturdayOpen[saturdayOpen.length - 1], "2026-11-15");
 
 const state = emptyDayState();
 state.proofName = "session.mp4";

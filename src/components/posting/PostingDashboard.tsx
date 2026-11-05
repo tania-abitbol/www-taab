@@ -11,7 +11,6 @@ import {
   chooseSlot,
   SlotId,
   accountRole,
-  calendarDates,
   checksFor,
   dayHeading,
   dayReady,
@@ -19,6 +18,8 @@ import {
   formatDay,
   formatShortDay,
   madridToday,
+  openDates,
+  openPlans,
   personMark,
   slotsFor,
 } from "~/config/posting";
@@ -221,7 +222,7 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
                   {slot.short}
                 </span>
               ))}
-              {calendarDates().map((date) => (
+              {openDates(today).map((date) => (
                 <div key={date} className="contents">
                   <span className={`py-1 ${date === today ? "font-bold" : ""}`}>{formatShortDay(date)}</span>
                   {SLOTS.map((slot) => {
@@ -277,15 +278,18 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
             </div>
           </section>
         ) : (
-          <section aria-label="Créneaux" className="flex flex-col gap-3">
+          <section aria-label="Créneaux" className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
             <h2 className="font-title text-2xl tracking-tight">Créneaux</h2>
-            {calendarDates().map((date) => (
-              <article key={date} className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
-                <h3 className="font-body text-base font-bold">
-                  {formatDay(date)}
-                  {date === today ? " · aujourd'hui" : ""}
-                </h3>
-                <div className="mt-3 grid grid-cols-2 gap-2">
+            <div className="mt-3 grid grid-cols-[3.4rem_repeat(4,1fr)] gap-1 font-body text-[11px] leading-tight">
+              <span />
+              {SLOTS.map((slot) => (
+                <span key={slot.id} className="text-center font-bold">
+                  {slot.short}
+                </span>
+              ))}
+              {openDates(today).map((date) => (
+                <div key={date} className="contents">
+                  <span className={`py-1 ${date === today ? "font-bold" : ""}`}>{formatShortDay(date)}</span>
                   {SLOTS.map((slot) => {
                     const selected = person ? slotsFor(desk, person.id, date).includes(slot.id) : false;
                     return (
@@ -294,25 +298,26 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
                         id={`slot-${date}-${slot.id}`}
                         type="button"
                         aria-pressed={selected}
+                        aria-label={`${formatShortDay(date)} ${slot.label}`}
                         onClick={() => toggleSlot(date, slot.id)}
-                        className={`h-12 rounded-xl border px-2 font-body text-sm font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 ${
-                          selected ? "border-black bg-black text-white" : "border-gray-300 bg-white text-black"
+                        className={`rounded-md py-1 text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-black ${
+                          selected ? "bg-black text-white" : "bg-gray-100"
                         }`}
                       >
-                        {slot.label}
+                        {selected ? slot.short : "·"}
                       </button>
                     );
                   })}
                 </div>
-              </article>
-            ))}
+              ))}
+            </div>
             {person && (
               <button
                 id="validate-week"
                 type="button"
                 disabled={desk.weekValidated[person.id] === true}
                 onClick={() => update((current) => ({ ...current, weekValidated: { ...current.weekValidated, [person.id]: true } }))}
-                className="h-12 rounded-xl bg-black px-4 font-body text-base font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:opacity-40"
+                className="mt-4 h-12 w-full rounded-xl bg-black px-4 font-body text-base font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:opacity-40"
               >
                 {desk.weekValidated[person.id] ? "Semaine validée" : "Valider ma semaine"}
               </button>
@@ -320,7 +325,7 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
           </section>
         )}
 
-        {DAY_PLANS.map((plan) => {
+        {openPlans(today).map((plan) => {
           const checks = checksFor(plan);
           if (isTania && plan.kind !== "post") {
             return (
