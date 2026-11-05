@@ -5,6 +5,10 @@ export const CALENDAR_END = "2026-11-15";
 export const FRIDAY_CONNECT_MINUTES = 10;
 export const FRIDAY_ACCOUNT_MINUTES = 16;
 export const SATURDAY_ACCOUNT_MINUTES = 20;
+export const SUNDAY_PHOTO_MINUTES = 5;
+export const SUNDAY_BIO_MINUTES = 5;
+/** 50 minutes left in the hour, in whole minutes. */
+export const SUNDAY_WARM_MINUTES = [17, 17, 16] as const;
 
 export const SLOTS = [
   { id: "17-18", label: "17:00–18:00", short: "17–18" },
@@ -138,13 +142,8 @@ export const madridToday = (now = new Date()) =>
     day: "2-digit",
   }).format(now);
 
-/** Whole minutes, as in “16 min” or “20 min”. */
-export const formatMinutes = (minutes: number) => {
-  const whole = Math.floor(minutes + 1e-9);
-  const seconds = Math.round((minutes - whole) * 60);
-  if (seconds === 0) return `${whole} min`;
-  return `${whole} min ${seconds.toString().padStart(2, "0")}`;
-};
+/** Whole minutes only, as in “16 min” or “17 min”. */
+export const formatMinutes = (minutes: number) => `${Math.round(minutes)} min`;
 
 const ACCOUNT_ACTIONS =
   "échauffer le compte, commenter des TikToks, les regarder en entier sauf si ça n'intéresse pas, s'abonner à des gens intéressants, chauffer le compte comme si tu y étais naturellement";
@@ -153,27 +152,31 @@ const accountLine = (minutes: number, account: AccountName) =>
   `${formatMinutes(minutes)} · ${account.task} (${ACCOUNT_ACTIONS})`;
 
 export const checksFor = (plan: DayPlan): CheckItem[] => {
-  if (plan.kind === "friday" || plan.kind === "sunday") {
-    const items: CheckItem[] = [
+  if (plan.kind === "friday") {
+    return [
       {
         id: "connect",
-        label: `${formatMinutes(FRIDAY_CONNECT_MINUTES)} · Se connecter au compte reçu${plan.kind === "friday" ? " sur WhatsApp" : ""}`,
+        label: `${formatMinutes(FRIDAY_CONNECT_MINUTES)} · Se connecter au compte reçu sur WhatsApp`,
       },
       ...ACCOUNTS.map((account) => ({ id: `min-${account.id}`, label: accountLine(FRIDAY_ACCOUNT_MINUTES, account) })),
     ];
-    if (plan.kind === "sunday") {
-      for (const account of ACCOUNTS) {
-        items.push({
-          id: `photo-${account.id}`,
-          label: `Photo de profil · ${account.task}. Pas générée par IA, une autre source convient`,
-        });
-        items.push({
-          id: `bio-${account.id}`,
-          label: `Bio dans ta langue, sur le thème du compte · ${account.task}`,
-        });
-      }
-    }
-    return items;
+  }
+  if (plan.kind === "sunday") {
+    const [compte1] = ACCOUNTS;
+    return [
+      {
+        id: `photo-${compte1.id}`,
+        label: `${formatMinutes(SUNDAY_PHOTO_MINUTES)} · Photo de profil · ${compte1.task}. Photo d'une fille normale, Pinterest ou une photo que tu as déjà, pas de photo IA`,
+      },
+      {
+        id: `bio-${compte1.id}`,
+        label: `${formatMinutes(SUNDAY_BIO_MINUTES)} · Bio · ${compte1.task}. Bio intéressante, personnelle, normale, gentille et sympathique`,
+      },
+      ...ACCOUNTS.map((account, index) => ({
+        id: `min-${account.id}`,
+        label: accountLine(SUNDAY_WARM_MINUTES[index], account),
+      })),
+    ];
   }
   if (plan.kind === "saturday") {
     return ACCOUNTS.map((account) => ({ id: `min-${account.id}`, label: accountLine(SATURDAY_ACCOUNT_MINUTES, account) }));

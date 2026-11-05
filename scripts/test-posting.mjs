@@ -7,6 +7,9 @@ const {
   FRIDAY_CONNECT_MINUTES,
   PROFILES,
   SATURDAY_ACCOUNT_MINUTES,
+  SUNDAY_BIO_MINUTES,
+  SUNDAY_PHOTO_MINUTES,
+  SUNDAY_WARM_MINUTES,
   accountRole,
   checksFor,
   chooseSlot,
@@ -73,8 +76,22 @@ assert.equal(saturday.some((item) => item.id === "connect"), false);
 assert.equal(saturday.some((item) => /whatsapp/i.test(item.label)), false);
 
 const sunday = checksFor(DAY_PLANS[2]);
-assert.ok(sunday.some((item) => item.id === "connect"));
-assert.ok(sunday.some((item) => item.id === "photo-fr"));
+assert.equal(sunday.some((item) => item.id === "connect"), false);
+assert.equal(sunday.some((item) => /whatsapp|Se connecter/i.test(item.label)), false);
+assert.equal(sunday.filter((item) => item.id.startsWith("photo-")).length, 1);
+assert.equal(sunday.filter((item) => item.id.startsWith("bio-")).length, 1);
+assert.equal(sunday[0].label.startsWith("5 min · Photo de profil · Compte 1"), true);
+assert.ok(sunday[0].label.includes("fille normale"));
+assert.ok(sunday[0].label.includes("Pinterest"));
+assert.ok(sunday[0].label.includes("pas de photo IA"));
+assert.equal(sunday[1].label.startsWith("5 min · Bio · Compte 1"), true);
+assert.ok(sunday[1].label.includes("gentille et sympathique"));
+assert.deepEqual(
+  sunday.slice(2).map((item) => item.label.split(" (")[0]),
+  ["17 min · Compte 1", "17 min · Compte 2", "16 min · Compte 3"]
+);
+assert.equal(SUNDAY_PHOTO_MINUTES + SUNDAY_BIO_MINUTES + SUNDAY_WARM_MINUTES.reduce((sum, minutes) => sum + minutes, 0), 60);
+assert.equal(sunday.some((item) => /\b(FR|ES|US)\b|16 min 40/.test(item.label)), false);
 
 assert.equal(accountRole(DAY_PLANS[3], "fr"), "publie");
 assert.equal(accountRole(DAY_PLANS[3], "es"), "échauffement");
