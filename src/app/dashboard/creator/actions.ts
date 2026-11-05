@@ -27,3 +27,16 @@ export const unlockDashboard = async (formData: FormData) => {
   });
   redirect(next);
 };
+
+export const leavePosting = async () => {
+  cookies().set({
+    name: DASHBOARD_COOKIE,
+    value: "",
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 0,
+  });
+  redirect("/posting");
+};

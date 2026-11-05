@@ -22,6 +22,7 @@ import {
   personMark,
   slotsFor,
 } from "~/config/posting";
+import { leavePosting } from "~/app/dashboard/creator/actions";
 import { loadBlob, readDesk, saveBlob, writeDesk } from "~/components/posting/storage";
 
 const fieldClass =
@@ -158,9 +159,19 @@ export const PostingDashboard = ({ role }: { role: DeskRole }) => {
   return (
     <main lang="fr" className="min-h-dvh px-4 py-6 selection:bg-yellow selection:text-black sm:px-6 sm:py-8">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-        <a href="/" className="font-title text-3xl tracking-tight">
-          TAAB
-        </a>
+        <div className="flex items-center justify-between gap-3">
+          <a href="/" className="font-title text-3xl tracking-tight">
+            TAAB
+          </a>
+          <form action={leavePosting}>
+            <button
+              type="submit"
+              className="font-body text-sm font-bold underline decoration-gray-300 underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
+            >
+              Changer de profil
+            </button>
+          </form>
+        </div>
         <header>
           <h1 className="font-title text-4xl tracking-tight">{isTania ? "Tania" : person?.name}</h1>
           <p className="mt-2 max-w-prose font-body text-sm leading-relaxed text-gray-700">
