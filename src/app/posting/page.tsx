@@ -3,6 +3,8 @@ import { cookies } from "next/headers";
 
 import { DashboardGate } from "~/components/dashboard/DashboardGate";
 import { DASHBOARD_COOKIE, readSession } from "~/server/dashboardSession";
+import { listProfiles } from "~/server/postingProfileStore";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +25,12 @@ export default async function PostingPage({ searchParams }: { searchParams: { re
       />
     );
   }
+  const profiles = await listProfiles();
+  if (session.role !== "tania" && !profiles.some((profile) => profile.id === session.role)) redirect("/posting/logout");
   const { PostingDashboard } = await import("~/components/posting/PostingDashboard");
-  return <PostingDashboard role={session.role} />;
+  const visible =
+    session.role === "tania"
+      ? profiles
+      : profiles.filter((profile) => profile.id === session.role).map(({ id, name }) => ({ id, name }));
+  return <PostingDashboard role={session.role} profiles={visible} />;
 }

@@ -10,6 +10,7 @@
     "test:rules": "firebase emulators:exec --only firestore --project demo-etha \"node scripts/test-firestore-rules.mjs\""
   },
   "dependencies": {
+    "@netlify/blobs": "^11.1.7",
     "@react-three/drei": "^9.115.0",
     "@react-three/fiber": "^8.17.10",
     "@types/firebase": "^3.2.1",

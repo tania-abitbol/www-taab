@@ -3,7 +3,8 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { createSessionValue, DASHBOARD_COOKIE, roleForCode } from "~/server/dashboardSession";
+import { createSessionValue, DASHBOARD_COOKIE } from "~/server/dashboardSession";
+import { roleForAccessCode } from "~/server/postingProfileStore";
 
 const safeNext = (value: FormDataEntryValue | null) => {
   const next = String(value ?? "");
@@ -13,7 +14,7 @@ const safeNext = (value: FormDataEntryValue | null) => {
 
 export const unlockDashboard = async (formData: FormData) => {
   const next = safeNext(formData.get("next"));
-  const role = roleForCode(String(formData.get("code") ?? ""));
+  const role = await roleForAccessCode(String(formData.get("code") ?? ""));
   if (!role || (next === "/dashboard/creator" && role !== "tania")) redirect(`${next}?refus=1`);
 
   cookies().set({

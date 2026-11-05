@@ -13,13 +13,25 @@ const {
   emptyDayState,
   formatMinutes,
 } = await import("../src/config/posting.ts");
-const { createSessionValue, readSession, roleForCode, verifySession } = await import("../src/server/dashboardSession.ts");
+const { createSessionValue, readSession, verifySession } = await import("../src/server/dashboardSession.ts");
+const { DEFAULT_PROFILES, addProfile, deleteProfile, profileIdForCode, updateProfile } = await import(
+  "../src/config/postingProfiles.ts"
+);
 
-assert.equal(roleForCode("2580"), "tania");
-assert.equal(roleForCode("1111"), "p1");
-assert.equal(roleForCode("2222"), "p2");
-assert.equal(roleForCode("3333"), "p3");
-assert.equal(roleForCode("0000"), null);
+assert.equal(profileIdForCode(DEFAULT_PROFILES, "1111"), "p1");
+assert.equal(profileIdForCode(DEFAULT_PROFILES, "2222"), "p2");
+assert.equal(profileIdForCode(DEFAULT_PROFILES, "3333"), "p3");
+assert.equal(profileIdForCode(DEFAULT_PROFILES, "0000"), null);
+const renamed = updateProfile(DEFAULT_PROFILES, "p1", "Léa", "4444");
+assert.equal(renamed.ok, true);
+assert.equal(renamed.ok && renamed.profiles[0].name, "Léa");
+assert.equal(renamed.ok && profileIdForCode(renamed.profiles, "1111"), null);
+assert.equal(updateProfile(DEFAULT_PROFILES, "p1", "Léa", "2580").ok, false);
+const added = addProfile(DEFAULT_PROFILES, "Essai", "9999");
+assert.equal(added.ok, true);
+assert.equal(added.ok && added.profiles.length, 4);
+const removed = deleteProfile(DEFAULT_PROFILES, "p3");
+assert.equal(removed.ok && removed.profiles.some((profile) => profile.id === "p3"), false);
 assert.deepEqual(
   PROFILES.map((person) => person.name),
   ["Profil 1", "Profil 2", "Profil 3"]
@@ -30,6 +42,7 @@ const worker = createSessionValue("p1", 1_000);
 assert.equal(verifySession(tania, 1_000), true);
 assert.equal(verifySession(worker, 1_000), false);
 assert.equal(readSession(worker, 1_000)?.role, "p1");
+assert.equal(readSession(createSessionValue("p-essai", 1_000), 1_000)?.role, "p-essai");
 
 assert.equal(FRIDAY_CONNECT_MINUTES, 10);
 assert.equal(formatMinutes(FRIDAY_ACCOUNT_MINUTES), "16 min 40");

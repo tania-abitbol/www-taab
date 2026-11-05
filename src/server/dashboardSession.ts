@@ -4,17 +4,6 @@ export const DASHBOARD_COOKIE = "taab_creator_dash";
 const SESSION_MS = 1000 * 60 * 60 * 24 * 30;
 const SECRET = "taab-creator-dashboard-gate-v1";
 
-export type DeskRole = "tania" | "p1" | "p2" | "p3";
-
-const CODES: Record<string, DeskRole> = {
-  "2580": "tania",
-  "1111": "p1",
-  "2222": "p2",
-  "3333": "p3",
-};
-
-const ROLES = new Set<DeskRole>(["tania", "p1", "p2", "p3"]);
-
 const signature = (payload: string) => createHmac("sha256", SECRET).update(payload).digest("base64url");
 
 const signed = (payload: string, sig: string) => {
@@ -25,15 +14,15 @@ const signed = (payload: string, sig: string) => {
   return timingSafeEqual(left, right);
 };
 
-export const roleForCode = (code: string): DeskRole | null => CODES[code.trim()] ?? null;
+const isRole = (role: string) => role === "tania" || /^p[a-z0-9-]{1,40}$/.test(role);
 
 /** Legacy sessions without a role are Tania's. Creator tools stay on 2580. */
-export const createSessionValue = (role: DeskRole = "tania", now = Date.now()) => {
+export const createSessionValue = (role = "tania", now = Date.now()) => {
   const payload = `v2.${now + SESSION_MS}.${role}`;
   return `${payload}.${signature(payload)}`;
 };
 
-export const readSession = (value: string | undefined, now = Date.now()): { role: DeskRole } | null => {
+export const readSession = (value: string | undefined, now = Date.now()): { role: string } | null => {
   if (!value) return null;
   const parts = value.split(".");
   if (parts.length === 3) {
@@ -47,9 +36,9 @@ export const readSession = (value: string | undefined, now = Date.now()): { role
     const [version, expRaw, role, sig] = parts;
     const exp = Number(expRaw);
     if (version !== "v2" || !Number.isFinite(exp) || exp <= now) return null;
-    if (!ROLES.has(role as DeskRole)) return null;
+    if (!isRole(role)) return null;
     if (!signed(`${version}.${expRaw}.${role}`, sig)) return null;
-    return { role: role as DeskRole };
+    return { role };
   }
   return null;
 };

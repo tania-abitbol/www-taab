@@ -7,7 +7,6 @@ import {
   DAY_PLANS,
   DayState,
   Desk,
-  DeskRole,
   SLOTS,
   SlotId,
   accountRole,
@@ -23,7 +22,10 @@ import {
   slotsFor,
 } from "~/config/posting";
 import { leavePosting } from "~/app/dashboard/creator/actions";
+import { addManagedProfile, deleteManagedProfile, saveManagedProfile } from "~/app/posting/actions";
 import { loadBlob, readDesk, saveBlob, writeDesk } from "~/components/posting/storage";
+
+type ManagedProfile = { id: string; name: string; code?: string };
 
 const fieldClass =
   "h-12 w-full rounded-xl border border-gray-300 bg-white px-4 font-body text-base text-black placeholder:text-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-1";
@@ -31,12 +33,15 @@ const fieldClass =
 const proofKey = (personId: string, date: string) => `proof:${personId}:${date}`;
 const slideKey = (date: string, accountId: string) => `tania:${date}:${accountId}`;
 
-export const PostingDashboard = ({ role }: { role: DeskRole }) => {
+export const PostingDashboard = ({ role, profiles }: { role: string; profiles: ManagedProfile[] }) => {
   const today = madridToday();
   const [desk, setDesk] = useState<Desk | null>(null);
+  const [roster, setRoster] = useState(profiles);
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [fileError, setFileError] = useState("");
   const [newName, setNewName] = useState("");
+  const [newCode, setNewCode] = useState("");
+  const [profileError, setProfileError] = useState("");
   const isTania = role === "tania";
 
   useEffect(() => {
@@ -91,7 +96,8 @@ export const PostingDashboard = ({ role }: { role: DeskRole }) => {
     );
   }
 
-  const person = desk.people.find((item) => item.id === role) ?? null;
+  const person = isTania ? null : roster.find((item) => item.id === role) ?? null;
+  const people = isTania ? roster : [];
 
   const toggleSlot = (date: string, slotId: SlotId) => {
     if (!person) return;
@@ -148,12 +154,37 @@ export const PostingDashboard = ({ role }: { role: DeskRole }) => {
     }
   };
 
-  const addPerson = (event: FormEvent) => {
+  const addPerson = async (event: FormEvent) => {
     event.preventDefault();
-    const name = newName.trim();
-    if (!name) return;
-    update((current) => ({ ...current, people: [...current.people, { id: `x-${Date.now().toString(36)}`, name }] }));
+    const result = await addManagedProfile(newName, newCode);
+    if (!result.ok) {
+      setProfileError(result.error);
+      return;
+    }
+    setRoster(result.profiles);
     setNewName("");
+    setNewCode("");
+    setProfileError("");
+  };
+
+  const savePerson = async (id: string, name: string, code: string) => {
+    const result = await saveManagedProfile(id, name, code);
+    if (!result.ok) {
+      setProfileError(result.error);
+      return;
+    }
+    setRoster(result.profiles);
+    setProfileError("");
+  };
+
+  const deletePerson = async (id: string) => {
+    const result = await deleteManagedProfile(id);
+    if (!result.ok) {
+      setProfileError(result.error);
+      return;
+    }
+    setRoster(result.profiles);
+    setProfileError("");
   };
 
   return (
@@ -183,7 +214,7 @@ export const PostingDashboard = ({ role }: { role: DeskRole }) => {
           <section className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
             <h2 className="font-title text-2xl tracking-tight">Créneaux</h2>
             <p className="mt-1 font-body text-xs text-gray-700">
-              {desk.people.map((item) => `${personMark(item)} ${item.name}`).join(" · ")}
+              {people.map((item) => `${personMark(item)} ${item.name}`).join(" · ")}
             </p>
             <div className="mt-3 grid grid-cols-[3.4rem_repeat(4,1fr)] gap-1 font-body text-[11px] leading-tight">
               <span />
@@ -196,7 +227,7 @@ export const PostingDashboard = ({ role }: { role: DeskRole }) => {
                 <div key={date} className="contents">
                   <span className={`py-1 ${date === today ? "font-bold" : ""}`}>{formatShortDay(date)}</span>
                   {SLOTS.map((slot) => {
-                    const marks = desk.people
+                    const marks = people
                       .filter((item) => slotsFor(desk, item.id, date).includes(slot.id))
                       .map((item) => personMark(item));
                     return (
@@ -208,24 +239,44 @@ export const PostingDashboard = ({ role }: { role: DeskRole }) => {
                 </div>
               ))}
             </div>
-            <form onSubmit={addPerson} className="mt-4 flex gap-2">
-              <label htmlFor="new-person" className="sr-only">
-                Ajouter une personne
-              </label>
-              <input
-                id="new-person"
-                value={newName}
-                onChange={(event) => setNewName(event.target.value)}
-                placeholder="Ajouter une personne"
-                className={fieldClass}
-              />
-              <button
-                type="submit"
-                className="h-12 shrink-0 rounded-xl bg-black px-4 font-body text-sm font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
-              >
-                Ajouter
-              </button>
-            </form>
+            <div className="mt-5 border-t border-gray-200 pt-4">
+              <h3 className="font-body text-base font-bold">Profils</h3>
+              <ul className="mt-3 flex flex-col gap-4">
+                {people.map((item) => (
+                  <li key={item.id}>
+                    <ProfileEditor profile={item} onSave={savePerson} onDelete={deletePerson} />
+                  </li>
+                ))}
+              </ul>
+              <form onSubmit={(event) => void addPerson(event)} className="mt-4 flex flex-col gap-2">
+                <label htmlFor="new-person" className="font-body text-sm font-bold">
+                  Nouveau profil
+                </label>
+                <input
+                  id="new-person"
+                  value={newName}
+                  onChange={(event) => setNewName(event.target.value)}
+                  placeholder="Nom"
+                  className={fieldClass}
+                />
+                <input
+                  id="new-code"
+                  value={newCode}
+                  onChange={(event) => setNewCode(event.target.value)}
+                  inputMode="numeric"
+                  autoComplete="off"
+                  placeholder="Code"
+                  className={fieldClass}
+                />
+                <button
+                  type="submit"
+                  className="h-12 rounded-xl bg-black px-4 font-body text-sm font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
+                >
+                  Ajouter
+                </button>
+              </form>
+              {profileError && <p className="mt-2 font-body text-sm text-[#C8102E]">{profileError}</p>}
+            </div>
           </section>
         ) : (
           <section aria-label="Créneaux" className="flex flex-col gap-3">
@@ -393,5 +444,59 @@ export const PostingDashboard = ({ role }: { role: DeskRole }) => {
         <p className="font-body text-sm leading-relaxed text-gray-700">Créneaux, cases et fichiers restent dans ce navigateur.</p>
       </div>
     </main>
+  );
+};
+
+const ProfileEditor = ({
+  profile,
+  onSave,
+  onDelete,
+}: {
+  profile: ManagedProfile;
+  onSave: (id: string, name: string, code: string) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
+}) => {
+  const [name, setName] = useState(profile.name);
+  const [code, setCode] = useState(profile.code ?? "");
+  return (
+    <div className="flex flex-col gap-2">
+      <label htmlFor={`profile-name-${profile.id}`} className="sr-only">
+        Nom de {profile.name}
+      </label>
+      <input
+        id={`profile-name-${profile.id}`}
+        value={name}
+        onChange={(event) => setName(event.target.value)}
+        className={fieldClass}
+      />
+      <label htmlFor={`profile-code-${profile.id}`} className="sr-only">
+        Code de {profile.name}
+      </label>
+      <input
+        id={`profile-code-${profile.id}`}
+        value={code}
+        onChange={(event) => setCode(event.target.value)}
+        inputMode="numeric"
+        autoComplete="off"
+        className={fieldClass}
+      />
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={() => void onSave(profile.id, name, code)}
+          className="h-12 rounded-xl bg-black px-3 font-body text-sm font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
+        >
+          Enregistrer
+        </button>
+        <button
+          id={`profile-delete-${profile.id}`}
+          type="button"
+          onClick={() => void onDelete(profile.id)}
+          className="h-12 rounded-xl border border-black bg-white px-3 font-body text-sm font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
+        >
+          Supprimer
+        </button>
+      </div>
+    </div>
   );
 };
