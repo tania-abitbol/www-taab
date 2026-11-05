@@ -7,6 +7,7 @@ import { listProfiles } from "~/server/postingProfileStore";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export const metadata: Metadata = {
   title: "Publication | TAAB",
