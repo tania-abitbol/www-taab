@@ -184,6 +184,8 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
   if (plan.kind === "friday") {
     return [
       { id: "create", label: line(FRIDAY_CREATE_MINUTES, say.create(name(0), name(1), name(2))) },
+      { id: "username", label: say.username },
+      { id: "no-profile", label: say.noProfile },
       ...ACCOUNTS.map((account, index) => ({ id: `min-${account.id}`, label: line(FRIDAY_WARM_MINUTES, say.warm(name(index))) })),
     ];
   }
@@ -311,6 +313,8 @@ export const dateLocale = (lang: PostingLang) => (lang === "es" ? "es-ES" : lang
 
 type Phrases = {
   create: (first: string, second: string, third: string) => string;
+  username: string;
+  noProfile: string;
   warm: (account: string, before?: string) => string;
   post: (account: string) => string;
   sundayPhoto: (account: string) => string;
@@ -327,7 +331,10 @@ type Phrases = {
 const phrases: Record<PostingLang, Phrases> = {
   fr: {
     create: (first, second, third) =>
-      `Crée 3 comptes TikTok neufs : un pour le ${first}, un pour le ${second}, un pour le ${third}. Chacun part de zéro. N'utilise pas un compte déjà ouvert. Pour chaque compte, prends un e-mail et/ou un numéro de téléphone de ton pays. Ça peut être les tiens. Le compte se crée dans ton pays : je ne suis pas dans le bon pays, je ne peux pas le faire à ta place. Le compte t'appartient, ce sont tes informations. Je ne le reprendrai jamais pour moi. À la fin de cette mission, tu peux supprimer les comptes sans souci. Choisis un nom d'utilisateur cohérent, un prénom courant de fille dans ton pays. C'est toi qui choisis. Pas un nom en rapport avec mes applications. Pour le moment, tu ne mets ni photo de profil ni bio. Tu crées seulement le compte. Tu n'enregistres pas cette partie : il peut y avoir des mots de passe. Tu filmes seulement les 30 minutes où tu fais défiler.`,
+      `Crée 3 comptes TikTok neufs : un pour le ${first}, un pour le ${second}, un pour le ${third}. Chacun part de zéro. N'utilise pas un compte déjà ouvert. Pour chaque compte, prends un e-mail et/ou un numéro de téléphone de ton pays. Ça peut être les tiens. Le compte se crée dans ton pays : je ne suis pas dans le bon pays, je ne peux pas le faire à ta place. Le compte t'appartient, ce sont tes informations. Je ne le reprendrai jamais pour moi. À la fin de cette mission, tu peux supprimer les comptes sans souci. Tu n'enregistres pas cette partie : il peut y avoir des mots de passe. Tu filmes seulement les 30 minutes où tu fais défiler.`,
+    username:
+      "Nom d'utilisateur. Pour chaque compte, choisis un nom cohérent : un prénom courant de fille, dans le pays où tu postes. C'est toi qui choisis. Pas un nom en rapport avec mes applications.",
+    noProfile: "Pas de photo et pas de bio. Pour le moment, tu ne mets ni photo de profil ni bio. Tu crées seulement les comptes.",
     warm: (account, before = "") =>
       `${account}. ${before}Ouvre ce compte et reste dessus, comme si c'était ton TikTok. Passe un bon moment. Fais défiler, regarde ce qui t'intéresse, et passe le reste. Tu n'aimes pas tout, tu ne commentes pas tout, tu ne regardes pas chaque vidéo jusqu'au bout. De temps en temps, un like, un petit commentaire ou un abonnement, seulement quand ça te plaît vraiment. Ça doit rester naturel. Tu ne postes rien.`,
     post: (account) =>
@@ -347,7 +354,10 @@ const phrases: Record<PostingLang, Phrases> = {
   },
   es: {
     create: (first, second, third) =>
-      `Crea 3 cuentas de TikTok nuevas: una para ${first}, una para ${second} y una para ${third}. Cada una empieza de cero. No uses una cuenta que ya esté abierta. Para cada cuenta, usa un correo y/o un número de teléfono de tu país. Pueden ser los tuyos. La cuenta se crea en tu país: yo no estoy en el país correcto, no puedo hacerlo por ti. La cuenta es tuya, son tus datos. Nunca me la quedaré. Al final de esta misión, puedes borrar las cuentas sin problema. Elige un nombre de usuario coherente, un nombre común de chica de tu país. Lo eliges tú. Nada relacionado con mis aplicaciones. Por ahora no pongas foto de perfil ni bio. Solo crea la cuenta. No grabes esta parte: puede haber contraseñas. Graba solo los 30 minutos en los que deslizas.`,
+      `Crea 3 cuentas de TikTok nuevas: una para ${first}, una para ${second} y una para ${third}. Cada una empieza de cero. No uses una cuenta que ya esté abierta. Para cada cuenta, usa un correo y/o un número de teléfono de tu país. Pueden ser los tuyos. La cuenta se crea en tu país: yo no estoy en el país correcto, no puedo hacerlo por ti. La cuenta es tuya, son tus datos. Nunca me la quedaré. Al final de esta misión, puedes borrar las cuentas sin problema. No grabes esta parte: puede haber contraseñas. Graba solo los 30 minutos en los que deslizas.`,
+    username:
+      "Nombre de usuario. Para cada cuenta, elige un nombre coherente: un nombre común de chica, del país donde publicas. Lo eliges tú. Nada relacionado con mis aplicaciones.",
+    noProfile: "Sin foto y sin bio. Por ahora no pongas foto de perfil ni bio. Solo creas las cuentas.",
     warm: (account, before = "") =>
       `${account}. ${before}Abre esta cuenta y quédate ahí, como si fuera tu TikTok. Pasa un buen rato. Desliza, mira lo que te interesa y salta el resto. No des like a todo, no comentes todo, no mires cada vídeo hasta el final. De vez en cuando, un like, un comentario corto o un seguimiento, solo cuando de verdad te guste. Tiene que parecer natural. No publicas nada.`,
     post: (account) =>
@@ -367,7 +377,10 @@ const phrases: Record<PostingLang, Phrases> = {
   },
   en: {
     create: (first, second, third) =>
-      `Create 3 new TikTok accounts: one for ${first}, one for ${second}, and one for ${third}. Each one starts from zero. Do not use an account that is already open. For each account, use an email and/or a phone number from your country. They can be your own. The account has to be created in your country: I am not in the right country, so I cannot do it for you. The account belongs to you, because it uses your details. I will never take it for myself. At the end of this mission, you can delete the accounts without any problem. Pick a normal username, a common girl's name from your country. You choose it. Nothing related to my apps. For now, do not add a profile photo or a bio. Just create the account. Do not record this part: there may be passwords. Record only the 30 minutes when you scroll.`,
+      `Create 3 new TikTok accounts: one for ${first}, one for ${second}, and one for ${third}. Each one starts from zero. Do not use an account that is already open. For each account, use an email and/or a phone number from your country. They can be your own. The account has to be created in your country: I am not in the right country, so I cannot do it for you. The account belongs to you, because it uses your details. I will never take it for myself. At the end of this mission, you can delete the accounts without any problem. Do not record this part: there may be passwords. Record only the 30 minutes when you scroll.`,
+    username:
+      "Username. For each account, pick a normal name: a common girl's name, from the country you post in. You choose it. Nothing related to my apps.",
+    noProfile: "No photo and no bio. For now, do not add a profile photo or a bio. You only create the accounts.",
     warm: (account, before = "") =>
       `${account}. ${before}Open this account and stay on it, as if it were your TikTok. Have a good time. Scroll, watch what you like, and skip the rest. Do not like everything, do not comment on everything, and do not watch every video all the way through. Now and then, a like, a short comment, or a follow, only when you really like it. It has to feel natural. You do not post anything.`,
     post: (account) =>
