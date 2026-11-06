@@ -7,15 +7,14 @@ export const WORKER_VISIBLE_THROUGH = "2026-11-08";
 export const FRIDAY_CREATE_MINUTES = 30;
 export const FRIDAY_WARM_MINUTES = 10;
 export const SATURDAY_ACCOUNT_MINUTES = 20;
-export const SUNDAY_PHOTO_MINUTES = 5;
-export const SUNDAY_BIO_MINUTES = 5;
-/** The rest of the hour, in whole minutes. No post on Sunday. */
-export const SUNDAY_WARM_MINUTES = [17, 17, 16] as const;
+export const SUNDAY_WARM_MINUTES = 20;
+export const MONDAY_PHOTO_MINUTES = 5;
+export const MONDAY_BIO_MINUTES = 5;
 export const MONDAY_WARM_BEFORE = 8;
 export const MONDAY_POST_MINUTES = 5;
 export const MONDAY_WARM_AFTER = 8;
-export const MONDAY_COMPTE2_MINUTES = 19;
-export const MONDAY_COMPTE3_MINUTES = 20;
+export const MONDAY_COMPTE2_MINUTES = 14;
+export const MONDAY_COMPTE3_MINUTES = 15;
 export const TUESDAY_WARM_BEFORE = 8;
 export const TUESDAY_POST_MINUTES = 5;
 export const TUESDAY_WARM_AFTER = 8;
@@ -190,18 +189,16 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
     ];
   }
   if (plan.kind === "sunday") {
-    const compte1 = name(0);
-    return [
-      { id: `photo-${ACCOUNTS[0].id}`, label: line(SUNDAY_PHOTO_MINUTES, say.sundayPhoto(compte1)) },
-      { id: `bio-${ACCOUNTS[0].id}`, label: line(SUNDAY_BIO_MINUTES, say.sundayBio(compte1)) },
-      ...ACCOUNTS.map((account, index) => ({
-        id: `min-${account.id}`,
-        label: line(SUNDAY_WARM_MINUTES[index], say.warm(name(index), say.noPostToday)),
-      })),
-    ];
+    return ACCOUNTS.map((account, index) => ({
+      id: `min-${account.id}`,
+      label: line(SUNDAY_WARM_MINUTES, say.warm(name(index), say.noPostToday)),
+    }));
   }
   if (plan.date === "2026-11-09") {
+    const compte1 = name(0);
     return [
+      { id: `photo-${ACCOUNTS[0].id}`, label: line(MONDAY_PHOTO_MINUTES, say.sundayPhoto(compte1)) },
+      { id: `bio-${ACCOUNTS[0].id}`, label: line(MONDAY_BIO_MINUTES, say.sundayBio(compte1)) },
       { id: "warm-before", label: line(MONDAY_WARM_BEFORE, say.warm(name(0), say.beforePost)) },
       { id: "post", label: line(MONDAY_POST_MINUTES, say.post(name(0))) },
       { id: "warm-after", label: line(MONDAY_WARM_AFTER, say.warm(name(0), say.afterPost)) },

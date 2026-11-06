@@ -5,8 +5,10 @@ const {
   DAY_PLANS,
   FRIDAY_CREATE_MINUTES,
   FRIDAY_WARM_MINUTES,
+  MONDAY_BIO_MINUTES,
   MONDAY_COMPTE2_MINUTES,
   MONDAY_COMPTE3_MINUTES,
+  MONDAY_PHOTO_MINUTES,
   MONDAY_POST_MINUTES,
   MONDAY_WARM_AFTER,
   MONDAY_WARM_BEFORE,
@@ -20,8 +22,6 @@ const {
   TUESDAY_WARM_BEFORE,
   PROFILES,
   SATURDAY_ACCOUNT_MINUTES,
-  SUNDAY_BIO_MINUTES,
-  SUNDAY_PHOTO_MINUTES,
   SUNDAY_WARM_MINUTES,
   accountRole,
   checksFor,
@@ -113,42 +113,36 @@ assert.equal(saturday.some((item) => /whatsapp/i.test(item.label)), false);
 
 const sunday = checksFor(DAY_PLANS[2]);
 assert.equal(sunday.some((item) => item.id === "connect"), false);
-assert.equal(sunday.some((item) => /whatsapp|Se connecter/i.test(item.label)), false);
-assert.equal(sunday.filter((item) => item.id.startsWith("photo-")).length, 1);
-assert.equal(sunday.filter((item) => item.id.startsWith("bio-")).length, 1);
-assert.equal(sunday[0].label.startsWith("5 min · Mettre une photo de profil au Compte 1"), true);
-assert.ok(sunday[0].label.includes("appuie sur la photo"));
-assert.ok(sunday[0].label.includes("fille normale"));
-assert.ok(sunday[0].label.includes("Pinterest"));
-assert.ok(sunday[0].label.includes("pas de photo IA"));
-assert.equal(sunday[1].label.startsWith("5 min · Mettre une bio au Compte 1"), true);
-assert.ok(sunday[1].label.includes("bio courte"));
-assert.ok(sunday[1].label.includes("Modifier le profil"));
-assert.ok(sunday[1].label.includes("gentille et sympathique"));
-assert.equal(sunday.some((item) => item.label.includes("Appuie sur Publier")), false);
-assert.ok(sunday[2].label.startsWith("17 min · Compte 1"));
-assert.ok(sunday[2].label.includes("Tu ne postes pas aujourd'hui"));
-assert.ok(sunday[3].label.startsWith("17 min · Compte 2"));
-assert.ok(sunday[4].label.startsWith("16 min · Compte 3"));
-assert.equal(
-  SUNDAY_PHOTO_MINUTES + SUNDAY_BIO_MINUTES + SUNDAY_WARM_MINUTES.reduce((sum, minutes) => sum + minutes, 0),
-  60
-);
+assert.equal(sunday.some((item) => /whatsapp|Se connecter|photo de profil|Appuie sur Publier/i.test(item.label)), false);
+assert.equal(sunday.length, 3);
+assert.ok(sunday.every((item) => item.label.startsWith("20 min")));
+assert.ok(sunday[0].label.includes("Tu ne postes pas aujourd'hui"));
+assert.equal(SUNDAY_WARM_MINUTES * 3, 60);
 assert.equal(sunday.some((item) => /\b(FR|ES|US)\b|16 min 40/.test(item.label)), false);
 
 const monday = checksFor(DAY_PLANS[3]);
-assert.ok(monday[0].label.startsWith("8 min · Compte 1"));
-assert.ok(monday[0].label.includes("Avant de poster"));
-assert.ok(monday[1].label.includes("Appuie sur Publier"));
-assert.ok(monday[2].label.includes("Juste après avoir posté"));
-assert.ok(monday[3].label.startsWith("19 min · Compte 2"));
-assert.ok(monday[3].label.includes("Tu ne postes pas"));
-assert.ok(monday[4].label.startsWith("20 min · Compte 3"));
+assert.equal(monday[0].label.startsWith("5 min · Mettre une photo de profil au Compte 1"), true);
+assert.ok(monday[0].label.includes("pas de photo IA"));
+assert.equal(monday[1].label.startsWith("5 min · Mettre une bio au Compte 1"), true);
+assert.ok(monday[1].label.includes("bio courte"));
+assert.ok(monday[2].label.startsWith("8 min · Compte 1"));
+assert.ok(monday[2].label.includes("Avant de poster"));
+assert.ok(monday[3].label.includes("Appuie sur Publier"));
+assert.ok(monday[4].label.includes("Juste après avoir posté"));
+assert.ok(monday[5].label.startsWith("14 min · Compte 2"));
+assert.ok(monday[5].label.includes("Tu ne postes pas"));
+assert.ok(monday[6].label.startsWith("15 min · Compte 3"));
 assert.equal(monday.some((item) => /échauffement/i.test(item.label)), false);
-assert.ok(monday[0].label.includes("Ça doit rester naturel"));
-assert.ok(monday[0].label.includes("tu ne regardes pas chaque vidéo jusqu'au bout"));
+assert.ok(monday[2].label.includes("Ça doit rester naturel"));
+assert.ok(monday[2].label.includes("tu ne regardes pas chaque vidéo jusqu'au bout"));
 assert.equal(
-  MONDAY_WARM_BEFORE + MONDAY_POST_MINUTES + MONDAY_WARM_AFTER + MONDAY_COMPTE2_MINUTES + MONDAY_COMPTE3_MINUTES,
+  MONDAY_PHOTO_MINUTES +
+    MONDAY_BIO_MINUTES +
+    MONDAY_WARM_BEFORE +
+    MONDAY_POST_MINUTES +
+    MONDAY_WARM_AFTER +
+    MONDAY_COMPTE2_MINUTES +
+    MONDAY_COMPTE3_MINUTES,
   60
 );
 assert.equal(monday.some((item) => /\b(FR|ES|US)\b|16 min 40/.test(item.label)), false);
