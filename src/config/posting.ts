@@ -7,10 +7,8 @@ export const FRIDAY_WARM_MINUTES = 10;
 export const SATURDAY_ACCOUNT_MINUTES = 20;
 export const SUNDAY_PHOTO_MINUTES = 5;
 export const SUNDAY_BIO_MINUTES = 5;
-export const SUNDAY_POST_MINUTES = 5;
-export const SUNDAY_WARM_AFTER = 8;
-export const SUNDAY_COMPTE2_MINUTES = 19;
-export const SUNDAY_COMPTE3_MINUTES = 18;
+/** The rest of the hour, in whole minutes. No post on Sunday. */
+export const SUNDAY_WARM_MINUTES = [17, 17, 16] as const;
 export const MONDAY_WARM_BEFORE = 8;
 export const MONDAY_POST_MINUTES = 5;
 export const MONDAY_WARM_AFTER = 8;
@@ -123,7 +121,7 @@ const post = (date: string, index: number, publishers: string[], repeatsDay7 = f
 export const DAY_PLANS: DayPlan[] = [
   { date: "2026-11-06", index: 1, kind: "friday", repeatsDay7: false, publishers: [] },
   { date: "2026-11-07", index: 2, kind: "saturday", repeatsDay7: false, publishers: [] },
-  { date: "2026-11-08", index: 3, kind: "sunday", repeatsDay7: false, publishers: ["fr"] },
+  { date: "2026-11-08", index: 3, kind: "sunday", repeatsDay7: false, publishers: [] },
   post("2026-11-09", 4, ["fr"]),
   post("2026-11-10", 5, ["fr", "es"]),
   post("2026-11-11", 6, ["fr", "es"]),
@@ -192,10 +190,10 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
     return [
       { id: `photo-${ACCOUNTS[0].id}`, label: line(SUNDAY_PHOTO_MINUTES, say.sundayPhoto(compte1)) },
       { id: `bio-${ACCOUNTS[0].id}`, label: line(SUNDAY_BIO_MINUTES, say.sundayBio(compte1)) },
-      { id: "post", label: line(SUNDAY_POST_MINUTES, say.post(compte1)) },
-      { id: "warm-after", label: line(SUNDAY_WARM_AFTER, say.warm(compte1, say.afterPost)) },
-      { id: "warm-2", label: line(SUNDAY_COMPTE2_MINUTES, say.warm(name(1), say.noPostToday)) },
-      { id: "warm-3", label: line(SUNDAY_COMPTE3_MINUTES, say.warm(name(2), say.noPostToday)) },
+      ...ACCOUNTS.map((account, index) => ({
+        id: `min-${account.id}`,
+        label: line(SUNDAY_WARM_MINUTES[index], say.warm(name(index), say.noPostToday)),
+      })),
     ];
   }
   if (plan.date === "2026-11-09") {

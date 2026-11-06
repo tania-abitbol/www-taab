@@ -21,11 +21,8 @@ const {
   PROFILES,
   SATURDAY_ACCOUNT_MINUTES,
   SUNDAY_BIO_MINUTES,
-  SUNDAY_COMPTE2_MINUTES,
-  SUNDAY_COMPTE3_MINUTES,
   SUNDAY_PHOTO_MINUTES,
-  SUNDAY_POST_MINUTES,
-  SUNDAY_WARM_AFTER,
+  SUNDAY_WARM_MINUTES,
   accountRole,
   checksFor,
   chooseSlot,
@@ -123,13 +120,13 @@ assert.equal(sunday[1].label.startsWith("5 min · Mettre une bio au Compte 1"), 
 assert.ok(sunday[1].label.includes("bio courte"));
 assert.ok(sunday[1].label.includes("Modifier le profil"));
 assert.ok(sunday[1].label.includes("gentille et sympathique"));
-assert.ok(sunday[2].label.includes("Appuie sur Publier"));
-assert.ok(sunday[3].label.includes("Juste après avoir posté"));
-assert.ok(sunday[4].label.startsWith("19 min · Compte 2"));
-assert.ok(sunday[4].label.includes("Tu ne postes pas"));
-assert.ok(sunday[5].label.startsWith("18 min · Compte 3"));
+assert.equal(sunday.some((item) => item.label.includes("Appuie sur Publier")), false);
+assert.ok(sunday[2].label.startsWith("17 min · Compte 1"));
+assert.ok(sunday[2].label.includes("Tu ne postes pas aujourd'hui"));
+assert.ok(sunday[3].label.startsWith("17 min · Compte 2"));
+assert.ok(sunday[4].label.startsWith("16 min · Compte 3"));
 assert.equal(
-  SUNDAY_PHOTO_MINUTES + SUNDAY_BIO_MINUTES + SUNDAY_POST_MINUTES + SUNDAY_WARM_AFTER + SUNDAY_COMPTE2_MINUTES + SUNDAY_COMPTE3_MINUTES,
+  SUNDAY_PHOTO_MINUTES + SUNDAY_BIO_MINUTES + SUNDAY_WARM_MINUTES.reduce((sum, minutes) => sum + minutes, 0),
   60
 );
 assert.equal(sunday.some((item) => /\b(FR|ES|US)\b|16 min 40/.test(item.label)), false);
@@ -182,7 +179,8 @@ assert.equal(
 );
 assert.equal(tuesday.filter((item) => item.label.includes("Appuie sur Publier")).length, 2);
 assert.equal(tuesday.some((item) => /\b(FR|ES|US)\b|16 min 40/.test(item.label)), false);
-assert.deepEqual(DAY_PLANS[2].publishers, ["fr"]);
+assert.deepEqual(DAY_PLANS[2].publishers, []);
+assert.deepEqual(DAY_PLANS[3].publishers, ["fr"]);
 assert.deepEqual(DAY_PLANS[4].publishers, ["fr", "es"]);
 assert.deepEqual(DAY_PLANS[5].publishers, ["fr", "es"]);
 assert.deepEqual(DAY_PLANS[6].publishers, ["fr", "es", "us"]);
