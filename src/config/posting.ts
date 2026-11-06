@@ -329,7 +329,7 @@ const phrases: Record<PostingLang, Phrases> = {
     create: (first, second, third) =>
       `Crée 3 comptes TikTok neufs : un pour le ${first}, un pour le ${second}, un pour le ${third}. Chacun part de zéro. N'utilise pas un compte déjà ouvert. Pour chaque compte, prends un e-mail et/ou un numéro de téléphone de ton pays. Ça peut être les tiens. Le compte se crée dans ton pays : je ne suis pas dans le bon pays, je ne peux pas le faire à ta place. Le compte t'appartient, ce sont tes informations. Je ne le reprendrai jamais pour moi. À la fin de cette mission, tu peux supprimer les comptes sans souci. Tu n'enregistres pas cette partie : il peut y avoir des mots de passe. Tu filmes seulement les 30 minutes où tu fais défiler.`,
     warm: (account, before = "") =>
-      `${account}. ${before}Ouvre ce compte et reste dessus. Fais défiler TikTok. Regarde chaque vidéo jusqu'au bout, sauf si elle ne t'intéresse pas. Écris un petit commentaire sous 2 ou 3 vidéos. Abonne-toi à des profils qui te plaisent. Tu chauffes le compte : tu ne postes rien, tu fais comme si c'était ton téléphone.`,
+      `${account}. ${before}Ouvre ce compte et reste dessus, comme si c'était ton TikTok. Passe un bon moment. Fais défiler, regarde ce qui t'intéresse, et passe le reste. Tu n'aimes pas tout, tu ne commentes pas tout, tu ne regardes pas chaque vidéo jusqu'au bout. De temps en temps, un like, un petit commentaire ou un abonnement, seulement quand ça te plaît vraiment. Ça doit rester naturel. Tu ne postes rien.`,
     post: (account) =>
       `${account}. C'est maintenant que tu postes. Ouvre le diaporama. Choisis une musique dans TikTok. Appuie sur Publier. Attends de voir la vidéo sur le profil.`,
     sundayPhoto: (account) =>
@@ -349,7 +349,7 @@ const phrases: Record<PostingLang, Phrases> = {
     create: (first, second, third) =>
       `Crea 3 cuentas de TikTok nuevas: una para ${first}, una para ${second} y una para ${third}. Cada una empieza de cero. No uses una cuenta que ya esté abierta. Para cada cuenta, usa un correo y/o un número de teléfono de tu país. Pueden ser los tuyos. La cuenta se crea en tu país: yo no estoy en el país correcto, no puedo hacerlo por ti. La cuenta es tuya, son tus datos. Nunca me la quedaré. Al final de esta misión, puedes borrar las cuentas sin problema. No grabes esta parte: puede haber contraseñas. Graba solo los 30 minutos en los que deslizas.`,
     warm: (account, before = "") =>
-      `${account}. ${before}Abre esta cuenta y quédate ahí. Desliza TikTok. Mira cada vídeo hasta el final, salvo si no te interesa. Escribe un comentario corto en 2 o 3 vídeos. Sigue perfiles que te gusten. Estás calentando la cuenta: no publicas nada, haz como si fuera tu teléfono.`,
+      `${account}. ${before}Abre esta cuenta y quédate ahí, como si fuera tu TikTok. Pasa un buen rato. Desliza, mira lo que te interesa y salta el resto. No des like a todo, no comentes todo, no mires cada vídeo hasta el final. De vez en cuando, un like, un comentario corto o un seguimiento, solo cuando de verdad te guste. Tiene que parecer natural. No publicas nada.`,
     post: (account) =>
       `${account}. Ahora sí publicas. Abre el carrusel. Elige una música en TikTok. Pulsa Publicar. Espera a ver el vídeo en el perfil.`,
     sundayPhoto: (account) =>
@@ -369,7 +369,7 @@ const phrases: Record<PostingLang, Phrases> = {
     create: (first, second, third) =>
       `Create 3 new TikTok accounts: one for ${first}, one for ${second}, and one for ${third}. Each one starts from zero. Do not use an account that is already open. For each account, use an email and/or a phone number from your country. They can be your own. The account has to be created in your country: I am not in the right country, so I cannot do it for you. The account belongs to you, because it uses your details. I will never take it for myself. At the end of this mission, you can delete the accounts without any problem. Do not record this part: there may be passwords. Record only the 30 minutes when you scroll.`,
     warm: (account, before = "") =>
-      `${account}. ${before}Open this account and stay on it. Scroll TikTok. Watch each video all the way through, unless you are not interested. Write a short comment on 2 or 3 videos. Follow profiles you like. You are warming the account: you do not post anything. Act like it is your phone.`,
+      `${account}. ${before}Open this account and stay on it, as if it were your TikTok. Have a good time. Scroll, watch what you like, and skip the rest. Do not like everything, do not comment on everything, and do not watch every video all the way through. Now and then, a like, a short comment, or a follow, only when you really like it. It has to feel natural. You do not post anything.`,
     post: (account) =>
       `${account}. Now you post. Open the slideshow. Pick a song in TikTok. Tap Post. Wait until you see the video on the profile.`,
     sundayPhoto: (account) =>

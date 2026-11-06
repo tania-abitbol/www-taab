@@ -85,10 +85,10 @@ assert.ok(postingUi("fr").proofScroll.includes("30 minutes"));
 assert.equal(friday[1].label.startsWith("10 min · Compte 1"), true);
 assert.equal(friday[2].label.startsWith("10 min · Compte 2"), true);
 assert.equal(friday[3].label.startsWith("10 min · Compte 3"), true);
-assert.ok(friday[1].label.includes("jusqu'au bout"));
-assert.ok(friday[1].label.includes("petit commentaire"));
-assert.ok(friday[1].label.includes("Abonne-toi"));
-assert.ok(friday[1].label.includes("tu ne postes rien"));
+assert.ok(friday[1].label.includes("comme si c'était ton TikTok"));
+assert.ok(friday[1].label.includes("Tu n'aimes pas tout"));
+assert.ok(friday[1].label.includes("seulement quand ça te plaît vraiment"));
+assert.ok(friday[1].label.includes("Tu ne postes rien"));
 assert.equal(friday.some((item) => /\b(FR|ES|US)\b/.test(item.label)), false);
 assert.equal(friday.some((item) => item.label.includes("16 min 40")), false);
 assert.equal(friday.some((item) => /lien tiktok/i.test(item.label)), false);
@@ -101,8 +101,8 @@ assert.deepEqual(
   ["20 min · Compte 1.", "20 min · Compte 2.", "20 min · Compte 3."]
 );
 assert.equal(saturday.some((item) => /\b(FR|ES|US)\b/.test(item.label)), false);
-assert.ok(saturday[0].label.includes("jusqu'au bout"));
-assert.ok(saturday[0].label.includes("tu ne postes rien"));
+assert.ok(saturday[0].label.includes("Passe un bon moment"));
+assert.ok(saturday[0].label.includes("Tu ne postes rien"));
 assert.equal(saturday.some((item) => item.id === "connect"), false);
 assert.equal(saturday.some((item) => /whatsapp/i.test(item.label)), false);
 
@@ -140,8 +140,8 @@ assert.ok(monday[3].label.startsWith("19 min · Compte 2"));
 assert.ok(monday[3].label.includes("Tu ne postes pas"));
 assert.ok(monday[4].label.startsWith("20 min · Compte 3"));
 assert.equal(monday.some((item) => /échauffement/i.test(item.label)), false);
-assert.ok(monday[0].label.includes("jusqu'au bout"));
-assert.ok(monday[0].label.includes("Abonne-toi"));
+assert.ok(monday[0].label.includes("Ça doit rester naturel"));
+assert.ok(monday[0].label.includes("tu ne regardes pas chaque vidéo jusqu'au bout"));
 assert.equal(
   MONDAY_WARM_BEFORE + MONDAY_POST_MINUTES + MONDAY_WARM_AFTER + MONDAY_COMPTE2_MINUTES + MONDAY_COMPTE3_MINUTES,
   60
