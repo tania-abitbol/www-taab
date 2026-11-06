@@ -94,11 +94,12 @@ assert.equal(sunday.some((item) => item.id === "connect"), false);
 assert.equal(sunday.some((item) => /whatsapp|Se connecter/i.test(item.label)), false);
 assert.equal(sunday.filter((item) => item.id.startsWith("photo-")).length, 1);
 assert.equal(sunday.filter((item) => item.id.startsWith("bio-")).length, 1);
-assert.equal(sunday[0].label.startsWith("5 min · Photo de profil · Compte 1"), true);
+assert.equal(sunday[0].label.startsWith("5 min · Mettre une photo de profil au Compte 1"), true);
 assert.ok(sunday[0].label.includes("fille normale"));
 assert.ok(sunday[0].label.includes("Pinterest"));
 assert.ok(sunday[0].label.includes("pas de photo IA"));
-assert.equal(sunday[1].label.startsWith("5 min · Bio · Compte 1"), true);
+assert.equal(sunday[1].label.startsWith("5 min · Mettre une bio au Compte 1"), true);
+assert.ok(sunday[1].label.includes("Bio courte"));
 assert.ok(sunday[1].label.includes("gentille et sympathique"));
 assert.deepEqual(
   sunday.slice(2).map((item) => item.label.split(" (")[0]),

@@ -185,11 +185,11 @@ export const checksFor = (plan: DayPlan): CheckItem[] => {
     return [
       {
         id: `photo-${compte1.id}`,
-        label: `${formatMinutes(SUNDAY_PHOTO_MINUTES)} · Photo de profil · ${compte1.task}. Photo d'une fille normale, Pinterest ou une photo que tu as déjà, pas de photo IA`,
+        label: `${formatMinutes(SUNDAY_PHOTO_MINUTES)} · Mettre une photo de profil au ${compte1.task}. Photo d'une fille normale, Pinterest ou une photo que tu as déjà, pas de photo IA`,
       },
       {
         id: `bio-${compte1.id}`,
-        label: `${formatMinutes(SUNDAY_BIO_MINUTES)} · Bio · ${compte1.task}. Bio intéressante, personnelle, normale, gentille et sympathique`,
+        label: `${formatMinutes(SUNDAY_BIO_MINUTES)} · Mettre une bio au ${compte1.task}. Bio courte, personnelle, normale, gentille et sympathique`,
       },
       ...ACCOUNTS.map((account, index) => ({
         id: `min-${account.id}`,
