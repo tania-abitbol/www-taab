@@ -1,8 +1,18 @@
 import { DayState, Desk, PROFILES, SlotId, emptyDayState, emptyDesk, isIsoDate, isSlotId } from "~/config/posting";
 
-export const POSTING_STORAGE_KEY = "taab:posting:v3";
 const DB_NAME = "taab-posting";
 const STORE = "blobs";
+const PREVIOUS_KEYS = ["taab:posting:v1", "taab:posting:v2", "taab:posting:v3"];
+export const POSTING_STORAGE_KEY = "taab:posting:v4";
+
+const dropPreviousDesk = () => {
+  let hadPrevious = false;
+  for (const key of PREVIOUS_KEYS) {
+    if (localStorage.getItem(key)) hadPrevious = true;
+    localStorage.removeItem(key);
+  }
+  if (hadPrevious) indexedDB.deleteDatabase(DB_NAME);
+};
 
 const asDay = (value: unknown): DayState => {
   const source = value && typeof value === "object" ? (value as Partial<DayState>) : {};
@@ -71,6 +81,7 @@ export const parseDesk = (raw: string | null): Desk => {
 
 export const readDesk = (): Desk => {
   try {
+    dropPreviousDesk();
     return parseDesk(localStorage.getItem(POSTING_STORAGE_KEY));
   } catch {
     return emptyDesk();
