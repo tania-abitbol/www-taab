@@ -327,7 +327,7 @@ type Phrases = {
 const phrases: Record<PostingLang, Phrases> = {
   fr: {
     create: (first, second, third) =>
-      `Crée 3 comptes TikTok neufs : un pour le ${first}, un pour le ${second}, un pour le ${third}. Chacun part de zéro. N'utilise pas un compte déjà ouvert. Pour chaque compte, prends un e-mail et/ou un numéro de téléphone de ton pays. Ça peut être les tiens. Le compte se crée dans ton pays : je ne suis pas dans le bon pays, je ne peux pas le faire à ta place. Le compte t'appartient, ce sont tes informations. Je ne le reprendrai jamais pour moi. À la fin de cette mission, tu peux supprimer les comptes sans souci.`,
+      `Crée 3 comptes TikTok neufs : un pour le ${first}, un pour le ${second}, un pour le ${third}. Chacun part de zéro. N'utilise pas un compte déjà ouvert. Pour chaque compte, prends un e-mail et/ou un numéro de téléphone de ton pays. Ça peut être les tiens. Le compte se crée dans ton pays : je ne suis pas dans le bon pays, je ne peux pas le faire à ta place. Le compte t'appartient, ce sont tes informations. Je ne le reprendrai jamais pour moi. À la fin de cette mission, tu peux supprimer les comptes sans souci. Tu n'enregistres pas cette partie : il peut y avoir des mots de passe. Tu filmes seulement les 30 minutes où tu fais défiler.`,
     warm: (account, before = "") =>
       `${account}. ${before}Ouvre ce compte et reste dessus. Fais défiler TikTok. Regarde chaque vidéo jusqu'au bout, sauf si elle ne t'intéresse pas. Écris un petit commentaire sous 2 ou 3 vidéos. Abonne-toi à des profils qui te plaisent. Tu chauffes le compte : tu ne postes rien, tu fais comme si c'était ton téléphone.`,
     post: (account) =>
@@ -347,7 +347,7 @@ const phrases: Record<PostingLang, Phrases> = {
   },
   es: {
     create: (first, second, third) =>
-      `Crea 3 cuentas de TikTok nuevas: una para ${first}, una para ${second} y una para ${third}. Cada una empieza de cero. No uses una cuenta que ya esté abierta. Para cada cuenta, usa un correo y/o un número de teléfono de tu país. Pueden ser los tuyos. La cuenta se crea en tu país: yo no estoy en el país correcto, no puedo hacerlo por ti. La cuenta es tuya, son tus datos. Nunca me la quedaré. Al final de esta misión, puedes borrar las cuentas sin problema.`,
+      `Crea 3 cuentas de TikTok nuevas: una para ${first}, una para ${second} y una para ${third}. Cada una empieza de cero. No uses una cuenta que ya esté abierta. Para cada cuenta, usa un correo y/o un número de teléfono de tu país. Pueden ser los tuyos. La cuenta se crea en tu país: yo no estoy en el país correcto, no puedo hacerlo por ti. La cuenta es tuya, son tus datos. Nunca me la quedaré. Al final de esta misión, puedes borrar las cuentas sin problema. No grabes esta parte: puede haber contraseñas. Graba solo los 30 minutos en los que deslizas.`,
     warm: (account, before = "") =>
       `${account}. ${before}Abre esta cuenta y quédate ahí. Desliza TikTok. Mira cada vídeo hasta el final, salvo si no te interesa. Escribe un comentario corto en 2 o 3 vídeos. Sigue perfiles que te gusten. Estás calentando la cuenta: no publicas nada, haz como si fuera tu teléfono.`,
     post: (account) =>
@@ -367,7 +367,7 @@ const phrases: Record<PostingLang, Phrases> = {
   },
   en: {
     create: (first, second, third) =>
-      `Create 3 new TikTok accounts: one for ${first}, one for ${second}, and one for ${third}. Each one starts from zero. Do not use an account that is already open. For each account, use an email and/or a phone number from your country. They can be your own. The account has to be created in your country: I am not in the right country, so I cannot do it for you. The account belongs to you, because it uses your details. I will never take it for myself. At the end of this mission, you can delete the accounts without any problem.`,
+      `Create 3 new TikTok accounts: one for ${first}, one for ${second}, and one for ${third}. Each one starts from zero. Do not use an account that is already open. For each account, use an email and/or a phone number from your country. They can be your own. The account has to be created in your country: I am not in the right country, so I cannot do it for you. The account belongs to you, because it uses your details. I will never take it for myself. At the end of this mission, you can delete the accounts without any problem. Do not record this part: there may be passwords. Record only the 30 minutes when you scroll.`,
     warm: (account, before = "") =>
       `${account}. ${before}Open this account and stay on it. Scroll TikTok. Watch each video all the way through, unless you are not interested. Write a short comment on 2 or 3 videos. Follow profiles you like. You are warming the account: you do not post anything. Act like it is your phone.`,
     post: (account) =>
@@ -407,6 +407,7 @@ export const postingUi = (lang: PostingLang) =>
       todayWord: "aujourd'hui",
       proof: "Preuve du jour",
       proofBody: "Enregistrement filmé de la session. Tu as juste à enregistrer ton écran pendant toute ton heure de travail.",
+      proofScroll: "Enregistrement des 30 minutes où tu fais défiler. Tu ne filmes pas la création des comptes : il peut y avoir des mots de passe.",
       validateDay: "Valider la journée",
       dayDone: "Journée validée",
       ready: "Cases et preuve sont là.",
@@ -431,6 +432,7 @@ export const postingUi = (lang: PostingLang) =>
       todayWord: "hoy",
       proof: "Prueba del día",
       proofBody: "Grabación de la sesión. Solo tienes que grabar tu pantalla durante toda tu hora de trabajo.",
+      proofScroll: "Grabación de los 30 minutos en los que deslizas. No grabes la creación de las cuentas: puede haber contraseñas.",
       validateDay: "Validar el día",
       dayDone: "Día validado",
       ready: "Las casillas y la prueba están.",
@@ -455,6 +457,7 @@ export const postingUi = (lang: PostingLang) =>
       todayWord: "today",
       proof: "Proof of the day",
       proofBody: "A recording of the session. Just screen-record your whole hour of work.",
+      proofScroll: "A recording of the 30 minutes when you scroll. Do not record while you create the accounts: there may be passwords.",
       validateDay: "Validate the day",
       dayDone: "Day validated",
       ready: "The boxes and the proof are here.",

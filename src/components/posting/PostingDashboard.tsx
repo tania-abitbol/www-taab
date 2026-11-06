@@ -483,7 +483,9 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
               </ul>
               <div className="mt-4 rounded-2xl bg-gray-100 p-3">
                 <h3 className="font-body text-base font-bold">{ui.proof}</h3>
-                <p className="mt-1 font-body text-sm leading-relaxed text-gray-700">{ui.proofBody}</p>
+                <p className="mt-1 font-body text-sm leading-relaxed text-gray-700">
+                  {plan.kind === "friday" ? ui.proofScroll : ui.proofBody}
+                </p>
                 <input
                   id={`proof-${plan.date}`}
                   type="file"
