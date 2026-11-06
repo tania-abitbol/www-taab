@@ -159,25 +159,21 @@ export const madridToday = (now = new Date()) =>
 /** Whole minutes only, as in “16 min” or “17 min”. */
 export const formatMinutes = (minutes: number) => `${Math.round(minutes)} min`;
 
-const ACCOUNT_ACTIONS =
-  "échauffer le compte, commenter des TikToks, les regarder en entier sauf si ça n'intéresse pas, s'abonner à des gens intéressants, chauffer le compte comme si tu y étais naturellement";
+/** Plain steps. The person may never have used TikTok this way. */
+const warmGuide = (minutes: number, account: string, before = "") =>
+  `${formatMinutes(minutes)} · ${account}. ${before}Ouvre ce compte et reste dessus. Fais défiler TikTok. Regarde chaque vidéo jusqu'au bout, sauf si elle ne t'intéresse pas. Écris un petit commentaire sous 2 ou 3 vidéos. Abonne-toi à des profils qui te plaisent. Tu chauffes le compte : tu ne postes rien, tu fais comme si c'était ton téléphone.`;
 
-const WARM_ACTIONS =
-  "commenter des TikToks, les regarder en entier sauf si ça n'intéresse pas, s'abonner à des gens intéressants";
-
-const warmLine = (minutes: number, title: string) => `${formatMinutes(minutes)} · ${title} (${WARM_ACTIONS})`;
-
-const accountLine = (minutes: number, account: AccountName) =>
-  `${formatMinutes(minutes)} · ${account.task} (${ACCOUNT_ACTIONS})`;
+const postGuide = (minutes: number, account: string) =>
+  `${formatMinutes(minutes)} · ${account}. C'est maintenant que tu postes. Ouvre le diaporama. Choisis une musique dans TikTok. Appuie sur Publier. Attends de voir la vidéo sur le profil.`;
 
 export const checksFor = (plan: DayPlan): CheckItem[] => {
   if (plan.kind === "friday") {
     return [
       {
         id: "connect",
-        label: `${formatMinutes(FRIDAY_CONNECT_MINUTES)} · Se connecter au compte reçu sur WhatsApp`,
+        label: `${formatMinutes(FRIDAY_CONNECT_MINUTES)} · Ouvre WhatsApp. Tania t'a envoyé le compte. Connecte-toi avec exactement ce qu'elle a écrit. Quand TikTok s'ouvre, tu t'arrêtes. Ne change pas la photo ni la bio.`,
       },
-      ...ACCOUNTS.map((account) => ({ id: `min-${account.id}`, label: accountLine(FRIDAY_ACCOUNT_MINUTES, account) })),
+      ...ACCOUNTS.map((account) => ({ id: `min-${account.id}`, label: warmGuide(FRIDAY_ACCOUNT_MINUTES, account.task) })),
     ];
   }
   if (plan.kind === "sunday") {
@@ -185,47 +181,47 @@ export const checksFor = (plan: DayPlan): CheckItem[] => {
     return [
       {
         id: `photo-${compte1.id}`,
-        label: `${formatMinutes(SUNDAY_PHOTO_MINUTES)} · Mettre une photo de profil au ${compte1.task}. Photo d'une fille normale, Pinterest ou une photo que tu as déjà, pas de photo IA`,
+        label: `${formatMinutes(SUNDAY_PHOTO_MINUTES)} · Mettre une photo de profil au ${compte1.task}. Va sur le profil, appuie sur la photo, et change-la. Photo d'une fille normale, Pinterest ou une photo que tu as déjà, pas de photo IA. Seulement le ${compte1.task}.`,
       },
       {
         id: `bio-${compte1.id}`,
-        label: `${formatMinutes(SUNDAY_BIO_MINUTES)} · Mettre une bio au ${compte1.task}. Bio courte, personnelle, normale, gentille et sympathique`,
+        label: `${formatMinutes(SUNDAY_BIO_MINUTES)} · Mettre une bio au ${compte1.task}. Appuie sur Modifier le profil, puis sur Bio. Écris une bio courte, personnelle, normale, gentille et sympathique. Deux lignes suffisent. Seulement le ${compte1.task}.`,
       },
       ...ACCOUNTS.map((account, index) => ({
         id: `min-${account.id}`,
-        label: accountLine(SUNDAY_WARM_MINUTES[index], account),
+        label: warmGuide(SUNDAY_WARM_MINUTES[index], account.task),
       })),
     ];
   }
   if (plan.date === "2026-11-09") {
     const [compte1, compte2, compte3] = ACCOUNTS;
     return [
-      { id: "warm-before", label: warmLine(MONDAY_WARM_BEFORE, `Chauffer le compte · ${compte1.task}`) },
-      { id: "post", label: `${formatMinutes(MONDAY_POST_MINUTES)} · Poster · ${compte1.task}` },
-      { id: "warm-after", label: warmLine(MONDAY_WARM_AFTER, `Chauffer le compte après · ${compte1.task}`) },
-      { id: "warm-2", label: warmLine(MONDAY_COMPTE2_MINUTES, `Chauffer le ${compte2.task.toLowerCase()}`) },
-      { id: "warm-3", label: warmLine(MONDAY_COMPTE3_MINUTES, `Chauffer le ${compte3.task.toLowerCase()}`) },
+      { id: "warm-before", label: warmGuide(MONDAY_WARM_BEFORE, compte1.task, "Avant de poster. ") },
+      { id: "post", label: postGuide(MONDAY_POST_MINUTES, compte1.task) },
+      { id: "warm-after", label: warmGuide(MONDAY_WARM_AFTER, compte1.task, "Juste après avoir posté. ") },
+      { id: "warm-2", label: warmGuide(MONDAY_COMPTE2_MINUTES, compte2.task, "Tu ne postes pas aujourd'hui. ") },
+      { id: "warm-3", label: warmGuide(MONDAY_COMPTE3_MINUTES, compte3.task, "Tu ne postes pas aujourd'hui. ") },
     ];
   }
   if (plan.date === "2026-11-10") {
     const [compte1, compte2, compte3] = ACCOUNTS;
     return [
-      { id: "warm-before-1", label: warmLine(TUESDAY_WARM_BEFORE, `Chauffer le compte · ${compte1.task}`) },
-      { id: "post-1", label: `${formatMinutes(TUESDAY_POST_MINUTES)} · Poster · ${compte1.task}` },
-      { id: "warm-after-1", label: warmLine(TUESDAY_WARM_AFTER, `Chauffer le compte · ${compte1.task}`) },
-      { id: "warm-before-2", label: warmLine(TUESDAY_COMPTE2_WARM, `Chauffer le compte · ${compte2.task}`) },
+      { id: "warm-before-1", label: warmGuide(TUESDAY_WARM_BEFORE, compte1.task, "Avant de poster. ") },
+      { id: "post-1", label: postGuide(TUESDAY_POST_MINUTES, compte1.task) },
+      { id: "warm-after-1", label: warmGuide(TUESDAY_WARM_AFTER, compte1.task, "Juste après avoir posté. ") },
+      { id: "warm-before-2", label: warmGuide(TUESDAY_COMPTE2_WARM, compte2.task, "Tu ne postes pas. ") },
       {
         id: "profile-2",
-        label: `${formatMinutes(TUESDAY_COMPTE2_PROFILE)} · Nouvelle bio et nouvelle photo de profil · ${compte2.task}. Bio intéressante, personnelle, normale, gentille et sympathique. Photo d'une fille normale, Pinterest ou une photo que tu as déjà, pas de photo IA`,
+        label: `${formatMinutes(TUESDAY_COMPTE2_PROFILE)} · ${compte2.task}. Tu ne postes pas. Change la photo et la bio. Photo : appuie sur la photo, mets une fille normale, Pinterest ou une photo que tu as déjà, pas de photo IA. Bio : appuie sur Modifier le profil, écris une bio courte, personnelle, normale, gentille et sympathique.`,
       },
-      { id: "warm-after-2", label: warmLine(TUESDAY_COMPTE2_WARM_AFTER, `Chauffer le compte · ${compte2.task}`) },
-      { id: "warm-3", label: warmLine(TUESDAY_COMPTE3_MINUTES, `Chauffer le ${compte3.task.toLowerCase()}`) },
+      { id: "warm-after-2", label: warmGuide(TUESDAY_COMPTE2_WARM_AFTER, compte2.task, "La photo et la bio sont faites. ") },
+      { id: "warm-3", label: warmGuide(TUESDAY_COMPTE3_MINUTES, compte3.task, "Tu ne postes pas. Tu ne changes ni la photo ni la bio. ") },
     ];
   }
   if (plan.kind === "saturday") {
     return ACCOUNTS.map((account) => ({
       id: `min-${account.id}`,
-      label: `${formatMinutes(SATURDAY_ACCOUNT_MINUTES)} · ${account.task} (commenter, regarder en entier sauf si ça n'intéresse pas, s'abonner, chauffer naturellement)`,
+      label: warmGuide(SATURDAY_ACCOUNT_MINUTES, account.task),
     }));
   }
   return ACCOUNTS.map((account) =>

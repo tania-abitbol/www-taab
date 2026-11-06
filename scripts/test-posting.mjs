@@ -68,24 +68,30 @@ assert.equal(FRIDAY_CONNECT_MINUTES + FRIDAY_ACCOUNT_MINUTES * 3, 58);
 assert.ok(FRIDAY_CONNECT_MINUTES + FRIDAY_ACCOUNT_MINUTES * 3 <= 60);
 
 const friday = checksFor(DAY_PLANS[0]);
-assert.equal(friday[0].label, "10 min · Se connecter au compte reçu sur WhatsApp");
+assert.ok(friday[0].label.startsWith("10 min"));
+assert.ok(friday[0].label.includes("WhatsApp"));
+assert.ok(friday[0].label.includes("Connecte-toi"));
 assert.equal(friday[1].label.startsWith("16 min · Compte 1"), true);
 assert.equal(friday[2].label.startsWith("16 min · Compte 2"), true);
 assert.equal(friday[3].label.startsWith("16 min · Compte 3"), true);
+assert.ok(friday[1].label.includes("jusqu'au bout"));
+assert.ok(friday[1].label.includes("petit commentaire"));
+assert.ok(friday[1].label.includes("Abonne-toi"));
+assert.ok(friday[1].label.includes("tu ne postes rien"));
 assert.equal(friday.some((item) => /\b(FR|ES|US)\b/.test(item.label)), false);
 assert.equal(friday.some((item) => item.label.includes("16 min 40")), false);
-assert.ok(friday[1].label.includes("s'abonner à des gens intéressants"));
 assert.equal(friday.some((item) => /lien tiktok/i.test(item.label)), false);
 
 const saturday = checksFor(DAY_PLANS[1]);
 assert.equal(saturday.length, 3);
 assert.ok(saturday.every((item) => item.label.startsWith("20 min")));
 assert.deepEqual(
-  saturday.map((item) => item.label.split(" (")[0]),
-  ["20 min · Compte 1", "20 min · Compte 2", "20 min · Compte 3"]
+  saturday.map((item) => item.label.slice(0, 18)),
+  ["20 min · Compte 1.", "20 min · Compte 2.", "20 min · Compte 3."]
 );
 assert.equal(saturday.some((item) => /\b(FR|ES|US)\b/.test(item.label)), false);
-assert.ok(saturday[0].label.includes("commenter, regarder en entier sauf si ça n'intéresse pas, s'abonner, chauffer naturellement"));
+assert.ok(saturday[0].label.includes("jusqu'au bout"));
+assert.ok(saturday[0].label.includes("tu ne postes rien"));
 assert.equal(saturday.some((item) => item.id === "connect"), false);
 assert.equal(saturday.some((item) => /whatsapp/i.test(item.label)), false);
 
@@ -95,33 +101,32 @@ assert.equal(sunday.some((item) => /whatsapp|Se connecter/i.test(item.label)), f
 assert.equal(sunday.filter((item) => item.id.startsWith("photo-")).length, 1);
 assert.equal(sunday.filter((item) => item.id.startsWith("bio-")).length, 1);
 assert.equal(sunday[0].label.startsWith("5 min · Mettre une photo de profil au Compte 1"), true);
+assert.ok(sunday[0].label.includes("appuie sur la photo"));
 assert.ok(sunday[0].label.includes("fille normale"));
 assert.ok(sunday[0].label.includes("Pinterest"));
 assert.ok(sunday[0].label.includes("pas de photo IA"));
 assert.equal(sunday[1].label.startsWith("5 min · Mettre une bio au Compte 1"), true);
-assert.ok(sunday[1].label.includes("Bio courte"));
+assert.ok(sunday[1].label.includes("bio courte"));
+assert.ok(sunday[1].label.includes("Modifier le profil"));
 assert.ok(sunday[1].label.includes("gentille et sympathique"));
 assert.deepEqual(
-  sunday.slice(2).map((item) => item.label.split(" (")[0]),
-  ["17 min · Compte 1", "17 min · Compte 2", "16 min · Compte 3"]
+  sunday.slice(2).map((item) => item.label.slice(0, 18)),
+  ["17 min · Compte 1.", "17 min · Compte 2.", "16 min · Compte 3."]
 );
 assert.equal(SUNDAY_PHOTO_MINUTES + SUNDAY_BIO_MINUTES + SUNDAY_WARM_MINUTES.reduce((sum, minutes) => sum + minutes, 0), 60);
 assert.equal(sunday.some((item) => /\b(FR|ES|US)\b|16 min 40/.test(item.label)), false);
 
 const monday = checksFor(DAY_PLANS[3]);
-assert.deepEqual(
-  monday.map((item) => item.label.split(" (")[0]),
-  [
-    "8 min · Chauffer le compte · Compte 1",
-    "5 min · Poster · Compte 1",
-    "8 min · Chauffer le compte après · Compte 1",
-    "19 min · Chauffer le compte 2",
-    "20 min · Chauffer le compte 3",
-  ]
-);
+assert.ok(monday[0].label.startsWith("8 min · Compte 1"));
+assert.ok(monday[0].label.includes("Avant de poster"));
+assert.ok(monday[1].label.includes("Appuie sur Publier"));
+assert.ok(monday[2].label.includes("Juste après avoir posté"));
+assert.ok(monday[3].label.startsWith("19 min · Compte 2"));
+assert.ok(monday[3].label.includes("Tu ne postes pas"));
+assert.ok(monday[4].label.startsWith("20 min · Compte 3"));
 assert.equal(monday.some((item) => /échauffement/i.test(item.label)), false);
-assert.ok(monday[0].label.includes("les regarder en entier sauf si ça n'intéresse pas"));
-assert.ok(monday[0].label.includes("s'abonner à des gens intéressants"));
+assert.ok(monday[0].label.includes("jusqu'au bout"));
+assert.ok(monday[0].label.includes("Abonne-toi"));
 assert.equal(
   MONDAY_WARM_BEFORE + MONDAY_POST_MINUTES + MONDAY_WARM_AFTER + MONDAY_COMPTE2_MINUTES + MONDAY_COMPTE3_MINUTES,
   60
@@ -131,18 +136,14 @@ assert.equal(monday.some((item) => /\b(FR|ES|US)\b|16 min 40/.test(item.label)),
 assert.equal(accountRole(DAY_PLANS[3], "fr"), "publie");
 assert.equal(accountRole(DAY_PLANS[3], "es"), "échauffement");
 const tuesday = checksFor(DAY_PLANS[4]);
-assert.deepEqual(
-  tuesday.map((item) => item.label.split(" (")[0].split(". ")[0]),
-  [
-    "8 min · Chauffer le compte · Compte 1",
-    "5 min · Poster · Compte 1",
-    "8 min · Chauffer le compte · Compte 1",
-    "5 min · Chauffer le compte · Compte 2",
-    "5 min · Nouvelle bio et nouvelle photo de profil · Compte 2",
-    "5 min · Chauffer le compte · Compte 2",
-    "24 min · Chauffer le compte 3",
-  ]
-);
+assert.ok(tuesday[0].label.startsWith("8 min · Compte 1"));
+assert.ok(tuesday[1].label.includes("Appuie sur Publier"));
+assert.ok(tuesday[2].label.includes("Juste après avoir posté"));
+assert.ok(tuesday[3].label.startsWith("5 min · Compte 2"));
+assert.ok(tuesday[4].label.includes("Change la photo et la bio"));
+assert.ok(tuesday[5].label.includes("La photo et la bio sont faites"));
+assert.ok(tuesday[6].label.startsWith("24 min · Compte 3"));
+assert.ok(tuesday[6].label.includes("Tu ne postes pas"));
 assert.ok(tuesday[4].label.includes("gentille et sympathique"));
 assert.ok(tuesday[4].label.includes("fille normale"));
 assert.ok(tuesday[4].label.includes("Pinterest"));
