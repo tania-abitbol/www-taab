@@ -21,6 +21,15 @@ export const TUESDAY_COMPTE2_WARM = 5;
 export const TUESDAY_COMPTE2_PROFILE = 5;
 export const TUESDAY_COMPTE2_WARM_AFTER = 5;
 export const TUESDAY_COMPTE3_MINUTES = 24;
+/** Wednesday: the one account that does not post, then 8 + 5 + 8 on each of the other two. */
+export const WEDNESDAY_WARM_ONLY = 18;
+export const WEDNESDAY_WARM_BEFORE = 8;
+export const WEDNESDAY_POST_MINUTES = 5;
+export const WEDNESDAY_WARM_AFTER = 8;
+/** Thursday through Sunday: every account posts, 8 + 5 + 7. */
+export const ALL_WARM_BEFORE = 8;
+export const ALL_POST_MINUTES = 5;
+export const ALL_WARM_AFTER = 7;
 
 export const SLOTS = [
   { id: "17-18", label: "17:00–18:00", short: "17–18" },
@@ -114,10 +123,15 @@ export const DAY_PLANS: DayPlan[] = [
   { date: "2026-11-08", index: 3, kind: "sunday", repeatsDay7: false, publishers: [] },
   post("2026-11-09", 4, ["fr"]),
   post("2026-11-10", 5, ["fr"]),
+  post("2026-11-11", 6, ["es", "us"]),
+  post("2026-11-12", 7, ["fr", "es", "us"]),
+  post("2026-11-13", 7, ["fr", "es", "us"], true),
+  post("2026-11-14", 7, ["fr", "es", "us"], true),
+  post("2026-11-15", 7, ["fr", "es", "us"], true),
 ];
 
-/** Day tasks are written through this date. Later days stay on the planner only. */
-export const PLANNED_THROUGH = "2026-11-10";
+/** Day tasks are written through this date. */
+export const PLANNED_THROUGH = "2026-11-15";
 
 export const planFor = (date: string) => DAY_PLANS.find((plan) => plan.date === date) ?? null;
 
@@ -207,10 +221,28 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
       label: line(SATURDAY_ACCOUNT_MINUTES, say.warm(name(index))),
     }));
   }
+  if (plan.publishers.length === 2) {
+    return ACCOUNTS.flatMap((account, index) =>
+      plan.publishers.includes(account.id)
+        ? [
+            { id: `warm-before-${account.id}`, label: line(WEDNESDAY_WARM_BEFORE, say.warm(name(index), say.beforePost)) },
+            { id: `post-${account.id}`, label: line(WEDNESDAY_POST_MINUTES, say.post(name(index))) },
+            { id: `warm-after-${account.id}`, label: line(WEDNESDAY_WARM_AFTER, say.warm(name(index), say.afterPost)) },
+          ]
+        : [{ id: `warm-${account.id}`, label: line(WEDNESDAY_WARM_ONLY, say.warm(name(index), say.noPostToday)) }]
+    );
+  }
+  if (plan.publishers.length === 3) {
+    return ACCOUNTS.flatMap((account, index) => [
+      { id: `warm-before-${account.id}`, label: line(ALL_WARM_BEFORE, say.warm(name(index), say.beforePost)) },
+      { id: `post-${account.id}`, label: line(ALL_POST_MINUTES, say.post(name(index))) },
+      { id: `warm-after-${account.id}`, label: line(ALL_WARM_AFTER, say.warm(name(index), say.afterPost)) },
+    ]);
+  }
   return ACCOUNTS.map((account, index) =>
     plan.publishers.includes(account.id)
-      ? { id: `pub-${account.id}`, label: `Publier · ${name(index)}` }
-      : { id: `warm-${account.id}`, label: `Échauffement seulement · ${name(index)}` }
+      ? { id: `pub-${account.id}`, label: line(ALL_POST_MINUTES, say.post(name(index))) }
+      : { id: `warm-${account.id}`, label: line(WEDNESDAY_WARM_ONLY, say.warm(name(index), say.noPostToday)) }
   );
 };
 
