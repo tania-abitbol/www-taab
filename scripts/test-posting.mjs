@@ -30,7 +30,9 @@ const {
   emptyDayState,
   formatMinutes,
   langFromName,
+  WORKER_VISIBLE_THROUGH,
   openDates,
+  openPlans,
   postingUi,
 } = await import("../src/config/posting.ts");
 const { createSessionValue, readSession, verifySession } = await import("../src/server/dashboardSession.ts");
@@ -203,6 +205,12 @@ const saturdayOpen = openDates("2026-11-07");
 assert.equal(saturdayOpen.includes("2026-11-06"), false);
 assert.equal(saturdayOpen[0], "2026-11-07");
 assert.equal(saturdayOpen[saturdayOpen.length - 1], "2026-11-15");
+assert.equal(WORKER_VISIBLE_THROUGH, "2026-11-08");
+assert.equal(openPlans("2026-11-06").some((plan) => plan.date === "2026-11-15"), true);
+assert.equal(
+  openPlans("2026-11-06").filter((plan) => plan.date <= WORKER_VISIBLE_THROUGH).some((plan) => plan.date > "2026-11-08"),
+  false
+);
 
 const state = emptyDayState();
 state.proofName = "session.mp4";

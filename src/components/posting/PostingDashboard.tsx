@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useState } from "react";
 import {
   ACCOUNTS,
   CALENDAR_END,
+  WORKER_VISIBLE_THROUGH,
   CALENDAR_START,
   DAY_PLANS,
   DayState,
@@ -60,10 +61,14 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
   const lang: PostingLang = isTania ? "fr" : langFromName(profiles.find((item) => item.id === role)?.name ?? "");
   const ui = postingUi(lang);
   const lower = (value: string) => value.charAt(0).toLowerCase() + value.slice(1);
+  const rangeStart = isTania ? CALENDAR_START : "2026-11-06";
+  const rangeEnd = isTania ? CALENDAR_END : WORKER_VISIBLE_THROUGH;
   const range =
     lang === "en"
-      ? ui.range(formatDay(CALENDAR_START, lang), formatDay(CALENDAR_END, lang))
-      : ui.range(lower(formatDay(CALENDAR_START, lang)), lower(formatDay(CALENDAR_END, lang)));
+      ? ui.range(formatDay(rangeStart, lang), formatDay(rangeEnd, lang))
+      : ui.range(lower(formatDay(rangeStart, lang)), lower(formatDay(rangeEnd, lang)));
+  const visibleDates = (forTania: boolean) => openDates(today).filter((date) => forTania || date <= WORKER_VISIBLE_THROUGH);
+  const visiblePlans = (forTania: boolean) => openPlans(today).filter((plan) => forTania || plan.date <= WORKER_VISIBLE_THROUGH);
 
   useEffect(() => {
     const loaded = readDesk();
@@ -119,7 +124,7 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
 
   const person = isTania ? null : roster.find((item) => item.id === role) ?? null;
   const people = isTania ? roster : [];
-  const missingDays = person ? openDates(today).filter((date) => slotsFor(desk, person.id, date).length === 0) : [];
+  const missingDays = person ? visibleDates(false).filter((date) => slotsFor(desk, person.id, date).length === 0) : [];
   const missingNames = new Intl.ListFormat(dateLocale(lang), { type: "conjunction" }).format(
     missingDays.map((date) => lower(formatDay(date, lang)))
   );
@@ -244,7 +249,7 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
                   {slot.short}
                 </span>
               ))}
-              {openDates(today).map((date) => (
+              {visibleDates(true).map((date) => (
                 <div key={date} className="contents">
                   <span className={`py-1 ${date === today ? "font-bold" : ""}`}>{formatShortDay(date)}</span>
                   {SLOTS.map((slot) => {
@@ -304,7 +309,7 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
             <h2 className="font-title text-2xl tracking-tight">{ui.slots}</h2>
             <p className="mt-2 font-body text-base leading-relaxed text-gray-700">{ui.slotsHelp}</p>
             <ul className="mt-4 flex flex-col gap-4">
-              {openDates(today).map((date) => {
+              {visibleDates(false).map((date) => {
                 const chosen = person ? slotsFor(desk, person.id, date)[0] : undefined;
                 const chosenSlot = SLOTS.find((slot) => slot.id === chosen);
                 return (
@@ -373,7 +378,7 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
           </section>
         )}
 
-        {openPlans(today).map((plan) => {
+        {visiblePlans(isTania).map((plan) => {
           const checks = checksFor(plan, isTania ? "fr" : lang);
           if (isTania && plan.kind !== "post") {
             return (

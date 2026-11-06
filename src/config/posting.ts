@@ -2,6 +2,8 @@
 
 export const CALENDAR_START = "2026-11-05";
 export const CALENDAR_END = "2026-11-15";
+/** Workers only see the current list. The rest stays on Tania's screen. */
+export const WORKER_VISIBLE_THROUGH = "2026-11-08";
 export const FRIDAY_CREATE_MINUTES = 30;
 export const FRIDAY_WARM_MINUTES = 10;
 export const SATURDAY_ACCOUNT_MINUTES = 20;
