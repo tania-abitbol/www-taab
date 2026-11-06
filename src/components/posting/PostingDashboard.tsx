@@ -14,6 +14,7 @@ import {
   SlotId,
   accountRole,
   checksFor,
+  dateLocale,
   dayHeading,
   dayReady,
   emptyDayState,
@@ -34,6 +35,11 @@ import { addManagedProfile, deleteManagedProfile, saveManagedProfile } from "~/a
 import { loadBlob, readDesk, saveBlob, writeDesk } from "~/components/posting/storage";
 
 type ManagedProfile = { id: string; name: string; code?: string };
+
+const hourText = (short: string) => {
+  const [start, end] = short.split("–");
+  return `${start}h–${end}h`;
+};
 
 const fieldClass =
   "h-12 w-full rounded-xl border border-gray-300 bg-white px-4 font-body text-base text-black placeholder:text-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-1";
@@ -113,6 +119,11 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
 
   const person = isTania ? null : roster.find((item) => item.id === role) ?? null;
   const people = isTania ? roster : [];
+  const missingDays = person ? openDates(today).filter((date) => slotsFor(desk, person.id, date).length === 0) : [];
+  const missingNames = new Intl.ListFormat(dateLocale(lang), { type: "conjunction" }).format(
+    missingDays.map((date) => lower(formatDay(date, lang)))
+  );
+  const weekSaved = person ? desk.weekValidated[person.id] === true : false;
 
   const toggleSlot = (date: string, slotId: SlotId) => {
     if (!person) return;
@@ -291,47 +302,73 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
         ) : (
           <section aria-label={ui.slots} className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
             <h2 className="font-title text-2xl tracking-tight">{ui.slots}</h2>
-            <div className="mt-3 grid grid-cols-[3.4rem_repeat(4,1fr)] gap-1 font-body text-[11px] leading-tight">
-              <span />
-              {SLOTS.map((slot) => (
-                <span key={slot.id} className="text-center font-bold">
-                  {slot.short}
-                </span>
-              ))}
-              {openDates(today).map((date) => (
-                <div key={date} className="contents">
-                  <span className={`py-1 ${date === today ? "font-bold" : ""}`}>{formatShortDay(date, lang)}</span>
-                  {SLOTS.map((slot) => {
-                    const selected = person ? slotsFor(desk, person.id, date).includes(slot.id) : false;
-                    return (
-                      <button
-                        key={slot.id}
-                        id={`slot-${date}-${slot.id}`}
-                        type="button"
-                        aria-pressed={selected}
-                        aria-label={`${formatShortDay(date, lang)} ${slot.label}`}
-                        onClick={() => toggleSlot(date, slot.id)}
-                        className={`rounded-md py-1 text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-black ${
-                          selected ? "bg-black text-white" : "bg-gray-100"
-                        }`}
-                      >
-                        {selected ? slot.short : "·"}
-                      </button>
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
+            <p className="mt-2 font-body text-base leading-relaxed text-gray-700">{ui.slotsHelp}</p>
+            <ul className="mt-4 flex flex-col gap-4">
+              {openDates(today).map((date) => {
+                const chosen = person ? slotsFor(desk, person.id, date)[0] : undefined;
+                const chosenSlot = SLOTS.find((slot) => slot.id === chosen);
+                return (
+                  <li key={date} className="border-t border-gray-200 pt-4 first:border-t-0 first:pt-0">
+                    <p className="font-body text-base font-bold">
+                      {formatDay(date, lang)}
+                      {date === today ? `, ${ui.todayWord}` : ""}
+                    </p>
+                    <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                      {SLOTS.map((slot) => {
+                        const selected = chosen === slot.id;
+                        const hour = hourText(slot.short);
+                        return (
+                          <button
+                            key={slot.id}
+                            id={`slot-${date}-${slot.id}`}
+                            type="button"
+                            aria-pressed={selected}
+                            aria-label={`${formatDay(date, lang)} ${slot.label}`}
+                            onClick={() => toggleSlot(date, slot.id)}
+                            className={`flex h-12 items-center justify-center rounded-xl px-2 font-body text-base font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-black ${
+                              selected ? "bg-black text-white" : "bg-gray-100 text-black"
+                            }`}
+                          >
+                            {hour}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="mt-2 font-body text-sm leading-relaxed text-gray-700">
+                      {chosenSlot ? ui.picked(hourText(chosenSlot.short)) : ui.pickOne}
+                    </p>
+                  </li>
+                );
+              })}
+            </ul>
             {person && (
-              <button
-                id="validate-week"
-                type="button"
-                disabled={desk.weekValidated[person.id] === true}
-                onClick={() => update((current) => ({ ...current, weekValidated: { ...current.weekValidated, [person.id]: true } }))}
-                className="mt-4 h-12 w-full rounded-xl bg-black px-4 font-body text-base font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:opacity-40"
-              >
-                {desk.weekValidated[person.id] ? ui.weekDone : ui.validateWeek}
-              </button>
+              <div className="mt-4 border-t border-gray-200 pt-4">
+                {missingDays.length > 0 && (
+                  <p className="font-body text-base leading-relaxed text-gray-700">
+                    {missingDays.length > 3 ? ui.missingCount(missingDays.length) : ui.missingHours(missingNames)}
+                  </p>
+                )}
+                {missingDays.length === 0 && !weekSaved && (
+                  <p className="font-body text-base leading-relaxed text-gray-700">{ui.readyHours}</p>
+                )}
+                {weekSaved ? (
+                  <div id="validate-week" className={`${missingDays.length > 0 ? "mt-3" : ""} rounded-xl border border-black px-4 py-3`}>
+                    <p className="font-body text-base font-bold">{ui.weekDone}</p>
+                    <p className="mt-1 font-body text-sm leading-relaxed text-gray-700">{ui.weekEdit}</p>
+                  </div>
+                ) : (
+                  <button
+                    id="validate-week"
+                    type="button"
+                    onClick={() =>
+                      update((current) => ({ ...current, weekValidated: { ...current.weekValidated, [person.id]: true } }))
+                    }
+                    className="mt-3 h-12 w-full rounded-xl bg-black px-4 font-body text-base font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
+                  >
+                    {ui.validateWeek}
+                  </button>
+                )}
+              </div>
             )}
           </section>
         )}

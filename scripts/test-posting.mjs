@@ -30,6 +30,7 @@ const {
   formatMinutes,
   langFromName,
   openDates,
+  postingUi,
 } = await import("../src/config/posting.ts");
 const { createSessionValue, readSession, verifySession } = await import("../src/server/dashboardSession.ts");
 const { DEFAULT_PROFILES, addProfile, deleteProfile, profileIdForCode, updateProfile } = await import(
@@ -184,6 +185,9 @@ assert.equal(langFromName("Ghada - FR"), "fr");
 assert.equal(langFromName("Peches - ES"), "es");
 assert.equal(langFromName("Karol - US"), "en");
 assert.equal(langFromName("Profil 1"), "fr");
+assert.ok(postingUi("fr").slotsHelp.includes("une seule heure"));
+assert.ok(postingUi("es").slotsHelp.includes("una sola hora"));
+assert.ok(postingUi("en").weekEdit.includes("still change"));
 assert.ok(checksFor(DAY_PLANS[0], "es")[1].label.startsWith("16 min · Cuenta 1"));
 assert.ok(checksFor(DAY_PLANS[0], "es")[0].label.includes("Abre WhatsApp"));
 assert.ok(checksFor(DAY_PLANS[0], "en")[1].label.startsWith("16 min · Account 1"));
