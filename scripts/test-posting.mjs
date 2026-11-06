@@ -10,6 +10,7 @@ const {
   MONDAY_POST_MINUTES,
   MONDAY_WARM_AFTER,
   MONDAY_WARM_BEFORE,
+  TUESDAY_COMPTE2_POST,
   TUESDAY_COMPTE2_PROFILE,
   TUESDAY_COMPTE2_WARM,
   TUESDAY_COMPTE2_WARM_AFTER,
@@ -20,8 +21,11 @@ const {
   PROFILES,
   SATURDAY_ACCOUNT_MINUTES,
   SUNDAY_BIO_MINUTES,
+  SUNDAY_COMPTE2_MINUTES,
+  SUNDAY_COMPTE3_MINUTES,
   SUNDAY_PHOTO_MINUTES,
-  SUNDAY_WARM_MINUTES,
+  SUNDAY_POST_MINUTES,
+  SUNDAY_WARM_AFTER,
   accountRole,
   checksFor,
   chooseSlot,
@@ -111,11 +115,15 @@ assert.equal(sunday[1].label.startsWith("5 min · Mettre une bio au Compte 1"), 
 assert.ok(sunday[1].label.includes("bio courte"));
 assert.ok(sunday[1].label.includes("Modifier le profil"));
 assert.ok(sunday[1].label.includes("gentille et sympathique"));
-assert.deepEqual(
-  sunday.slice(2).map((item) => item.label.slice(0, 18)),
-  ["17 min · Compte 1.", "17 min · Compte 2.", "16 min · Compte 3."]
+assert.ok(sunday[2].label.includes("Appuie sur Publier"));
+assert.ok(sunday[3].label.includes("Juste après avoir posté"));
+assert.ok(sunday[4].label.startsWith("19 min · Compte 2"));
+assert.ok(sunday[4].label.includes("Tu ne postes pas"));
+assert.ok(sunday[5].label.startsWith("18 min · Compte 3"));
+assert.equal(
+  SUNDAY_PHOTO_MINUTES + SUNDAY_BIO_MINUTES + SUNDAY_POST_MINUTES + SUNDAY_WARM_AFTER + SUNDAY_COMPTE2_MINUTES + SUNDAY_COMPTE3_MINUTES,
+  60
 );
-assert.equal(SUNDAY_PHOTO_MINUTES + SUNDAY_BIO_MINUTES + SUNDAY_WARM_MINUTES.reduce((sum, minutes) => sum + minutes, 0), 60);
 assert.equal(sunday.some((item) => /\b(FR|ES|US)\b|16 min 40/.test(item.label)), false);
 
 const monday = checksFor(DAY_PLANS[3]);
@@ -142,10 +150,12 @@ assert.ok(tuesday[0].label.startsWith("8 min · Compte 1"));
 assert.ok(tuesday[1].label.includes("Appuie sur Publier"));
 assert.ok(tuesday[2].label.includes("Juste après avoir posté"));
 assert.ok(tuesday[3].label.startsWith("5 min · Compte 2"));
+assert.ok(tuesday[3].label.includes("Avant de poster"));
 assert.ok(tuesday[4].label.includes("Change la photo et la bio"));
-assert.ok(tuesday[5].label.includes("La photo et la bio sont faites"));
-assert.ok(tuesday[6].label.startsWith("24 min · Compte 3"));
-assert.ok(tuesday[6].label.includes("Tu ne postes pas"));
+assert.ok(tuesday[5].label.includes("Appuie sur Publier"));
+assert.ok(tuesday[6].label.includes("Juste après avoir posté"));
+assert.ok(tuesday[7].label.startsWith("19 min · Compte 3"));
+assert.ok(tuesday[7].label.includes("Tu ne postes pas"));
 assert.ok(tuesday[4].label.includes("gentille et sympathique"));
 assert.ok(tuesday[4].label.includes("fille normale"));
 assert.ok(tuesday[4].label.includes("Pinterest"));
@@ -157,21 +167,26 @@ assert.equal(
     TUESDAY_WARM_AFTER +
     TUESDAY_COMPTE2_WARM +
     TUESDAY_COMPTE2_PROFILE +
+    TUESDAY_COMPTE2_POST +
     TUESDAY_COMPTE2_WARM_AFTER +
     TUESDAY_COMPTE3_MINUTES,
   60
 );
+assert.equal(tuesday.filter((item) => item.label.includes("Appuie sur Publier")).length, 2);
 assert.equal(tuesday.some((item) => /\b(FR|ES|US)\b|16 min 40/.test(item.label)), false);
-assert.deepEqual(DAY_PLANS[4].publishers, ["fr"]);
-assert.deepEqual(DAY_PLANS[5].publishers, ["es", "us"]);
+assert.deepEqual(DAY_PLANS[2].publishers, ["fr"]);
+assert.deepEqual(DAY_PLANS[4].publishers, ["fr", "es"]);
+assert.deepEqual(DAY_PLANS[5].publishers, ["fr", "es"]);
 assert.deepEqual(DAY_PLANS[6].publishers, ["fr", "es", "us"]);
 assert.equal(DAY_PLANS[9].date, "2026-11-15");
 assert.equal(DAY_PLANS[7].repeatsDay7 && DAY_PLANS[8].repeatsDay7 && DAY_PLANS[9].repeatsDay7, true);
 const wednesday = checksFor(DAY_PLANS[5]);
-assert.ok(wednesday[0].label.startsWith("18 min · Compte 1"));
-assert.ok(wednesday[0].label.includes("Tu ne postes pas"));
-assert.ok(wednesday[2].label.includes("Appuie sur Publier"));
-assert.ok(wednesday[5].label.includes("Appuie sur Publier"));
+assert.ok(wednesday[0].label.startsWith("8 min · Compte 1"));
+assert.ok(wednesday[0].label.includes("Avant de poster"));
+assert.ok(wednesday[1].label.includes("Appuie sur Publier"));
+assert.ok(wednesday[4].label.includes("Appuie sur Publier"));
+assert.ok(wednesday[6].label.startsWith("18 min · Compte 3"));
+assert.ok(wednesday[6].label.includes("Tu ne postes pas"));
 assert.equal(wednesday.some((item) => /échauffement/i.test(item.label) || /\b(FR|ES|US)\b/.test(item.label)), false);
 const thursday = checksFor(DAY_PLANS[6]);
 const sundayNext = checksFor(DAY_PLANS[9]);

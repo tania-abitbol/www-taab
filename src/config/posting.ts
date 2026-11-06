@@ -7,8 +7,10 @@ export const FRIDAY_ACCOUNT_MINUTES = 16;
 export const SATURDAY_ACCOUNT_MINUTES = 20;
 export const SUNDAY_PHOTO_MINUTES = 5;
 export const SUNDAY_BIO_MINUTES = 5;
-/** 50 minutes left in the hour, in whole minutes. */
-export const SUNDAY_WARM_MINUTES = [17, 17, 16] as const;
+export const SUNDAY_POST_MINUTES = 5;
+export const SUNDAY_WARM_AFTER = 8;
+export const SUNDAY_COMPTE2_MINUTES = 19;
+export const SUNDAY_COMPTE3_MINUTES = 18;
 export const MONDAY_WARM_BEFORE = 8;
 export const MONDAY_POST_MINUTES = 5;
 export const MONDAY_WARM_AFTER = 8;
@@ -19,8 +21,9 @@ export const TUESDAY_POST_MINUTES = 5;
 export const TUESDAY_WARM_AFTER = 8;
 export const TUESDAY_COMPTE2_WARM = 5;
 export const TUESDAY_COMPTE2_PROFILE = 5;
+export const TUESDAY_COMPTE2_POST = 5;
 export const TUESDAY_COMPTE2_WARM_AFTER = 5;
-export const TUESDAY_COMPTE3_MINUTES = 24;
+export const TUESDAY_COMPTE3_MINUTES = 19;
 /** Wednesday: the one account that does not post, then 8 + 5 + 8 on each of the other two. */
 export const WEDNESDAY_WARM_ONLY = 18;
 export const WEDNESDAY_WARM_BEFORE = 8;
@@ -65,7 +68,7 @@ export type DayPlan = {
   index: number;
   kind: DayKind;
   repeatsDay7: boolean;
-  /** Account ids that publish. The others only warm up. Empty before Monday. */
+  /** Account ids that publish. The others only warm up. Empty on Friday and Saturday. */
   publishers: string[];
 };
 
@@ -120,10 +123,10 @@ const post = (date: string, index: number, publishers: string[], repeatsDay7 = f
 export const DAY_PLANS: DayPlan[] = [
   { date: "2026-11-06", index: 1, kind: "friday", repeatsDay7: false, publishers: [] },
   { date: "2026-11-07", index: 2, kind: "saturday", repeatsDay7: false, publishers: [] },
-  { date: "2026-11-08", index: 3, kind: "sunday", repeatsDay7: false, publishers: [] },
+  { date: "2026-11-08", index: 3, kind: "sunday", repeatsDay7: false, publishers: ["fr"] },
   post("2026-11-09", 4, ["fr"]),
-  post("2026-11-10", 5, ["fr"]),
-  post("2026-11-11", 6, ["es", "us"]),
+  post("2026-11-10", 5, ["fr", "es"]),
+  post("2026-11-11", 6, ["fr", "es"]),
   post("2026-11-12", 7, ["fr", "es", "us"]),
   post("2026-11-13", 7, ["fr", "es", "us"], true),
   post("2026-11-14", 7, ["fr", "es", "us"], true),
@@ -189,10 +192,10 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
     return [
       { id: `photo-${ACCOUNTS[0].id}`, label: line(SUNDAY_PHOTO_MINUTES, say.sundayPhoto(compte1)) },
       { id: `bio-${ACCOUNTS[0].id}`, label: line(SUNDAY_BIO_MINUTES, say.sundayBio(compte1)) },
-      ...ACCOUNTS.map((account, index) => ({
-        id: `min-${account.id}`,
-        label: line(SUNDAY_WARM_MINUTES[index], say.warm(name(index))),
-      })),
+      { id: "post", label: line(SUNDAY_POST_MINUTES, say.post(compte1)) },
+      { id: "warm-after", label: line(SUNDAY_WARM_AFTER, say.warm(compte1, say.afterPost)) },
+      { id: "warm-2", label: line(SUNDAY_COMPTE2_MINUTES, say.warm(name(1), say.noPostToday)) },
+      { id: "warm-3", label: line(SUNDAY_COMPTE3_MINUTES, say.warm(name(2), say.noPostToday)) },
     ];
   }
   if (plan.date === "2026-11-09") {
@@ -209,9 +212,10 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
       { id: "warm-before-1", label: line(TUESDAY_WARM_BEFORE, say.warm(name(0), say.beforePost)) },
       { id: "post-1", label: line(TUESDAY_POST_MINUTES, say.post(name(0))) },
       { id: "warm-after-1", label: line(TUESDAY_WARM_AFTER, say.warm(name(0), say.afterPost)) },
-      { id: "warm-before-2", label: line(TUESDAY_COMPTE2_WARM, say.warm(name(1), say.noPost)) },
+      { id: "warm-before-2", label: line(TUESDAY_COMPTE2_WARM, say.warm(name(1), say.beforePost)) },
       { id: "profile-2", label: line(TUESDAY_COMPTE2_PROFILE, say.tuesdayProfile(name(1))) },
-      { id: "warm-after-2", label: line(TUESDAY_COMPTE2_WARM_AFTER, say.warm(name(1), say.afterProfile)) },
+      { id: "post-2", label: line(TUESDAY_COMPTE2_POST, say.post(name(1))) },
+      { id: "warm-after-2", label: line(TUESDAY_COMPTE2_WARM_AFTER, say.warm(name(1), say.afterPost)) },
       { id: "warm-3", label: line(TUESDAY_COMPTE3_MINUTES, say.warm(name(2), say.noChange)) },
     ];
   }
@@ -333,7 +337,7 @@ const phrases: Record<PostingLang, Phrases> = {
     sundayBio: (account) =>
       `Mettre une bio au ${account}. Appuie sur Modifier le profil, puis sur Bio. Écris une bio courte, personnelle, normale, gentille et sympathique. Deux lignes suffisent. Seulement le ${account}.`,
     tuesdayProfile: (account) =>
-      `${account}. Tu ne postes pas. Change la photo et la bio. Photo : appuie sur la photo, mets une fille normale, Pinterest ou une photo que tu as déjà, pas de photo IA. Bio : appuie sur Modifier le profil, écris une bio courte, personnelle, normale, gentille et sympathique.`,
+      `${account}. Change la photo et la bio, puis tu postes. Photo : appuie sur la photo, mets une fille normale, Pinterest ou une photo que tu as déjà, pas de photo IA. Bio : appuie sur Modifier le profil, écris une bio courte, personnelle, normale, gentille et sympathique.`,
     beforePost: "Avant de poster. ",
     afterPost: "Juste après avoir posté. ",
     noPostToday: "Tu ne postes pas aujourd'hui. ",
@@ -353,7 +357,7 @@ const phrases: Record<PostingLang, Phrases> = {
     sundayBio: (account) =>
       `Pon una bio en ${account}. Pulsa Editar perfil y luego Bio. Escribe una bio corta, personal, normal, amable y simpática. Dos líneas bastan. Solo ${account}.`,
     tuesdayProfile: (account) =>
-      `${account}. No publicas. Cambia la foto y la bio. Foto: pulsa la foto y pon una chica normal, de Pinterest o una foto que ya tengas, nada de IA. Bio: pulsa Editar perfil y escribe una bio corta, personal, normal, amable y simpática.`,
+      `${account}. Cambia la foto y la bio, y luego publicas. Foto: pulsa la foto y pon una chica normal, de Pinterest o una foto que ya tengas, nada de IA. Bio: pulsa Editar perfil y escribe una bio corta, personal, normal, amable y simpática.`,
     beforePost: "Antes de publicar. ",
     afterPost: "Justo después de publicar. ",
     noPostToday: "Hoy no publicas. ",
@@ -373,7 +377,7 @@ const phrases: Record<PostingLang, Phrases> = {
     sundayBio: (account) =>
       `Put a bio on ${account}. Tap Edit profile, then Bio. Write a short, personal, normal, kind bio. Two lines is enough. Only ${account}.`,
     tuesdayProfile: (account) =>
-      `${account}. You do not post. Change the photo and the bio. Photo: tap the photo and use a normal girl, from Pinterest or a photo you already have, no AI. Bio: tap Edit profile and write a short, personal, normal, kind bio.`,
+      `${account}. Change the photo and the bio, then you post. Photo: tap the photo and use a normal girl, from Pinterest or a photo you already have, no AI. Bio: tap Edit profile and write a short, personal, normal, kind bio.`,
     beforePost: "Before you post. ",
     afterPost: "Right after you post. ",
     noPostToday: "You do not post today. ",

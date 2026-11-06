@@ -387,6 +387,31 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
                     </li>
                   ))}
                 </ul>
+                {plan.publishers.length > 0 && (
+                  <div className="mt-4 flex flex-col gap-4">
+                    {ACCOUNTS.filter((account) => plan.publishers.includes(account.id)).map((account) => {
+                      const fileName = desk.taniaFiles[plan.date]?.[account.id];
+                      return (
+                        <div key={account.id}>
+                          <p className="font-body text-sm font-bold">
+                            {account.name} · {accountRole(plan, account.id)}
+                          </p>
+                          <label htmlFor={`upload-${plan.date}-${account.id}`} className="mt-1 block font-body text-sm">
+                            Diaporama
+                          </label>
+                          <input
+                            id={`upload-${plan.date}-${account.id}`}
+                            type="file"
+                            accept="image/*,video/*"
+                            onChange={(event) => void onSlide(plan.date, account.id, event.target.files?.[0])}
+                            className="mt-1 font-body text-sm"
+                          />
+                          {fileName && <p className="mt-1 font-body text-sm">{fileName}</p>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </section>
             );
           }
