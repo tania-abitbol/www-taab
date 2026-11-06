@@ -4,6 +4,8 @@ import { FormEvent, useEffect, useState } from "react";
 
 import {
   ACCOUNTS,
+  CALENDAR_END,
+  CALENDAR_START,
   DAY_PLANS,
   DayState,
   Desk,
@@ -20,7 +22,11 @@ import {
   madridToday,
   openDates,
   openPlans,
+  PostingLang,
+  displayName,
+  langFromName,
   personMark,
+  postingUi,
   slotsFor,
 } from "~/config/posting";
 import { leavePosting } from "~/app/dashboard/creator/actions";
@@ -45,6 +51,13 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
   const [newCode, setNewCode] = useState("");
   const [profileError, setProfileError] = useState("");
   const isTania = role === "tania";
+  const lang: PostingLang = isTania ? "fr" : langFromName(profiles.find((item) => item.id === role)?.name ?? "");
+  const ui = postingUi(lang);
+  const lower = (value: string) => value.charAt(0).toLowerCase() + value.slice(1);
+  const range =
+    lang === "en"
+      ? ui.range(formatDay(CALENDAR_START, lang), formatDay(CALENDAR_END, lang))
+      : ui.range(lower(formatDay(CALENDAR_START, lang)), lower(formatDay(CALENDAR_END, lang)));
 
   useEffect(() => {
     const loaded = readDesk();
@@ -72,7 +85,7 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
           }
         }
       } catch {
-        if (!cancelled) setFileError("Les fichiers de ce navigateur ne se sont pas ouverts.");
+        if (!cancelled) setFileError("files");
       }
     })();
     return () => {
@@ -92,8 +105,8 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
 
   if (!desk) {
     return (
-      <main lang="fr" className="min-h-dvh px-4 py-6">
-        <p className="font-body text-base text-gray-700">Ouverture…</p>
+      <main lang={lang} className="min-h-dvh px-4 py-6">
+        <p className="font-body text-base text-gray-700">{ui.opening}</p>
       </main>
     );
   }
@@ -187,7 +200,7 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
   };
 
   return (
-    <main lang="fr" className="min-h-dvh px-4 py-6 selection:bg-yellow selection:text-black sm:px-6 sm:py-8">
+    <main lang={lang} className="min-h-dvh px-4 py-6 selection:bg-yellow selection:text-black sm:px-6 sm:py-8">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
         <div className="flex items-center justify-between gap-3">
           <a href="/" className="font-title text-3xl tracking-tight">
@@ -198,15 +211,13 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
               type="submit"
               className="font-body text-sm font-bold underline decoration-gray-300 underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
             >
-              Changer de profil
+              {ui.switchProfile}
             </button>
           </form>
         </div>
         <header>
-          <h1 className="font-title text-4xl tracking-tight">{isTania ? "Tania" : person?.name}</h1>
-          <p className="mt-2 max-w-prose font-body text-sm leading-relaxed text-gray-700">
-            Du jeudi 5 novembre au dimanche 15 novembre.
-          </p>
+          <h1 className="font-title text-4xl tracking-tight">{isTania ? "Tania" : displayName(person?.name ?? "")}</h1>
+          <p className="mt-2 max-w-prose font-body text-sm leading-relaxed text-gray-700">{range}</p>
         </header>
 
         {isTania ? (
@@ -278,8 +289,8 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
             </div>
           </section>
         ) : (
-          <section aria-label="Créneaux" className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
-            <h2 className="font-title text-2xl tracking-tight">Créneaux</h2>
+          <section aria-label={ui.slots} className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
+            <h2 className="font-title text-2xl tracking-tight">{ui.slots}</h2>
             <div className="mt-3 grid grid-cols-[3.4rem_repeat(4,1fr)] gap-1 font-body text-[11px] leading-tight">
               <span />
               {SLOTS.map((slot) => (
@@ -289,7 +300,7 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
               ))}
               {openDates(today).map((date) => (
                 <div key={date} className="contents">
-                  <span className={`py-1 ${date === today ? "font-bold" : ""}`}>{formatShortDay(date)}</span>
+                  <span className={`py-1 ${date === today ? "font-bold" : ""}`}>{formatShortDay(date, lang)}</span>
                   {SLOTS.map((slot) => {
                     const selected = person ? slotsFor(desk, person.id, date).includes(slot.id) : false;
                     return (
@@ -298,7 +309,7 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
                         id={`slot-${date}-${slot.id}`}
                         type="button"
                         aria-pressed={selected}
-                        aria-label={`${formatShortDay(date)} ${slot.label}`}
+                        aria-label={`${formatShortDay(date, lang)} ${slot.label}`}
                         onClick={() => toggleSlot(date, slot.id)}
                         className={`rounded-md py-1 text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-black ${
                           selected ? "bg-black text-white" : "bg-gray-100"
@@ -319,14 +330,14 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
                 onClick={() => update((current) => ({ ...current, weekValidated: { ...current.weekValidated, [person.id]: true } }))}
                 className="mt-4 h-12 w-full rounded-xl bg-black px-4 font-body text-base font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:opacity-40"
               >
-                {desk.weekValidated[person.id] ? "Semaine validée" : "Valider ma semaine"}
+                {desk.weekValidated[person.id] ? ui.weekDone : ui.validateWeek}
               </button>
             )}
           </section>
         )}
 
         {openPlans(today).map((plan) => {
-          const checks = checksFor(plan);
+          const checks = checksFor(plan, isTania ? "fr" : lang);
           if (isTania && plan.kind !== "post") {
             return (
               <section key={plan.date} className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
@@ -388,8 +399,8 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
           const ready = dayReady(plan, state);
           return (
             <section key={plan.date} className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
-              <p className="font-body text-sm text-gray-700">{dayHeading(plan)}</p>
-              <h2 className="font-title text-2xl tracking-tight">{formatDay(plan.date)}</h2>
+              <p className="font-body text-sm text-gray-700">{dayHeading(plan, lang)}</p>
+              <h2 className="font-title text-2xl tracking-tight">{formatDay(plan.date, lang)}</h2>
               <ul className="mt-3 flex flex-col gap-2">
                 {checks.map((check) => (
                   <li key={check.id}>
@@ -409,10 +420,8 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
                 ))}
               </ul>
               <div className="mt-4 rounded-2xl bg-gray-100 p-3">
-                <h3 className="font-body text-base font-bold">Preuve du jour</h3>
-                <p className="mt-1 font-body text-sm leading-relaxed text-gray-700">
-                  Enregistrement filmé de la session. Tu as juste à enregistrer ton écran pendant toute ton heure de travail.
-                </p>
+                <h3 className="font-body text-base font-bold">{ui.proof}</h3>
+                <p className="mt-1 font-body text-sm leading-relaxed text-gray-700">{ui.proofBody}</p>
                 <input
                   id={`proof-${plan.date}`}
                   type="file"
@@ -432,19 +441,17 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
                 onClick={() => patchDay(plan.date, (day) => ({ ...day, validated: true }))}
                 className="mt-4 h-12 w-full rounded-xl bg-black px-4 font-body text-base font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:opacity-40"
               >
-                {state.validated ? "Journée validée" : "Valider la journée"}
+                {state.validated ? ui.dayDone : ui.validateDay}
               </button>
               {!state.validated && (
-                <p className="mt-2 font-body text-sm text-gray-700">
-                  {ready ? "Cases et preuve sont là." : "Il manque des cases ou la preuve."}
-                </p>
+                <p className="mt-2 font-body text-sm text-gray-700">{ready ? ui.ready : ui.missing}</p>
               )}
             </section>
           );
         })}
 
-        {fileError && <p className="font-body text-sm text-[#C8102E]">{fileError}</p>}
-        <p className="font-body text-sm leading-relaxed text-gray-700">Créneaux, cases et fichiers restent dans ce navigateur.</p>
+        {fileError && <p className="font-body text-sm text-[#C8102E]">{ui.files}</p>}
+        <p className="font-body text-sm leading-relaxed text-gray-700">{ui.local}</p>
       </div>
     </main>
   );

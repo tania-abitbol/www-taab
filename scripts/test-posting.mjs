@@ -28,6 +28,7 @@ const {
   dayReady,
   emptyDayState,
   formatMinutes,
+  langFromName,
   openDates,
 } = await import("../src/config/posting.ts");
 const { createSessionValue, readSession, verifySession } = await import("../src/server/dashboardSession.ts");
@@ -179,5 +180,14 @@ assert.deepEqual(chooseSlot(["17-18", "19-20"], "20-21"), ["20-21"]);
 assert.deepEqual(chooseSlot(["18-19"], "18-19"), []);
 assert.equal(ACCOUNTS.map((account) => account.name).join(","), "FR,ES,US");
 assert.equal(ACCOUNTS.map((account) => account.task).join(","), "Compte 1,Compte 2,Compte 3");
+assert.equal(langFromName("Ghada - FR"), "fr");
+assert.equal(langFromName("Peches - ES"), "es");
+assert.equal(langFromName("Karol - US"), "en");
+assert.equal(langFromName("Profil 1"), "fr");
+assert.ok(checksFor(DAY_PLANS[0], "es")[1].label.startsWith("16 min · Cuenta 1"));
+assert.ok(checksFor(DAY_PLANS[0], "es")[0].label.includes("Abre WhatsApp"));
+assert.ok(checksFor(DAY_PLANS[0], "en")[1].label.startsWith("16 min · Account 1"));
+assert.ok(checksFor(DAY_PLANS[0], "en")[0].label.includes("Open WhatsApp"));
+assert.equal(checksFor(DAY_PLANS[0], "es").some((item) => /\b(FR|ES|US)\b/.test(item.label)), false);
 assert.equal(checksFor(DAY_PLANS[3]).some((item) => /\b(FR|ES|US)\b/.test(item.label)), false);
 console.log("posting codes ok");

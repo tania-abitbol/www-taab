@@ -133,8 +133,8 @@ export const emptyDesk = (): Desk => ({
   taniaFiles: {},
 });
 
-export const formatDay = (iso: string) => {
-  const label = new Intl.DateTimeFormat("fr-FR", {
+export const formatDay = (iso: string, lang: PostingLang = "fr") => {
+  const label = new Intl.DateTimeFormat(dateLocale(lang), {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -143,8 +143,8 @@ export const formatDay = (iso: string) => {
   return label.charAt(0).toUpperCase() + label.slice(1);
 };
 
-export const formatShortDay = (iso: string) =>
-  new Intl.DateTimeFormat("fr-FR", { weekday: "short", day: "numeric", timeZone: "UTC" }).format(
+export const formatShortDay = (iso: string, lang: PostingLang = "fr") =>
+  new Intl.DateTimeFormat(dateLocale(lang), { weekday: "short", day: "numeric", timeZone: "UTC" }).format(
     new Date(`${iso}T00:00:00Z`)
   );
 
@@ -159,75 +159,58 @@ export const madridToday = (now = new Date()) =>
 /** Whole minutes only, as in “16 min” or “17 min”. */
 export const formatMinutes = (minutes: number) => `${Math.round(minutes)} min`;
 
-/** Plain steps. The person may never have used TikTok this way. */
-const warmGuide = (minutes: number, account: string, before = "") =>
-  `${formatMinutes(minutes)} · ${account}. ${before}Ouvre ce compte et reste dessus. Fais défiler TikTok. Regarde chaque vidéo jusqu'au bout, sauf si elle ne t'intéresse pas. Écris un petit commentaire sous 2 ou 3 vidéos. Abonne-toi à des profils qui te plaisent. Tu chauffes le compte : tu ne postes rien, tu fais comme si c'était ton téléphone.`;
+const line = (minutes: number, text: string) => `${formatMinutes(minutes)} · ${text}`;
 
-const postGuide = (minutes: number, account: string) =>
-  `${formatMinutes(minutes)} · ${account}. C'est maintenant que tu postes. Ouvre le diaporama. Choisis une musique dans TikTok. Appuie sur Publier. Attends de voir la vidéo sur le profil.`;
-
-export const checksFor = (plan: DayPlan): CheckItem[] => {
+export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] => {
+  const say = taskPhrases(lang);
+  const name = (index: number) => accountWord(index, lang);
   if (plan.kind === "friday") {
     return [
-      {
-        id: "connect",
-        label: `${formatMinutes(FRIDAY_CONNECT_MINUTES)} · Ouvre WhatsApp. Tania t'a envoyé le compte. Connecte-toi avec exactement ce qu'elle a écrit. Quand TikTok s'ouvre, tu t'arrêtes. Ne change pas la photo ni la bio.`,
-      },
-      ...ACCOUNTS.map((account) => ({ id: `min-${account.id}`, label: warmGuide(FRIDAY_ACCOUNT_MINUTES, account.task) })),
+      { id: "connect", label: line(FRIDAY_CONNECT_MINUTES, say.whatsapp) },
+      ...ACCOUNTS.map((account, index) => ({ id: `min-${account.id}`, label: line(FRIDAY_ACCOUNT_MINUTES, say.warm(name(index))) })),
     ];
   }
   if (plan.kind === "sunday") {
-    const [compte1] = ACCOUNTS;
+    const compte1 = name(0);
     return [
-      {
-        id: `photo-${compte1.id}`,
-        label: `${formatMinutes(SUNDAY_PHOTO_MINUTES)} · Mettre une photo de profil au ${compte1.task}. Va sur le profil, appuie sur la photo, et change-la. Photo d'une fille normale, Pinterest ou une photo que tu as déjà, pas de photo IA. Seulement le ${compte1.task}.`,
-      },
-      {
-        id: `bio-${compte1.id}`,
-        label: `${formatMinutes(SUNDAY_BIO_MINUTES)} · Mettre une bio au ${compte1.task}. Appuie sur Modifier le profil, puis sur Bio. Écris une bio courte, personnelle, normale, gentille et sympathique. Deux lignes suffisent. Seulement le ${compte1.task}.`,
-      },
+      { id: `photo-${ACCOUNTS[0].id}`, label: line(SUNDAY_PHOTO_MINUTES, say.sundayPhoto(compte1)) },
+      { id: `bio-${ACCOUNTS[0].id}`, label: line(SUNDAY_BIO_MINUTES, say.sundayBio(compte1)) },
       ...ACCOUNTS.map((account, index) => ({
         id: `min-${account.id}`,
-        label: warmGuide(SUNDAY_WARM_MINUTES[index], account.task),
+        label: line(SUNDAY_WARM_MINUTES[index], say.warm(name(index))),
       })),
     ];
   }
   if (plan.date === "2026-11-09") {
-    const [compte1, compte2, compte3] = ACCOUNTS;
     return [
-      { id: "warm-before", label: warmGuide(MONDAY_WARM_BEFORE, compte1.task, "Avant de poster. ") },
-      { id: "post", label: postGuide(MONDAY_POST_MINUTES, compte1.task) },
-      { id: "warm-after", label: warmGuide(MONDAY_WARM_AFTER, compte1.task, "Juste après avoir posté. ") },
-      { id: "warm-2", label: warmGuide(MONDAY_COMPTE2_MINUTES, compte2.task, "Tu ne postes pas aujourd'hui. ") },
-      { id: "warm-3", label: warmGuide(MONDAY_COMPTE3_MINUTES, compte3.task, "Tu ne postes pas aujourd'hui. ") },
+      { id: "warm-before", label: line(MONDAY_WARM_BEFORE, say.warm(name(0), say.beforePost)) },
+      { id: "post", label: line(MONDAY_POST_MINUTES, say.post(name(0))) },
+      { id: "warm-after", label: line(MONDAY_WARM_AFTER, say.warm(name(0), say.afterPost)) },
+      { id: "warm-2", label: line(MONDAY_COMPTE2_MINUTES, say.warm(name(1), say.noPostToday)) },
+      { id: "warm-3", label: line(MONDAY_COMPTE3_MINUTES, say.warm(name(2), say.noPostToday)) },
     ];
   }
   if (plan.date === "2026-11-10") {
-    const [compte1, compte2, compte3] = ACCOUNTS;
     return [
-      { id: "warm-before-1", label: warmGuide(TUESDAY_WARM_BEFORE, compte1.task, "Avant de poster. ") },
-      { id: "post-1", label: postGuide(TUESDAY_POST_MINUTES, compte1.task) },
-      { id: "warm-after-1", label: warmGuide(TUESDAY_WARM_AFTER, compte1.task, "Juste après avoir posté. ") },
-      { id: "warm-before-2", label: warmGuide(TUESDAY_COMPTE2_WARM, compte2.task, "Tu ne postes pas. ") },
-      {
-        id: "profile-2",
-        label: `${formatMinutes(TUESDAY_COMPTE2_PROFILE)} · ${compte2.task}. Tu ne postes pas. Change la photo et la bio. Photo : appuie sur la photo, mets une fille normale, Pinterest ou une photo que tu as déjà, pas de photo IA. Bio : appuie sur Modifier le profil, écris une bio courte, personnelle, normale, gentille et sympathique.`,
-      },
-      { id: "warm-after-2", label: warmGuide(TUESDAY_COMPTE2_WARM_AFTER, compte2.task, "La photo et la bio sont faites. ") },
-      { id: "warm-3", label: warmGuide(TUESDAY_COMPTE3_MINUTES, compte3.task, "Tu ne postes pas. Tu ne changes ni la photo ni la bio. ") },
+      { id: "warm-before-1", label: line(TUESDAY_WARM_BEFORE, say.warm(name(0), say.beforePost)) },
+      { id: "post-1", label: line(TUESDAY_POST_MINUTES, say.post(name(0))) },
+      { id: "warm-after-1", label: line(TUESDAY_WARM_AFTER, say.warm(name(0), say.afterPost)) },
+      { id: "warm-before-2", label: line(TUESDAY_COMPTE2_WARM, say.warm(name(1), say.noPost)) },
+      { id: "profile-2", label: line(TUESDAY_COMPTE2_PROFILE, say.tuesdayProfile(name(1))) },
+      { id: "warm-after-2", label: line(TUESDAY_COMPTE2_WARM_AFTER, say.warm(name(1), say.afterProfile)) },
+      { id: "warm-3", label: line(TUESDAY_COMPTE3_MINUTES, say.warm(name(2), say.noChange)) },
     ];
   }
   if (plan.kind === "saturday") {
-    return ACCOUNTS.map((account) => ({
+    return ACCOUNTS.map((account, index) => ({
       id: `min-${account.id}`,
-      label: warmGuide(SATURDAY_ACCOUNT_MINUTES, account.task),
+      label: line(SATURDAY_ACCOUNT_MINUTES, say.warm(name(index))),
     }));
   }
-  return ACCOUNTS.map((account) =>
+  return ACCOUNTS.map((account, index) =>
     plan.publishers.includes(account.id)
-      ? { id: `pub-${account.id}`, label: `Publier · ${account.task}` }
-      : { id: `warm-${account.id}`, label: `Échauffement seulement · ${account.task}` }
+      ? { id: `pub-${account.id}`, label: `Publier · ${name(index)}` }
+      : { id: `warm-${account.id}`, label: `Échauffement seulement · ${name(index)}` }
   );
 };
 
@@ -246,7 +229,16 @@ export const slotsFor = (desk: Desk, personId: string, date: string): SlotId[] =
 export const chooseSlot = (chosen: SlotId[], slotId: SlotId): SlotId[] =>
   chosen.length === 1 && chosen[0] === slotId ? [] : [slotId];
 
-export const dayHeading = (plan: DayPlan) => (plan.repeatsDay7 ? "Même programme que le jour 7" : `Jour ${plan.index}`);
+export const dayHeading = (plan: DayPlan, lang: PostingLang = "fr") => {
+  if (plan.repeatsDay7) {
+    if (lang === "es") return "Mismo programa que el día 7";
+    if (lang === "en") return "Same plan as day 7";
+    return "Même programme que le jour 7";
+  }
+  if (lang === "es") return `Día ${plan.index}`;
+  if (lang === "en") return `Day ${plan.index}`;
+  return `Jour ${plan.index}`;
+};
 
 export const accountRole = (plan: DayPlan, accountId: string) =>
   plan.publishers.includes(accountId) ? "publie" : "échauffement";
@@ -256,3 +248,159 @@ export const personMark = (person: Person) => {
   if (profile) return profile[1];
   return person.name.slice(0, 2);
 };
+
+/** Locale sits at the end of the profile name: "Ghada - FR". */
+export type PostingLang = "fr" | "es" | "en";
+
+const LOCALE = /\s[-–—]\s*(fr|es|us)\s*$/i;
+
+export const langFromName = (name: string): PostingLang => {
+  const match = name.match(LOCALE);
+  if (!match) return "fr";
+  if (match[1].toLowerCase() === "es") return "es";
+  if (match[1].toLowerCase() === "us") return "en";
+  return "fr";
+};
+
+export const displayName = (name: string) => name.replace(LOCALE, "").trim() || name;
+
+export const accountWord = (index: number, lang: PostingLang) => {
+  const number = index + 1;
+  if (lang === "es") return `Cuenta ${number}`;
+  if (lang === "en") return `Account ${number}`;
+  return `Compte ${number}`;
+};
+
+export const dateLocale = (lang: PostingLang) => (lang === "es" ? "es-ES" : lang === "en" ? "en-US" : "fr-FR");
+
+type Phrases = {
+  whatsapp: string;
+  warm: (account: string, before?: string) => string;
+  post: (account: string) => string;
+  sundayPhoto: (account: string) => string;
+  sundayBio: (account: string) => string;
+  tuesdayProfile: (account: string) => string;
+  beforePost: string;
+  afterPost: string;
+  noPostToday: string;
+  noPost: string;
+  afterProfile: string;
+  noChange: string;
+};
+
+const phrases: Record<PostingLang, Phrases> = {
+  fr: {
+    whatsapp:
+      "Ouvre WhatsApp. Tania t'a envoyé le compte. Connecte-toi avec exactement ce qu'elle a écrit. Quand TikTok s'ouvre, tu t'arrêtes. Ne change pas la photo ni la bio.",
+    warm: (account, before = "") =>
+      `${account}. ${before}Ouvre ce compte et reste dessus. Fais défiler TikTok. Regarde chaque vidéo jusqu'au bout, sauf si elle ne t'intéresse pas. Écris un petit commentaire sous 2 ou 3 vidéos. Abonne-toi à des profils qui te plaisent. Tu chauffes le compte : tu ne postes rien, tu fais comme si c'était ton téléphone.`,
+    post: (account) =>
+      `${account}. C'est maintenant que tu postes. Ouvre le diaporama. Choisis une musique dans TikTok. Appuie sur Publier. Attends de voir la vidéo sur le profil.`,
+    sundayPhoto: (account) =>
+      `Mettre une photo de profil au ${account}. Va sur le profil, appuie sur la photo, et change-la. Photo d'une fille normale, Pinterest ou une photo que tu as déjà, pas de photo IA. Seulement le ${account}.`,
+    sundayBio: (account) =>
+      `Mettre une bio au ${account}. Appuie sur Modifier le profil, puis sur Bio. Écris une bio courte, personnelle, normale, gentille et sympathique. Deux lignes suffisent. Seulement le ${account}.`,
+    tuesdayProfile: (account) =>
+      `${account}. Tu ne postes pas. Change la photo et la bio. Photo : appuie sur la photo, mets une fille normale, Pinterest ou une photo que tu as déjà, pas de photo IA. Bio : appuie sur Modifier le profil, écris une bio courte, personnelle, normale, gentille et sympathique.`,
+    beforePost: "Avant de poster. ",
+    afterPost: "Juste après avoir posté. ",
+    noPostToday: "Tu ne postes pas aujourd'hui. ",
+    noPost: "Tu ne postes pas. ",
+    afterProfile: "La photo et la bio sont faites. ",
+    noChange: "Tu ne postes pas. Tu ne changes ni la photo ni la bio. ",
+  },
+  es: {
+    whatsapp:
+      "Abre WhatsApp. Tania te mandó la cuenta. Entra con exactamente lo que ella escribió. Cuando se abra TikTok, paras. No cambies la foto ni la bio.",
+    warm: (account, before = "") =>
+      `${account}. ${before}Abre esta cuenta y quédate ahí. Desliza TikTok. Mira cada vídeo hasta el final, salvo si no te interesa. Escribe un comentario corto en 2 o 3 vídeos. Sigue perfiles que te gusten. Estás calentando la cuenta: no publicas nada, haz como si fuera tu teléfono.`,
+    post: (account) =>
+      `${account}. Ahora sí publicas. Abre el carrusel. Elige una música en TikTok. Pulsa Publicar. Espera a ver el vídeo en el perfil.`,
+    sundayPhoto: (account) =>
+      `Pon una foto de perfil en ${account}. Ve al perfil, pulsa la foto y cámbiala. Una chica normal: de Pinterest o una foto que ya tengas. Nada de foto hecha por IA. Solo ${account}.`,
+    sundayBio: (account) =>
+      `Pon una bio en ${account}. Pulsa Editar perfil y luego Bio. Escribe una bio corta, personal, normal, amable y simpática. Dos líneas bastan. Solo ${account}.`,
+    tuesdayProfile: (account) =>
+      `${account}. No publicas. Cambia la foto y la bio. Foto: pulsa la foto y pon una chica normal, de Pinterest o una foto que ya tengas, nada de IA. Bio: pulsa Editar perfil y escribe una bio corta, personal, normal, amable y simpática.`,
+    beforePost: "Antes de publicar. ",
+    afterPost: "Justo después de publicar. ",
+    noPostToday: "Hoy no publicas. ",
+    noPost: "No publicas. ",
+    afterProfile: "La foto y la bio ya están. ",
+    noChange: "No publicas. No cambies ni la foto ni la bio. ",
+  },
+  en: {
+    whatsapp:
+      "Open WhatsApp. Tania sent you the account. Log in with exactly what she wrote. When TikTok opens, stop. Do not change the photo or the bio.",
+    warm: (account, before = "") =>
+      `${account}. ${before}Open this account and stay on it. Scroll TikTok. Watch each video all the way through, unless you are not interested. Write a short comment on 2 or 3 videos. Follow profiles you like. You are warming the account: you do not post anything. Act like it is your phone.`,
+    post: (account) =>
+      `${account}. Now you post. Open the slideshow. Pick a song in TikTok. Tap Post. Wait until you see the video on the profile.`,
+    sundayPhoto: (account) =>
+      `Put a profile photo on ${account}. Go to the profile, tap the photo, and change it. A normal girl: from Pinterest, or a photo you already have. No AI photo. Only ${account}.`,
+    sundayBio: (account) =>
+      `Put a bio on ${account}. Tap Edit profile, then Bio. Write a short, personal, normal, kind bio. Two lines is enough. Only ${account}.`,
+    tuesdayProfile: (account) =>
+      `${account}. You do not post. Change the photo and the bio. Photo: tap the photo and use a normal girl, from Pinterest or a photo you already have, no AI. Bio: tap Edit profile and write a short, personal, normal, kind bio.`,
+    beforePost: "Before you post. ",
+    afterPost: "Right after you post. ",
+    noPostToday: "You do not post today. ",
+    noPost: "You do not post. ",
+    afterProfile: "The photo and the bio are done. ",
+    noChange: "You do not post. Do not change the photo or the bio. ",
+  },
+};
+
+export const taskPhrases = (lang: PostingLang) => phrases[lang];
+
+export const postingUi = (lang: PostingLang) =>
+  ({
+    fr: {
+      switchProfile: "Changer de profil",
+      range: (start: string, end: string) => `Du ${start} au ${end}.`,
+      slots: "Créneaux",
+      validateWeek: "Valider ma semaine",
+      weekDone: "Semaine validée",
+      proof: "Preuve du jour",
+      proofBody: "Enregistrement filmé de la session. Tu as juste à enregistrer ton écran pendant toute ton heure de travail.",
+      validateDay: "Valider la journée",
+      dayDone: "Journée validée",
+      ready: "Cases et preuve sont là.",
+      missing: "Il manque des cases ou la preuve.",
+      local: "Créneaux, cases et fichiers restent dans ce navigateur.",
+      files: "Les fichiers de ce navigateur ne se sont pas ouverts.",
+      opening: "Ouverture…",
+    },
+    es: {
+      switchProfile: "Cambiar de perfil",
+      range: (start: string, end: string) => `Del ${start} al ${end}.`,
+      slots: "Horarios",
+      validateWeek: "Validar mi semana",
+      weekDone: "Semana validada",
+      proof: "Prueba del día",
+      proofBody: "Grabación de la sesión. Solo tienes que grabar tu pantalla durante toda tu hora de trabajo.",
+      validateDay: "Validar el día",
+      dayDone: "Día validado",
+      ready: "Las casillas y la prueba están.",
+      missing: "Faltan casillas o la prueba.",
+      local: "Los horarios, las casillas y los archivos se quedan en este navegador.",
+      files: "No se han podido abrir los archivos de este navegador.",
+      opening: "Abriendo…",
+    },
+    en: {
+      switchProfile: "Switch profile",
+      range: (start: string, end: string) => `From ${start} to ${end}.`,
+      slots: "Time slots",
+      validateWeek: "Validate my week",
+      weekDone: "Week validated",
+      proof: "Proof of the day",
+      proofBody: "A recording of the session. Just screen-record your whole hour of work.",
+      validateDay: "Validate the day",
+      dayDone: "Day validated",
+      ready: "The boxes and the proof are here.",
+      missing: "Some boxes or the proof are missing.",
+      local: "Time slots, boxes, and files stay in this browser.",
+      files: "The files in this browser did not open.",
+      opening: "Opening…",
+    },
+  })[lang];
