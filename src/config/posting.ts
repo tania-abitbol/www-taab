@@ -71,7 +71,7 @@ export type DayPlan = {
   publishers: string[];
 };
 
-export type CheckItem = { id: string; label: string };
+export type CheckItem = { id: string; label: string; parent?: string };
 
 export type DayState = {
   checks: Record<string, boolean>;
@@ -183,8 +183,8 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
   if (plan.kind === "friday") {
     return [
       { id: "create", label: line(FRIDAY_CREATE_MINUTES, say.create(name(0), name(1), name(2))) },
-      { id: "username", label: say.username },
-      { id: "no-profile", label: say.noProfile },
+      { id: "username", label: say.username, parent: "create" },
+      { id: "no-profile", label: say.noProfile, parent: "create" },
       ...ACCOUNTS.map((account, index) => ({ id: `min-${account.id}`, label: line(FRIDAY_WARM_MINUTES, say.warm(name(index))) })),
     ];
   }

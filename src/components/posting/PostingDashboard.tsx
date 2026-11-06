@@ -387,7 +387,7 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
                 <h2 className="font-title text-2xl tracking-tight">{formatDay(plan.date)}</h2>
                 <ul className="mt-3 flex flex-col gap-2">
                   {checks.map((check) => (
-                    <li key={check.id} className="font-body text-sm leading-relaxed">
+                    <li key={check.id} className={check.parent ? "ml-8 font-body text-sm leading-relaxed text-gray-700" : "font-body text-sm leading-relaxed"}>
                       {check.label}
                     </li>
                   ))}
@@ -470,8 +470,11 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
               <h2 className="font-title text-2xl tracking-tight">{formatDay(plan.date, lang)}</h2>
               <ul className="mt-3 flex flex-col gap-2">
                 {checks.map((check) => (
-                  <li key={check.id}>
-                    <label htmlFor={`check-${plan.date}-${check.id}`} className="flex min-h-11 items-start gap-3 font-body text-base">
+                  <li key={check.id} className={check.parent ? "ml-8" : ""}>
+                    <label
+                      htmlFor={`check-${plan.date}-${check.id}`}
+                      className={`flex items-start gap-3 font-body ${check.parent ? "min-h-9 text-sm" : "min-h-11 text-base"}`}
+                    >
                       <input
                         id={`check-${plan.date}-${check.id}`}
                         type="checkbox"
@@ -479,7 +482,7 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
                         onChange={(event) =>
                           patchDay(plan.date, (day) => ({ ...day, checks: { ...day.checks, [check.id]: event.target.checked } }))
                         }
-                        className="mt-1 h-5 w-5 shrink-0 accent-black"
+                        className={`shrink-0 accent-black ${check.parent ? "mt-0.5 h-4 w-4" : "mt-1 h-5 w-5"}`}
                       />
                       <span>{check.label}</span>
                     </label>

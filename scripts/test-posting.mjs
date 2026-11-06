@@ -75,6 +75,8 @@ assert.ok(FRIDAY_CREATE_MINUTES + FRIDAY_WARM_MINUTES * 3 <= 60);
 const friday = checksFor(DAY_PLANS[0]);
 assert.ok(friday[0].label.startsWith("30 min"));
 assert.ok(friday[0].label.includes("part de zéro"));
+assert.equal(friday[1].parent, "create");
+assert.equal(friday[2].parent, "create");
 assert.ok(friday[1].label.includes("Nom d'utilisateur"));
 assert.ok(friday[1].label.includes("prénom courant de fille"));
 assert.ok(friday[1].label.includes("pays où tu postes"));
