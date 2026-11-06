@@ -411,7 +411,7 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
               <div className="mt-4 rounded-2xl bg-gray-100 p-3">
                 <h3 className="font-body text-base font-bold">Preuve du jour</h3>
                 <p className="mt-1 font-body text-sm leading-relaxed text-gray-700">
-                  Enregistrement filmé de la session. C&apos;est la seule preuve de publication.
+                  Enregistrement filmé de la session. Tu as juste à enregistrer ton écran pendant toute ton heure de travail.
                 </p>
                 <input
                   id={`proof-${plan.date}`}
