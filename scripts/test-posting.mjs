@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 const {
   ACCOUNTS,
   DAY_PLANS,
-  FRIDAY_ACCOUNT_MINUTES,
-  FRIDAY_CONNECT_MINUTES,
+  FRIDAY_CREATE_MINUTES,
+  FRIDAY_WARM_MINUTES,
   MONDAY_COMPTE2_MINUTES,
   MONDAY_COMPTE3_MINUTES,
   MONDAY_POST_MINUTES,
@@ -67,19 +67,21 @@ assert.equal(verifySession(worker, 1_000), false);
 assert.equal(readSession(worker, 1_000)?.role, "p1");
 assert.equal(readSession(createSessionValue("p-essai", 1_000), 1_000)?.role, "p-essai");
 
-assert.equal(FRIDAY_CONNECT_MINUTES, 10);
-assert.equal(formatMinutes(FRIDAY_ACCOUNT_MINUTES), "16 min");
+assert.equal(FRIDAY_CREATE_MINUTES, 30);
+assert.equal(formatMinutes(FRIDAY_WARM_MINUTES), "10 min");
 assert.equal(formatMinutes(SATURDAY_ACCOUNT_MINUTES), "20 min");
-assert.equal(FRIDAY_CONNECT_MINUTES + FRIDAY_ACCOUNT_MINUTES * 3, 58);
-assert.ok(FRIDAY_CONNECT_MINUTES + FRIDAY_ACCOUNT_MINUTES * 3 <= 60);
+assert.equal(FRIDAY_CREATE_MINUTES + FRIDAY_WARM_MINUTES * 3, 60);
+assert.ok(FRIDAY_CREATE_MINUTES + FRIDAY_WARM_MINUTES * 3 <= 60);
 
 const friday = checksFor(DAY_PLANS[0]);
-assert.ok(friday[0].label.startsWith("10 min"));
-assert.ok(friday[0].label.includes("WhatsApp"));
-assert.ok(friday[0].label.includes("Connecte-toi"));
-assert.equal(friday[1].label.startsWith("16 min · Compte 1"), true);
-assert.equal(friday[2].label.startsWith("16 min · Compte 2"), true);
-assert.equal(friday[3].label.startsWith("16 min · Compte 3"), true);
+assert.ok(friday[0].label.startsWith("30 min"));
+assert.ok(friday[0].label.includes("part de zéro"));
+assert.ok(friday[0].label.includes("numéro de téléphone de ton pays"));
+assert.ok(friday[0].label.includes("Je ne le reprendrai jamais"));
+assert.ok(friday[0].label.includes("supprimer les comptes sans souci"));
+assert.equal(friday[1].label.startsWith("10 min · Compte 1"), true);
+assert.equal(friday[2].label.startsWith("10 min · Compte 2"), true);
+assert.equal(friday[3].label.startsWith("10 min · Compte 3"), true);
 assert.ok(friday[1].label.includes("jusqu'au bout"));
 assert.ok(friday[1].label.includes("petit commentaire"));
 assert.ok(friday[1].label.includes("Abonne-toi"));
@@ -217,10 +219,10 @@ assert.equal(langFromName("Profil 1"), "fr");
 assert.ok(postingUi("fr").slotsHelp.includes("une seule heure"));
 assert.ok(postingUi("es").slotsHelp.includes("una sola hora"));
 assert.ok(postingUi("en").weekEdit.includes("still change"));
-assert.ok(checksFor(DAY_PLANS[0], "es")[1].label.startsWith("16 min · Cuenta 1"));
-assert.ok(checksFor(DAY_PLANS[0], "es")[0].label.includes("Abre WhatsApp"));
-assert.ok(checksFor(DAY_PLANS[0], "en")[1].label.startsWith("16 min · Account 1"));
-assert.ok(checksFor(DAY_PLANS[0], "en")[0].label.includes("Open WhatsApp"));
+assert.ok(checksFor(DAY_PLANS[0], "es")[1].label.startsWith("10 min · Cuenta 1"));
+assert.ok(checksFor(DAY_PLANS[0], "es")[0].label.includes("empieza de cero"));
+assert.ok(checksFor(DAY_PLANS[0], "en")[1].label.startsWith("10 min · Account 1"));
+assert.ok(checksFor(DAY_PLANS[0], "en")[0].label.includes("starts from zero"));
 assert.equal(checksFor(DAY_PLANS[0], "es").some((item) => /\b(FR|ES|US)\b/.test(item.label)), false);
 assert.equal(checksFor(DAY_PLANS[3]).some((item) => /\b(FR|ES|US)\b/.test(item.label)), false);
 console.log("posting codes ok");

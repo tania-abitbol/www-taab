@@ -2,8 +2,8 @@
 
 export const CALENDAR_START = "2026-11-05";
 export const CALENDAR_END = "2026-11-15";
-export const FRIDAY_CONNECT_MINUTES = 10;
-export const FRIDAY_ACCOUNT_MINUTES = 16;
+export const FRIDAY_CREATE_MINUTES = 30;
+export const FRIDAY_WARM_MINUTES = 10;
 export const SATURDAY_ACCOUNT_MINUTES = 20;
 export const SUNDAY_PHOTO_MINUTES = 5;
 export const SUNDAY_BIO_MINUTES = 5;
@@ -183,8 +183,8 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
   const name = (index: number) => accountWord(index, lang);
   if (plan.kind === "friday") {
     return [
-      { id: "connect", label: line(FRIDAY_CONNECT_MINUTES, say.whatsapp) },
-      ...ACCOUNTS.map((account, index) => ({ id: `min-${account.id}`, label: line(FRIDAY_ACCOUNT_MINUTES, say.warm(name(index))) })),
+      { id: "create", label: line(FRIDAY_CREATE_MINUTES, say.create(name(0), name(1), name(2))) },
+      ...ACCOUNTS.map((account, index) => ({ id: `min-${account.id}`, label: line(FRIDAY_WARM_MINUTES, say.warm(name(index))) })),
     ];
   }
   if (plan.kind === "sunday") {
@@ -310,7 +310,7 @@ export const accountWord = (index: number, lang: PostingLang) => {
 export const dateLocale = (lang: PostingLang) => (lang === "es" ? "es-ES" : lang === "en" ? "en-US" : "fr-FR");
 
 type Phrases = {
-  whatsapp: string;
+  create: (first: string, second: string, third: string) => string;
   warm: (account: string, before?: string) => string;
   post: (account: string) => string;
   sundayPhoto: (account: string) => string;
@@ -326,8 +326,8 @@ type Phrases = {
 
 const phrases: Record<PostingLang, Phrases> = {
   fr: {
-    whatsapp:
-      "Ouvre WhatsApp. Tania t'a envoyé le compte. Connecte-toi avec exactement ce qu'elle a écrit. Quand TikTok s'ouvre, tu t'arrêtes. Ne change pas la photo ni la bio.",
+    create: (first, second, third) =>
+      `Crée 3 comptes TikTok neufs : un pour le ${first}, un pour le ${second}, un pour le ${third}. Chacun part de zéro. N'utilise pas un compte déjà ouvert. Pour chaque compte, prends un e-mail et/ou un numéro de téléphone de ton pays. Ça peut être les tiens. Le compte se crée dans ton pays : je ne suis pas dans le bon pays, je ne peux pas le faire à ta place. Le compte t'appartient, ce sont tes informations. Je ne le reprendrai jamais pour moi. À la fin de cette mission, tu peux supprimer les comptes sans souci.`,
     warm: (account, before = "") =>
       `${account}. ${before}Ouvre ce compte et reste dessus. Fais défiler TikTok. Regarde chaque vidéo jusqu'au bout, sauf si elle ne t'intéresse pas. Écris un petit commentaire sous 2 ou 3 vidéos. Abonne-toi à des profils qui te plaisent. Tu chauffes le compte : tu ne postes rien, tu fais comme si c'était ton téléphone.`,
     post: (account) =>
@@ -346,8 +346,8 @@ const phrases: Record<PostingLang, Phrases> = {
     noChange: "Tu ne postes pas. Tu ne changes ni la photo ni la bio. ",
   },
   es: {
-    whatsapp:
-      "Abre WhatsApp. Tania te mandó la cuenta. Entra con exactamente lo que ella escribió. Cuando se abra TikTok, paras. No cambies la foto ni la bio.",
+    create: (first, second, third) =>
+      `Crea 3 cuentas de TikTok nuevas: una para ${first}, una para ${second} y una para ${third}. Cada una empieza de cero. No uses una cuenta que ya esté abierta. Para cada cuenta, usa un correo y/o un número de teléfono de tu país. Pueden ser los tuyos. La cuenta se crea en tu país: yo no estoy en el país correcto, no puedo hacerlo por ti. La cuenta es tuya, son tus datos. Nunca me la quedaré. Al final de esta misión, puedes borrar las cuentas sin problema.`,
     warm: (account, before = "") =>
       `${account}. ${before}Abre esta cuenta y quédate ahí. Desliza TikTok. Mira cada vídeo hasta el final, salvo si no te interesa. Escribe un comentario corto en 2 o 3 vídeos. Sigue perfiles que te gusten. Estás calentando la cuenta: no publicas nada, haz como si fuera tu teléfono.`,
     post: (account) =>
@@ -366,8 +366,8 @@ const phrases: Record<PostingLang, Phrases> = {
     noChange: "No publicas. No cambies ni la foto ni la bio. ",
   },
   en: {
-    whatsapp:
-      "Open WhatsApp. Tania sent you the account. Log in with exactly what she wrote. When TikTok opens, stop. Do not change the photo or the bio.",
+    create: (first, second, third) =>
+      `Create 3 new TikTok accounts: one for ${first}, one for ${second}, and one for ${third}. Each one starts from zero. Do not use an account that is already open. For each account, use an email and/or a phone number from your country. They can be your own. The account has to be created in your country: I am not in the right country, so I cannot do it for you. The account belongs to you, because it uses your details. I will never take it for myself. At the end of this mission, you can delete the accounts without any problem.`,
     warm: (account, before = "") =>
       `${account}. ${before}Open this account and stay on it. Scroll TikTok. Watch each video all the way through, unless you are not interested. Write a short comment on 2 or 3 videos. Follow profiles you like. You are warming the account: you do not post anything. Act like it is your phone.`,
     post: (account) =>
