@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 
 const {
   ACCOUNTS,
+  CATCHUP_DATES,
   DAY_PLANS,
   FRIDAY_CREATE_MINUTES,
   FRIDAY_WARM_MINUTES,
@@ -207,6 +208,10 @@ assert.equal(saturdayOpen[0], "2026-11-07");
 assert.equal(saturdayOpen[saturdayOpen.length - 1], "2026-11-15");
 assert.equal(WORKER_VISIBLE_THROUGH, "2026-11-08");
 assert.deepEqual(suiviDates("2026-11-08"), ["2026-11-06", "2026-11-07", "2026-11-08"]);
+assert.deepEqual(CATCHUP_DATES, ["2026-11-06", "2026-11-07"]);
+assert.equal(postingUi("fr").catchupFriday, "Vidéo du vendredi 6 novembre");
+assert.ok(postingUi("es").catchupSaturday.includes("sábado"));
+assert.ok(postingUi("en").catchupTitle.includes("Videos"));
 assert.equal(openPlans("2026-11-06").some((plan) => plan.date === "2026-11-15"), true);
 assert.equal(
   openPlans("2026-11-06").filter((plan) => plan.date <= WORKER_VISIBLE_THROUGH).some((plan) => plan.date > "2026-11-08"),

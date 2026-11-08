@@ -101,6 +101,8 @@ export const openDates = (today: string) => calendarDates().filter((date) => dat
 /** Days Tania reviews, including ones the worker no longer sees. */
 export const suiviDates = (today: string) => calendarDates().filter((date) => date >= "2026-11-06" && date <= today);
 
+export const CATCHUP_DATES = ["2026-11-06", "2026-11-07"] as const;
+
 export const openPlans = (today: string) => DAY_PLANS.filter((plan) => plan.date >= today && plan.date <= PLANNED_THROUGH);
 
 export const calendarDates = () => {
@@ -430,6 +432,10 @@ export const postingUi = (lang: PostingLang) =>
       proofSending: (percent: number) => `Envoi… ${percent} %`,
       proofFail: "La vidéo n'est pas partie. Laisse la page ouverte et réessaie.",
       proofTooBig: "Cette vidéo dépasse 3 Go.",
+      catchupTitle: "Vidéos à envoyer",
+      catchupBody: "Vendredi et samedi sont passés. Envoie la vidéo de chaque jour. Une heure, jusqu'à 3 Go. Laisse la page ouverte.",
+      catchupFriday: "Vidéo du vendredi 6 novembre",
+      catchupSaturday: "Vidéo du samedi 7 novembre",
       opening: "Ouverture…",
     },
     es: {
@@ -458,6 +464,10 @@ export const postingUi = (lang: PostingLang) =>
       proofSending: (percent: number) => `Enviando… ${percent} %`,
       proofFail: "El vídeo no se ha enviado. Deja la página abierta y vuelve a intentarlo.",
       proofTooBig: "Este vídeo pasa de 3 GB.",
+      catchupTitle: "Vídeos por enviar",
+      catchupBody: "El viernes y el sábado ya pasaron. Envía el vídeo de cada día. Una hora, hasta 3 GB. Deja la página abierta.",
+      catchupFriday: "Vídeo del viernes 6 de noviembre",
+      catchupSaturday: "Vídeo del sábado 7 de noviembre",
       opening: "Abriendo…",
     },
     en: {
@@ -486,6 +496,10 @@ export const postingUi = (lang: PostingLang) =>
       proofSending: (percent: number) => `Sending… ${percent}%`,
       proofFail: "The video did not send. Keep this page open and try again.",
       proofTooBig: "This video is over 3 GB.",
+      catchupTitle: "Videos to send",
+      catchupBody: "Friday and Saturday have passed. Send the video for each day. One hour, up to 3 GB. Keep this page open.",
+      catchupFriday: "Friday, November 6 video",
+      catchupSaturday: "Saturday, November 7 video",
       opening: "Opening…",
     },
   })[lang];

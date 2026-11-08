@@ -6,6 +6,7 @@ import {
   ACCOUNTS,
   CALENDAR_END,
   WORKER_VISIBLE_THROUGH,
+  CATCHUP_DATES,
   CALENDAR_START,
   DAY_PLANS,
   calendarDates,
@@ -513,6 +514,39 @@ export const PostingDashboard = ({
                 )}
               </div>
             )}
+          </section>
+        )}
+
+        {!isTania && person && (
+          <section className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
+            <h2 className="font-title text-2xl tracking-tight">{ui.catchupTitle}</h2>
+            <p className="mt-2 font-body text-base leading-relaxed text-gray-700">{ui.catchupBody}</p>
+            <div className="mt-4 flex flex-col gap-4">
+              {CATCHUP_DATES.map((date) => {
+                const savedName =
+                  desk.days[person.id]?.[date]?.proofName ||
+                  remoteProofs.find((item) => item.profileId === person.id && item.date === date)?.name;
+                const localUrl = urls[proofKey(person.id, date)];
+                const remote = remoteProofs.some((item) => item.profileId === person.id && item.date === date);
+                return (
+                  <div key={date}>
+                    <h3 className="font-body text-base font-bold">{date === "2026-11-06" ? ui.catchupFriday : ui.catchupSaturday}</h3>
+                    <input
+                      id={`catchup-${date}`}
+                      type="file"
+                      accept="video/*"
+                      onChange={(event) => void onProof(date, event.target.files?.[0])}
+                      className="mt-2 font-body text-sm"
+                    />
+                    {proofNote?.date === date && <p className="mt-2 font-body text-sm text-gray-700">{proofNote.text}</p>}
+                    {savedName && <p className="mt-2 font-body text-sm">{savedName}</p>}
+                    {(localUrl || remote) && (
+                      <video src={localUrl || `/posting/proof/${person.id}/${date}`} controls className="mt-2 w-full rounded-2xl bg-black" />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </section>
         )}
 
