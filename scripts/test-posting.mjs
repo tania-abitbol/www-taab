@@ -33,6 +33,7 @@ const {
   WORKER_VISIBLE_THROUGH,
   openDates,
   openPlans,
+  suiviDates,
   postingUi,
 } = await import("../src/config/posting.ts");
 const { createSessionValue, readSession, verifySession } = await import("../src/server/dashboardSession.ts");
@@ -205,6 +206,7 @@ assert.equal(saturdayOpen.includes("2026-11-06"), false);
 assert.equal(saturdayOpen[0], "2026-11-07");
 assert.equal(saturdayOpen[saturdayOpen.length - 1], "2026-11-15");
 assert.equal(WORKER_VISIBLE_THROUGH, "2026-11-08");
+assert.deepEqual(suiviDates("2026-11-08"), ["2026-11-06", "2026-11-07", "2026-11-08"]);
 assert.equal(openPlans("2026-11-06").some((plan) => plan.date === "2026-11-15"), true);
 assert.equal(
   openPlans("2026-11-06").filter((plan) => plan.date <= WORKER_VISIBLE_THROUGH).some((plan) => plan.date > "2026-11-08"),
@@ -238,4 +240,12 @@ assert.ok(checksFor(DAY_PLANS[0], "en")[3].label.startsWith("10 min · Account 1
 assert.ok(checksFor(DAY_PLANS[0], "en")[0].label.includes("starts from zero"));
 assert.equal(checksFor(DAY_PLANS[0], "es").some((item) => /\b(FR|ES|US)\b/.test(item.label)), false);
 assert.equal(checksFor(DAY_PLANS[3]).some((item) => /\b(FR|ES|US)\b/.test(item.label)), false);
+const { PROOF_MAX_BYTES, cleanDayWork, proofAllowed, proofFileName, proofObjectKey } = await import("../src/server/postingProofs.ts");
+assert.equal(cleanDayWork({ slot: "19-20", checks: { create: true, nope: false }, validated: true, proofName: "a.mp4" })?.slot, "19-20");
+assert.equal(cleanDayWork({ slot: "bad" })?.slot, null);
+assert.equal(proofObjectKey("p1", "2026-11-08"), "file-p1-2026-11-08");
+assert.equal(proofAllowed("p1", "2026-11-08", 1024 * 1024 * 1024), true);
+assert.equal(proofAllowed("p1", "2026-11-08", PROOF_MAX_BYTES + 1), false);
+assert.equal(proofAllowed("tania", "2026-11-08", 10), false);
+assert.equal(proofFileName("../secret.mp4"), "secret.mp4");
 console.log("posting codes ok");

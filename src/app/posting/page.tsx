@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 
 import { DashboardGate } from "~/components/dashboard/DashboardGate";
 import { DASHBOARD_COOKIE, readSession } from "~/server/dashboardSession";
+import { loadAllWork, loadWork } from "~/server/postingProofStore";
 import { listProfiles } from "~/server/postingProfileStore";
 import { redirect } from "next/navigation";
 
@@ -33,5 +34,9 @@ export default async function PostingPage({ searchParams }: { searchParams: { re
     session.role === "tania"
       ? profiles
       : profiles.filter((profile) => profile.id === session.role).map(({ id, name }) => ({ id, name }));
-  return <PostingDashboard role={session.role} profiles={visible} />;
+  const work =
+    session.role === "tania"
+      ? await loadAllWork(profiles.map((profile) => profile.id)).catch(() => ({}))
+      : { [session.role]: await loadWork(session.role).catch(() => ({ days: {} })) };
+  return <PostingDashboard role={session.role} profiles={visible} work={work} />;
 }

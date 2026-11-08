@@ -8,6 +8,7 @@ import {
   WORKER_VISIBLE_THROUGH,
   CALENDAR_START,
   DAY_PLANS,
+  calendarDates,
   DayState,
   Desk,
   SLOTS,
@@ -27,12 +28,14 @@ import {
   PostingLang,
   displayName,
   langFromName,
+  suiviDates,
   personMark,
   postingUi,
   slotsFor,
 } from "~/config/posting";
 import { leavePosting } from "~/app/dashboard/creator/actions";
-import { addManagedProfile, deleteManagedProfile, saveManagedProfile } from "~/app/posting/actions";
+import {   addManagedProfile, commitProof, deleteManagedProfile, prepareProofUpload, saveManagedProfile, saveMyDay } from "~/app/posting/actions";
+import type { DayWork, ProfileWork, ProofRecord } from "~/server/postingProofs";
 import { loadBlob, readDesk, saveBlob, writeDesk } from "~/components/posting/storage";
 
 type ManagedProfile = { id: string; name: string; code?: string };
@@ -48,12 +51,39 @@ const fieldClass =
 const proofKey = (personId: string, date: string) => `proof:${personId}:${date}`;
 const slideKey = (date: string, accountId: string) => `tania:${date}:${accountId}`;
 
-export const PostingDashboard = ({ role, profiles }: { role: string; profiles: ManagedProfile[] }) => {
+const uploadProof = (url: string, file: File, onProgress: (percent: number) => void) =>
+  new Promise<void>((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open("PUT", url);
+    request.setRequestHeader("content-type", file.type || "video/mp4");
+    request.upload.onprogress = (event) => {
+      if (event.lengthComputable) onProgress(Math.min(100, Math.round((event.loaded / event.total) * 100)));
+    };
+    request.onload = () => (request.status >= 200 && request.status < 300 ? resolve() : reject(new Error("upload")));
+    request.onerror = () => reject(new Error("upload"));
+    request.send(file);
+  });
+
+export const PostingDashboard = ({
+  role,
+  profiles,
+  work = {},
+}: {
+  role: string;
+  profiles: ManagedProfile[];
+  work?: Record<string, ProfileWork>;
+}) => {
+  const remoteProofs: ProofRecord[] = Object.entries(work).flatMap(([profileId, profile]) =>
+    Object.entries(profile.days)
+      .filter((entry): entry is [string, DayWork & { proofName: string }] => Boolean(entry[1].proofName))
+      .map(([date, day]) => ({ profileId, date, name: day.proofName }))
+  );
   const today = madridToday();
   const [desk, setDesk] = useState<Desk | null>(null);
   const [roster, setRoster] = useState(profiles);
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [fileError, setFileError] = useState("");
+  const [proofNote, setProofNote] = useState<{ date: string; text: string } | null>(null);
   const [newName, setNewName] = useState("");
   const [newCode, setNewCode] = useState("");
   const [profileError, setProfileError] = useState("");
@@ -67,11 +97,45 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
     lang === "en"
       ? ui.range(formatDay(rangeStart, lang), formatDay(rangeEnd, lang))
       : ui.range(lower(formatDay(rangeStart, lang)), lower(formatDay(rangeEnd, lang)));
-  const visibleDates = (forTania: boolean) => openDates(today).filter((date) => forTania || date <= WORKER_VISIBLE_THROUGH);
-  const visiblePlans = (forTania: boolean) => openPlans(today).filter((plan) => forTania || plan.date <= WORKER_VISIBLE_THROUGH);
+  const visibleDates = (forTania: boolean) =>
+    (forTania ? calendarDates() : openDates(today)).filter((date) => forTania || date <= WORKER_VISIBLE_THROUGH);
+  const visiblePlans = (forTania: boolean) =>
+    (forTania ? DAY_PLANS : openPlans(today)).filter((plan) => forTania || plan.date <= WORKER_VISIBLE_THROUGH);
 
   useEffect(() => {
     const loaded = readDesk();
+    const mine = role === "tania" ? null : work[role];
+    if (mine) {
+      const slotsForPerson = { ...(loaded.slots[role] ?? {}) };
+      const daysForPerson = { ...(loaded.days[role] ?? {}) };
+      const pending: string[] = [];
+      const dates = Array.from(new Set([...Object.keys(slotsForPerson), ...Object.keys(daysForPerson), ...Object.keys(mine.days)]));
+      for (const date of dates) {
+        const remote = mine.days[date];
+        if (remote) {
+          slotsForPerson[date] = remote.slot ? [remote.slot as SlotId] : [];
+          const existing = daysForPerson[date] ?? emptyDayState();
+          daysForPerson[date] = {
+            checks: remote.checks,
+            proofName: remote.proofName ?? existing.proofName,
+            validated: remote.validated,
+          };
+        } else if (slotsForPerson[date]?.length || daysForPerson[date]?.proofName || daysForPerson[date]?.validated || Object.keys(daysForPerson[date]?.checks ?? {}).length) {
+          pending.push(date);
+        }
+      }
+      loaded.slots = { ...loaded.slots, [role]: slotsForPerson };
+      loaded.days = { ...loaded.days, [role]: daysForPerson };
+      for (const date of pending) {
+        const existing = daysForPerson[date];
+        void saveMyDay(date, {
+          slot: slotsForPerson[date]?.[0] ?? null,
+          checks: existing?.checks ?? {},
+          validated: existing?.validated === true,
+          proofName: existing?.proofName ?? null,
+        });
+      }
+    }
     setDesk(loaded);
     let cancelled = false;
     const created: string[] = [];
@@ -130,15 +194,30 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
   );
   const weekSaved = person ? desk.weekValidated[person.id] === true : false;
 
+  const publishDay = (date: string, desk: Desk) => {
+    if (!person) return;
+    const record = desk.days[person.id]?.[date];
+    void saveMyDay(date, {
+      slot: slotsFor(desk, person.id, date)[0] ?? null,
+      checks: record?.checks ?? {},
+      validated: record?.validated === true,
+      proofName: record?.proofName ?? null,
+    });
+  };
+
   const toggleSlot = (date: string, slotId: SlotId) => {
     if (!person) return;
-    update((current) => ({
-      ...current,
-      slots: {
-        ...current.slots,
-        [person.id]: { ...current.slots[person.id], [date]: chooseSlot(slotsFor(current, person.id, date), slotId) },
-      },
-    }));
+    update((current) => {
+      const next = {
+        ...current,
+        slots: {
+          ...current.slots,
+          [person.id]: { ...current.slots[person.id], [date]: chooseSlot(slotsFor(current, person.id, date), slotId) },
+        },
+      };
+      publishDay(date, next);
+      return next;
+    });
   };
 
   const patchDay = (date: string, recipe: (day: DayState) => DayState) => {
@@ -148,22 +227,36 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
       const next = recipe(existing);
       const plan = DAY_PLANS.find((item) => item.date === date);
       const validated = Boolean(plan && next.validated && dayReady(plan, next));
-      return {
+      const updated = {
         ...current,
         days: { ...current.days, [person.id]: { ...current.days[person.id], [date]: { ...next, validated } } },
       };
+      publishDay(date, updated);
+      return updated;
     });
   };
 
   const onProof = async (date: string, file: File | undefined) => {
     if (!file || !person) return;
     setFileError("");
+    setProofNote({ date, text: ui.proofSending(0) });
     try {
-      await saveBlob(proofKey(person.id, date), file);
+      const prepared = await prepareProofUpload(date, file.name, file.size);
+      if (!prepared.ok) {
+        setProofNote(null);
+        setFileError(prepared.error === "size" ? ui.proofTooBig : ui.proofFail);
+        return;
+      }
+      if (prepared.local) await saveBlob(proofKey(person.id, date), file);
+      else await uploadProof(prepared.url, file, (percent) => setProofNote({ date, text: ui.proofSending(percent) }));
+      const saved = await commitProof(date, prepared.name);
+      if (!saved.ok) throw new Error("commit");
       setUrls((current) => ({ ...current, [proofKey(person.id, date)]: URL.createObjectURL(file) }));
-      patchDay(date, (day) => ({ ...day, proofName: file.name }));
+      patchDay(date, (day) => ({ ...day, proofName: prepared.name }));
+      setProofNote(null);
     } catch {
-      setFileError("La capture n'a pas été gardée. Réessaie avec un fichier plus léger.");
+      setProofNote(null);
+      setFileError(ui.proofFail);
     }
   };
 
@@ -235,6 +328,51 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
           <h1 className="font-title text-4xl tracking-tight">{isTania ? "Tania" : displayName(person?.name ?? "")}</h1>
           <p className="mt-2 max-w-prose font-body text-sm leading-relaxed text-gray-700">{range}</p>
         </header>
+
+        {isTania && (
+          <section className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
+            <h2 className="font-title text-2xl tracking-tight">Suivi</h2>
+            <p className="mt-1 font-body text-sm leading-relaxed text-gray-700">
+              Heure, cases et vidéo de chaque personne, y compris les jours passés.
+            </p>
+            <div className="mt-4 flex flex-col gap-6">
+              {profiles.map((worker) => (
+                <div key={worker.id}>
+                  <h3 className="font-title text-xl tracking-tight">{displayName(worker.name)}</h3>
+                  <div className="mt-2 flex flex-col gap-3">
+                    {suiviDates(today).map((date) => {
+                      const day = work[worker.id]?.days[date];
+                      const plan = DAY_PLANS.find((item) => item.date === date);
+                      const done = plan ? checksFor(plan, "fr").filter((item) => day?.checks[item.id]) : [];
+                      const slot = SLOTS.find((item) => item.id === day?.slot);
+                      return (
+                        <article key={date} className="border-t border-gray-200 pt-3">
+                          <p className="font-body text-base font-bold">{formatDay(date)}</p>
+                          <p className="mt-1 font-body text-sm">{slot ? slot.label : "Pas d'heure"}</p>
+                          {done.length > 0 ? (
+                            <ul className="mt-1 font-body text-sm leading-relaxed text-gray-700">
+                              {done.map((item) => (
+                                <li key={item.id}>{item.label.split(". ")[0]}</li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="mt-1 font-body text-sm text-gray-700">Aucune case</p>
+                          )}
+                          {day?.proofName ? (
+                            <video src={`/posting/proof/${worker.id}/${date}`} controls className="mt-2 w-full rounded-2xl bg-black" />
+                          ) : (
+                            <p className="mt-1 font-body text-sm text-gray-700">Pas de vidéo</p>
+                          )}
+                          <p className="mt-1 font-body text-sm">{day?.validated ? "Journée validée" : "Journée pas validée"}</p>
+                        </article>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {isTania ? (
           <section className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
@@ -392,6 +530,7 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
                     </li>
                   ))}
                 </ul>
+                <RemoteProofs date={plan.date} proofs={remoteProofs} profiles={profiles} />
                 {plan.publishers.length > 0 && (
                   <div className="mt-4 flex flex-col gap-4">
                     {ACCOUNTS.filter((account) => plan.publishers.includes(account.id)).map((account) => {
@@ -458,6 +597,7 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
                     );
                   })}
                 </div>
+                <RemoteProofs date={plan.date} proofs={remoteProofs} profiles={profiles} />
               </section>
             );
           }
@@ -502,8 +642,13 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
                   className="mt-2 font-body text-sm"
                 />
                 {state.proofName && <p className="mt-2 font-body text-sm">{state.proofName}</p>}
-                {person && urls[proofKey(person.id, plan.date)] && (
-                  <video src={urls[proofKey(person.id, plan.date)]} controls className="mt-3 w-full rounded-2xl bg-black" />
+                {proofNote?.date === plan.date && <p className="mt-2 font-body text-sm text-gray-700">{proofNote.text}</p>}
+                {person && (urls[proofKey(person.id, plan.date)] || remoteProofs.some((item) => item.profileId === person.id && item.date === plan.date)) && (
+                  <video
+                    src={urls[proofKey(person.id, plan.date)] || `/posting/proof/${person.id}/${plan.date}`}
+                    controls
+                    className="mt-3 w-full rounded-2xl bg-black"
+                  />
                 )}
               </div>
               <button
@@ -522,10 +667,33 @@ export const PostingDashboard = ({ role, profiles }: { role: string; profiles: M
           );
         })}
 
-        {fileError && <p className="font-body text-sm text-[#C8102E]">{ui.files}</p>}
+        {fileError && <p className="font-body text-sm text-[#C8102E]">{fileError === "files" ? ui.files : fileError}</p>}
         <p className="font-body text-sm leading-relaxed text-gray-700">{ui.local}</p>
       </div>
     </main>
+  );
+};
+
+const RemoteProofs = ({
+  date,
+  proofs,
+  profiles,
+}: {
+  date: string;
+  proofs: ProofRecord[];
+  profiles: ManagedProfile[];
+}) => {
+  const rows = proofs.filter((item) => item.date === date);
+  if (!rows.length) return null;
+  return (
+    <div className="mt-4 flex flex-col gap-3">
+      {rows.map((row) => (
+        <div key={row.profileId}>
+          <p className="font-body text-sm font-bold">{profiles.find((item) => item.id === row.profileId)?.name}</p>
+          <video src={`/posting/proof/${row.profileId}/${row.date}`} controls className="mt-2 w-full rounded-2xl bg-black" />
+        </div>
+      ))}
+    </div>
   );
 };
 

@@ -98,6 +98,9 @@ export const isIsoDate = (value: string) => {
 
 export const openDates = (today: string) => calendarDates().filter((date) => date >= today);
 
+/** Days Tania reviews, including ones the worker no longer sees. */
+export const suiviDates = (today: string) => calendarDates().filter((date) => date >= "2026-11-06" && date <= today);
+
 export const openPlans = (today: string) => DAY_PLANS.filter((plan) => plan.date >= today && plan.date <= PLANNED_THROUGH);
 
 export const calendarDates = () => {
@@ -422,8 +425,11 @@ export const postingUi = (lang: PostingLang) =>
       dayDone: "Journée validée",
       ready: "Cases et preuve sont là.",
       missing: "Il manque des cases ou la preuve.",
-      local: "Créneaux, cases et fichiers restent dans ce navigateur.",
+      local: "Les heures et les cases restent dans ce navigateur. La vidéo est envoyée.",
       files: "Les fichiers de ce navigateur ne se sont pas ouverts.",
+      proofSending: (percent: number) => `Envoi… ${percent} %`,
+      proofFail: "La vidéo n'est pas partie. Laisse la page ouverte et réessaie.",
+      proofTooBig: "Cette vidéo dépasse 3 Go.",
       opening: "Ouverture…",
     },
     es: {
@@ -447,8 +453,11 @@ export const postingUi = (lang: PostingLang) =>
       dayDone: "Día validado",
       ready: "Las casillas y la prueba están.",
       missing: "Faltan casillas o la prueba.",
-      local: "Los horarios, las casillas y los archivos se quedan en este navegador.",
+      local: "Los horarios y las casillas se quedan en este navegador. El vídeo se envía.",
       files: "No se han podido abrir los archivos de este navegador.",
+      proofSending: (percent: number) => `Enviando… ${percent} %`,
+      proofFail: "El vídeo no se ha enviado. Deja la página abierta y vuelve a intentarlo.",
+      proofTooBig: "Este vídeo pasa de 3 GB.",
       opening: "Abriendo…",
     },
     en: {
@@ -472,8 +481,11 @@ export const postingUi = (lang: PostingLang) =>
       dayDone: "Day validated",
       ready: "The boxes and the proof are here.",
       missing: "Some boxes or the proof are missing.",
-      local: "Time slots, boxes, and files stay in this browser.",
+      local: "Time slots and boxes stay in this browser. The video is sent.",
       files: "The files in this browser did not open.",
+      proofSending: (percent: number) => `Sending… ${percent}%`,
+      proofFail: "The video did not send. Keep this page open and try again.",
+      proofTooBig: "This video is over 3 GB.",
       opening: "Opening…",
     },
   })[lang];
