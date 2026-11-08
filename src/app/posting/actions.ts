@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 
 import { DASHBOARD_COOKIE, readSession } from "~/server/dashboardSession";
 import { DayWork, cleanDayWork, proofAllowed, proofFileName } from "~/server/postingProofs";
-import { loadWork, proofStorageReady, rememberProof, saveWorkDay, signProofUpload } from "~/server/postingProofStore";
+import { loadWork, proofStorageReady, rememberProof, saveWorkDay } from "~/server/postingProofStore";
 import { changeProfile, createProfile, removeProfile } from "~/server/postingProfileStore";
 
 const refused = { ok: false as const, error: "Seul le code de Tania peut gérer les profils." };
@@ -40,13 +40,7 @@ export const prepareProofUpload = async (date: string, fileName: string, size: n
   if (!profileId) return { ok: false as const, error: "denied" as const };
   if (!proofAllowed(profileId, date, size)) return { ok: false as const, error: "size" as const };
   if (!proofStorageReady()) return { ok: true as const, local: true as const, name: proofFileName(fileName) };
-  try {
-    const url = await signProofUpload(profileId, date);
-    if (!url) return { ok: false as const, error: "store" as const };
-    return { ok: true as const, local: false as const, url, name: proofFileName(fileName) };
-  } catch {
-    return { ok: false as const, error: "store" as const };
-  }
+  return { ok: true as const, local: false as const, name: proofFileName(fileName) };
 };
 
 export const saveMyDay = async (date: string, day: DayWork) => {

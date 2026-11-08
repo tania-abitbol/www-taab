@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 
 import {
   ACCOUNTS,
@@ -36,7 +36,7 @@ import {
 } from "~/config/posting";
 import { leavePosting } from "~/app/dashboard/creator/actions";
 import {   addManagedProfile, commitProof, deleteManagedProfile, prepareProofUpload, saveManagedProfile, saveMyDay } from "~/app/posting/actions";
-import type { DayWork, ProfileWork, ProofRecord } from "~/server/postingProofs";
+import { PROOF_PART_BYTES, proofPartCount, type DayWork, type ProfileWork, type ProofRecord } from "~/server/postingProofs";
 import { loadBlob, readDesk, saveBlob, writeDesk } from "~/components/posting/storage";
 
 type ManagedProfile = { id: string; name: string; code?: string };
@@ -52,18 +52,80 @@ const fieldClass =
 const proofKey = (personId: string, date: string) => `proof:${personId}:${date}`;
 const slideKey = (date: string, accountId: string) => `tania:${date}:${accountId}`;
 
-const uploadProof = (url: string, file: File, onProgress: (percent: number) => void) =>
+const uploadProof = (file: File, date: string, onProgress: (percent: number) => void) =>
   new Promise<void>((resolve, reject) => {
-    const request = new XMLHttpRequest();
-    request.open("PUT", url);
-    request.setRequestHeader("content-type", file.type || "video/mp4");
-    request.upload.onprogress = (event) => {
-      if (event.lengthComputable) onProgress(Math.min(100, Math.round((event.loaded / event.total) * 100)));
+    const parts = Math.max(1, proofPartCount(file.size));
+    const generation = (globalThis.crypto?.randomUUID?.() ?? `${Date.now().toString(36)}abcdefghijkl`)
+      .replace(/-/g, "")
+      .slice(0, 12);
+    const send = (index: number) => {
+      const start = index * PROOF_PART_BYTES;
+      const blob = file.slice(start, Math.min(file.size, start + PROOF_PART_BYTES));
+      const request = new XMLHttpRequest();
+      request.open("POST", "/posting/upload");
+      request.setRequestHeader("content-type", "application/octet-stream");
+      request.setRequestHeader("x-proof-date", date);
+      request.setRequestHeader("x-proof-generation", generation);
+      request.setRequestHeader("x-proof-part", String(index));
+      request.setRequestHeader("x-proof-parts", String(parts));
+      request.setRequestHeader("x-proof-size", String(file.size));
+      request.setRequestHeader("x-proof-name", encodeURIComponent(file.name));
+      request.setRequestHeader("x-proof-type", /^video\/[a-z0-9.+-]+$/i.test(file.type) ? file.type : "video/mp4");
+      request.upload.onprogress = (event) => {
+        if (event.lengthComputable) onProgress(Math.min(99, Math.round(((start + event.loaded) / file.size) * 100)));
+      };
+      request.onload = () => {
+        if (request.status < 200 || request.status >= 300) {
+          reject(new Error(String(request.status)));
+          return;
+        }
+        if (index + 1 >= parts) {
+          onProgress(100);
+          resolve();
+          return;
+        }
+        send(index + 1);
+      };
+      request.onerror = () => reject(new Error("upload"));
+      request.send(blob);
     };
-    request.onload = () => (request.status >= 200 && request.status < 300 ? resolve() : reject(new Error("upload")));
-    request.onerror = () => reject(new Error("upload"));
-    request.send(file);
+    onProgress(0);
+    send(0);
   });
+
+const ProofFeedback = ({
+  active,
+  percent,
+  text,
+  error,
+}: {
+  active: boolean;
+  percent: number;
+  text: string;
+  error: string | null;
+}) => {
+  if (!active && !error) return null;
+  return (
+    <div className="mt-2">
+      {active && (
+        <>
+          <p className="font-body text-sm text-gray-700">{text}</p>
+          <div
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={percent}
+            aria-label={text}
+            className="mt-2 h-2 overflow-hidden rounded-full bg-gray-200"
+          >
+            <div className="h-full bg-black" style={{ width: `${percent}%` }} />
+          </div>
+        </>
+      )}
+      {error && <p className="mt-2 font-body text-sm text-[#C8102E]">{error}</p>}
+    </div>
+  );
+};
 
 export const PostingDashboard = ({
   role,
@@ -84,7 +146,9 @@ export const PostingDashboard = ({
   const [roster, setRoster] = useState(profiles);
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [fileError, setFileError] = useState("");
-  const [proofNote, setProofNote] = useState<{ date: string; text: string } | null>(null);
+  const [proofNote, setProofNote] = useState<{ date: string; percent: number; text: string; name: string } | null>(null);
+  const [proofError, setProofError] = useState<{ date: string; text: string } | null>(null);
+  const sending = useRef(new Set<string>());
   const [newName, setNewName] = useState("");
   const [newCode, setNewCode] = useState("");
   const [profileError, setProfileError] = useState("");
@@ -238,26 +302,37 @@ export const PostingDashboard = ({
   };
 
   const onProof = async (date: string, file: File | undefined) => {
-    if (!file || !person) return;
+    if (!file || !person || sending.current.has(date)) return;
+    sending.current.add(date);
     setFileError("");
-    setProofNote({ date, text: ui.proofSending(0) });
+    setProofError(null);
+    setProofNote({ date, percent: 0, text: ui.proofSending(0), name: file.name });
+    const fail = (text: string) => {
+      setProofNote(null);
+      setProofError({ date, text });
+    };
     try {
       const prepared = await prepareProofUpload(date, file.name, file.size);
       if (!prepared.ok) {
-        setProofNote(null);
-        setFileError(prepared.error === "size" ? ui.proofTooBig : ui.proofFail);
+        fail(prepared.error === "size" ? ui.proofTooBig : ui.proofFail);
         return;
       }
-      if (prepared.local) await saveBlob(proofKey(person.id, date), file);
-      else await uploadProof(prepared.url, file, (percent) => setProofNote({ date, text: ui.proofSending(percent) }));
+      if (prepared.local) {
+        await saveBlob(proofKey(person.id, date), file);
+        setProofNote({ date, percent: 100, text: ui.proofSending(100), name: prepared.name });
+      } else {
+        await uploadProof(file, date, (percent) => setProofNote({ date, percent, text: ui.proofSending(percent), name: prepared.name }));
+      }
       const saved = await commitProof(date, prepared.name);
-      if (!saved.ok) throw new Error("commit");
+      if (!saved.ok && prepared.local) throw new Error("commit");
       setUrls((current) => ({ ...current, [proofKey(person.id, date)]: URL.createObjectURL(file) }));
       patchDay(date, (day) => ({ ...day, proofName: prepared.name }));
       setProofNote(null);
-    } catch {
-      setProofNote(null);
-      setFileError(ui.proofFail);
+      setProofError(null);
+    } catch (error) {
+      fail(error instanceof Error && error.message === "413" ? ui.proofTooBig : ui.proofFail);
+    } finally {
+      sending.current.delete(date);
     }
   };
 
@@ -538,10 +613,17 @@ export const PostingDashboard = ({
                       onChange={(event) => void onProof(date, event.target.files?.[0])}
                       className="mt-2 font-body text-sm"
                     />
-                    {proofNote?.date === date && <p className="mt-2 font-body text-sm text-gray-700">{proofNote.text}</p>}
-                    {savedName && <p className="mt-2 font-body text-sm">{savedName}</p>}
+                    <ProofFeedback
+                      active={proofNote?.date === date}
+                      percent={proofNote?.date === date ? proofNote.percent : 0}
+                      text={proofNote?.date === date ? proofNote.text : ""}
+                      error={proofError?.date === date ? proofError.text : null}
+                    />
+                    {(savedName || (proofNote?.date === date && proofNote.name)) && (
+                      <p className="mt-2 font-body text-sm">{savedName || proofNote?.name}</p>
+                    )}
                     {(localUrl || remote) && (
-                      <video src={localUrl || `/posting/proof/${person.id}/${date}`} controls className="mt-2 w-full rounded-2xl bg-black" />
+                      <video src={localUrl || `/posting/proof/${person.id}/${date}`} controls playsInline className="mt-2 w-full rounded-2xl bg-black" />
                     )}
                   </div>
                 );
@@ -675,12 +757,20 @@ export const PostingDashboard = ({
                   onChange={(event) => void onProof(plan.date, event.target.files?.[0])}
                   className="mt-2 font-body text-sm"
                 />
-                {state.proofName && <p className="mt-2 font-body text-sm">{state.proofName}</p>}
-                {proofNote?.date === plan.date && <p className="mt-2 font-body text-sm text-gray-700">{proofNote.text}</p>}
+                {(state.proofName || (proofNote?.date === plan.date && proofNote.name)) && (
+                  <p className="mt-2 font-body text-sm">{state.proofName || proofNote?.name}</p>
+                )}
+                <ProofFeedback
+                  active={proofNote?.date === plan.date}
+                  percent={proofNote?.date === plan.date ? proofNote.percent : 0}
+                  text={proofNote?.date === plan.date ? proofNote.text : ""}
+                  error={proofError?.date === plan.date ? proofError.text : null}
+                />
                 {person && (urls[proofKey(person.id, plan.date)] || remoteProofs.some((item) => item.profileId === person.id && item.date === plan.date)) && (
                   <video
                     src={urls[proofKey(person.id, plan.date)] || `/posting/proof/${person.id}/${plan.date}`}
                     controls
+                    playsInline
                     className="mt-3 w-full rounded-2xl bg-black"
                   />
                 )}

@@ -1,11 +1,16 @@
 import {
   DayWork,
   ProfileWork,
+  ProofFile,
   cleanDayWork,
+  cleanProofFile,
   emptyDayWork,
   emptyProfileWork,
   proofFileName,
+  proofMetaKey,
   proofObjectKey,
+  proofPartKey,
+  proofWindow,
 } from "~/server/postingProofs";
 
 const PROOFS = "posting-proofs";
@@ -88,9 +93,41 @@ export const proofStorageReady = () => {
   return Boolean(context?.siteID && context.token);
 };
 
-export const signProofUpload = (profileId: string, date: string) => sign(PROOFS, proofObjectKey(profileId, date), "PUT");
-
 export const signProofRead = (profileId: string, date: string) => sign(PROOFS, proofObjectKey(profileId, date), "GET");
+
+export const writeProofPart = async (profileId: string, date: string, generation: string, part: number, bytes: Uint8Array) => {
+  const url = await sign(PROOFS, proofPartKey(profileId, date, generation, part), "PUT");
+  if (!url) throw new Error("proof-sign");
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: { "content-type": "application/octet-stream" },
+    body: bytes,
+    signal: AbortSignal.timeout(20000),
+  });
+  if (!response.ok) throw new Error(`proof-write-${response.status}`);
+};
+
+export const saveProofFile = (profileId: string, date: string, file: ProofFile) =>
+  writeJson(PROOFS, proofMetaKey(profileId, date), file);
+
+export const loadProofFile = async (profileId: string, date: string) => cleanProofFile(await readJson(PROOFS, proofMetaKey(profileId, date)));
+
+export const readProofRange = async (profileId: string, date: string, file: ProofFile, start: number, end: number) => {
+  const { first, last } = proofWindow(file.partSize, file.parts, start, end);
+  const chunks: Buffer[] = [];
+  for (let part = first; part <= last; part += 1) {
+    const url = await sign(PROOFS, proofPartKey(profileId, date, file.generation, part), "GET");
+    if (!url) throw new Error("proof-read");
+    const response = await fetch(url, { signal: AbortSignal.timeout(20000) });
+    if (!response.ok) throw new Error("proof-read");
+    const bytes = Buffer.from(await response.arrayBuffer());
+    const partStart = part * file.partSize;
+    const from = Math.max(0, start - partStart);
+    const to = Math.min(bytes.length, end - partStart + 1);
+    chunks.push(bytes.subarray(from, to));
+  }
+  return Buffer.concat(chunks);
+};
 
 export const loadWork = async (profileId: string): Promise<ProfileWork> => {
   const raw = (await readJson(WORK, `work-${profileId}`)) as { days?: Record<string, unknown> } | null;
