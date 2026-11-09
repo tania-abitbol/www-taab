@@ -68,7 +68,8 @@ export const parseDesk = (raw: string | null): Desk => {
       for (const [date, files] of Object.entries(parsed.taniaFiles)) {
         if (!isIsoDate(date) || !files || typeof files !== "object") continue;
         taniaFiles[date] = {};
-        for (const [accountId, name] of Object.entries(files)) {
+        for (const [accountId, value] of Object.entries(files)) {
+          const name = value as unknown;
           const names = Array.isArray(name)
             ? name.filter((item): item is string => typeof item === "string" && item.trim().length > 0)
             : typeof name === "string" && name.trim()

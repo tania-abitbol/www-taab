@@ -466,7 +466,7 @@ export const PostingDashboard = ({
   };
 
   const onSlides = async (date: string, accountId: string, list: FileList | null) => {
-    const files = [...(list ?? [])].filter((file) => file.type.startsWith("image/"));
+    const files = list ? Array.from(list).filter((file) => file.type.startsWith("image/")) : [];
     if (files.length === 0) return;
     setFileError("");
     try {
