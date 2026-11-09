@@ -5,27 +5,21 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   ACCOUNTS,
   CALENDAR_END,
-  WORKER_VISIBLE_THROUGH,
-  CATCHUP_DATES,
   CALENDAR_START,
   DAY_PLANS,
   calendarDates,
   DayState,
   Desk,
   SLOTS,
-  chooseSlot,
   SlotId,
   accountRole,
   checksFor,
-  dateLocale,
   dayHeading,
   dayReady,
   emptyDayState,
   formatDay,
   formatShortDay,
   madridToday,
-  openDates,
-  openPlans,
   PostingLang,
   displayName,
   langFromName,
@@ -40,11 +34,6 @@ import { PROOF_PART_BYTES, proofPartCount, type DayWork, type ProfileWork, type 
 import { loadBlob, readDesk, saveBlob, writeDesk } from "~/components/posting/storage";
 
 type ManagedProfile = { id: string; name: string; code?: string };
-
-const hourText = (short: string) => {
-  const [start, end] = short.split("–");
-  return `${start}h–${end}h`;
-};
 
 const fieldClass =
   "h-12 w-full rounded-xl border border-gray-300 bg-white px-4 font-body text-base text-black placeholder:text-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-1";
@@ -156,17 +145,15 @@ export const PostingDashboard = ({
   const lang: PostingLang = isTania ? "fr" : langFromName(profiles.find((item) => item.id === role)?.name ?? "");
   const ui = postingUi(lang);
   const lower = (value: string) => value.charAt(0).toLowerCase() + value.slice(1);
-  const workerDates = openDates(today).filter((date) => date <= WORKER_VISIBLE_THROUGH);
-  const rangeStart = isTania ? CALENDAR_START : workerDates[0] ?? today;
-  const rangeEnd = isTania ? CALENDAR_END : workerDates[workerDates.length - 1] ?? WORKER_VISIBLE_THROUGH;
+  const workerPlans = DAY_PLANS.filter((plan) => plan.date >= "2026-11-09" && plan.date <= "2026-11-15");
+  const rangeStart = isTania ? CALENDAR_START : "2026-11-09";
+  const rangeEnd = isTania ? CALENDAR_END : "2026-11-15";
   const range =
     lang === "en"
       ? ui.range(formatDay(rangeStart, lang), formatDay(rangeEnd, lang))
       : ui.range(lower(formatDay(rangeStart, lang)), lower(formatDay(rangeEnd, lang)));
-  const visibleDates = (forTania: boolean) =>
-    (forTania ? calendarDates() : openDates(today)).filter((date) => forTania || date <= WORKER_VISIBLE_THROUGH);
-  const visiblePlans = (forTania: boolean) =>
-    (forTania ? DAY_PLANS : openPlans(today)).filter((plan) => forTania || plan.date <= WORKER_VISIBLE_THROUGH);
+  const visibleDates = () => calendarDates();
+  const visiblePlans = (forTania: boolean) => (forTania ? DAY_PLANS : workerPlans);
 
   useEffect(() => {
     const loaded = readDesk();
@@ -254,11 +241,6 @@ export const PostingDashboard = ({
 
   const person = isTania ? null : roster.find((item) => item.id === role) ?? null;
   const people = isTania ? roster : [];
-  const missingDays = person ? visibleDates(false).filter((date) => slotsFor(desk, person.id, date).length === 0) : [];
-  const missingNames = new Intl.ListFormat(dateLocale(lang), { type: "conjunction" }).format(
-    missingDays.map((date) => lower(formatDay(date, lang)))
-  );
-  const weekSaved = person ? desk.weekValidated[person.id] === true : false;
 
   const publishDay = (date: string, desk: Desk) => {
     if (!person) return;
@@ -268,21 +250,6 @@ export const PostingDashboard = ({
       checks: record?.checks ?? {},
       validated: record?.validated === true,
       proofName: record?.proofName ?? null,
-    });
-  };
-
-  const toggleSlot = (date: string, slotId: SlotId) => {
-    if (!person) return;
-    update((current) => {
-      const next = {
-        ...current,
-        slots: {
-          ...current.slots,
-          [person.id]: { ...current.slots[person.id], [date]: chooseSlot(slotsFor(current, person.id, date), slotId) },
-        },
-      };
-      publishDay(date, next);
-      return next;
     });
   };
 
@@ -451,7 +418,7 @@ export const PostingDashboard = ({
           </section>
         )}
 
-        {isTania ? (
+        {isTania && (
           <section className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
             <h2 className="font-title text-2xl tracking-tight">Créneaux</h2>
             <p className="mt-1 font-body text-xs text-gray-700">
@@ -464,7 +431,7 @@ export const PostingDashboard = ({
                   {slot.short}
                 </span>
               ))}
-              {visibleDates(true).map((date) => (
+              {visibleDates().map((date) => (
                 <div key={date} className="contents">
                   <span className={`py-1 ${date === today ? "font-bold" : ""}`}>{formatShortDay(date)}</span>
                   {SLOTS.map((slot) => {
@@ -517,118 +484,6 @@ export const PostingDashboard = ({
                 </button>
               </form>
               {profileError && <p className="mt-2 font-body text-sm text-[#C8102E]">{profileError}</p>}
-            </div>
-          </section>
-        ) : (
-          <section aria-label={ui.slots} className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
-            <h2 className="font-title text-2xl tracking-tight">{ui.slots}</h2>
-            <p className="mt-2 font-body text-base leading-relaxed text-gray-700">{ui.slotsHelp}</p>
-            <ul className="mt-4 flex flex-col gap-4">
-              {visibleDates(false).map((date) => {
-                const chosen = person ? slotsFor(desk, person.id, date)[0] : undefined;
-                const chosenSlot = SLOTS.find((slot) => slot.id === chosen);
-                return (
-                  <li key={date} className="border-t border-gray-200 pt-4 first:border-t-0 first:pt-0">
-                    <p className="font-body text-base font-bold">
-                      {formatDay(date, lang)}
-                      {date === today ? `, ${ui.todayWord}` : ""}
-                    </p>
-                    <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                      {SLOTS.map((slot) => {
-                        const selected = chosen === slot.id;
-                        const hour = hourText(slot.short);
-                        return (
-                          <button
-                            key={slot.id}
-                            id={`slot-${date}-${slot.id}`}
-                            type="button"
-                            aria-pressed={selected}
-                            aria-label={`${formatDay(date, lang)} ${slot.label}`}
-                            onClick={() => toggleSlot(date, slot.id)}
-                            className={`flex h-12 items-center justify-center rounded-xl px-2 font-body text-base font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-black ${
-                              selected ? "bg-black text-white" : "bg-gray-100 text-black"
-                            }`}
-                          >
-                            {hour}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <p className="mt-2 font-body text-sm leading-relaxed text-gray-700">
-                      {chosenSlot ? ui.picked(hourText(chosenSlot.short)) : ui.pickOne}
-                    </p>
-                  </li>
-                );
-              })}
-            </ul>
-            {person && (
-              <div className="mt-4 border-t border-gray-200 pt-4">
-                {missingDays.length > 0 && (
-                  <p className="font-body text-base leading-relaxed text-gray-700">
-                    {missingDays.length > 3 ? ui.missingCount(missingDays.length) : ui.missingHours(missingNames)}
-                  </p>
-                )}
-                {missingDays.length === 0 && !weekSaved && (
-                  <p className="font-body text-base leading-relaxed text-gray-700">{ui.readyHours}</p>
-                )}
-                {weekSaved ? (
-                  <div id="validate-week" className={`${missingDays.length > 0 ? "mt-3" : ""} rounded-xl border border-black px-4 py-3`}>
-                    <p className="font-body text-base font-bold">{ui.weekDone}</p>
-                    <p className="mt-1 font-body text-sm leading-relaxed text-gray-700">{ui.weekEdit}</p>
-                  </div>
-                ) : (
-                  <button
-                    id="validate-week"
-                    type="button"
-                    onClick={() =>
-                      update((current) => ({ ...current, weekValidated: { ...current.weekValidated, [person.id]: true } }))
-                    }
-                    className="mt-3 h-12 w-full rounded-xl bg-black px-4 font-body text-base font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
-                  >
-                    {ui.validateWeek}
-                  </button>
-                )}
-              </div>
-            )}
-          </section>
-        )}
-
-        {!isTania && person && (
-          <section className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
-            <h2 className="font-title text-2xl tracking-tight">{ui.catchupTitle}</h2>
-            <p className="mt-2 font-body text-base leading-relaxed text-gray-700">{ui.catchupBody}</p>
-            <div className="mt-4 flex flex-col gap-4">
-              {CATCHUP_DATES.map((date) => {
-                const savedName =
-                  desk.days[person.id]?.[date]?.proofName ||
-                  remoteProofs.find((item) => item.profileId === person.id && item.date === date)?.name;
-                const localUrl = urls[proofKey(person.id, date)];
-                const remote = remoteProofs.some((item) => item.profileId === person.id && item.date === date);
-                return (
-                  <div key={date}>
-                    <h3 className="font-body text-base font-bold">{date === "2026-11-06" ? ui.catchupFriday : ui.catchupSaturday}</h3>
-                    <input
-                      id={`catchup-${date}`}
-                      type="file"
-                      accept="video/*"
-                      onChange={(event) => void onProof(date, event.target.files?.[0])}
-                      className="mt-2 font-body text-sm"
-                    />
-                    <ProofFeedback
-                      active={proofNote?.date === date}
-                      percent={proofNote?.date === date ? proofNote.percent : 0}
-                      text={proofNote?.date === date ? proofNote.text : ""}
-                      error={proofError?.date === date ? proofError.text : null}
-                    />
-                    {(savedName || (proofNote?.date === date && proofNote.name)) && (
-                      <p className="mt-2 font-body text-sm">{savedName || proofNote?.name}</p>
-                    )}
-                    {(localUrl || remote) && (
-                      <video src={localUrl || `/posting/proof/${person.id}/${date}`} controls playsInline className="mt-2 w-full rounded-2xl bg-black" />
-                    )}
-                  </div>
-                );
-              })}
             </div>
           </section>
         )}
@@ -760,7 +615,7 @@ export const PostingDashboard = ({
         })}
 
         {fileError && <p className="font-body text-sm text-[#C8102E]">{fileError === "files" ? ui.files : fileError}</p>}
-        <p className="font-body text-sm leading-relaxed text-gray-700">{ui.local}</p>
+        {isTania && <p className="font-body text-sm leading-relaxed text-gray-700">{ui.local}</p>}
       </div>
     </main>
   );
