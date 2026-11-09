@@ -156,8 +156,9 @@ export const PostingDashboard = ({
   const lang: PostingLang = isTania ? "fr" : langFromName(profiles.find((item) => item.id === role)?.name ?? "");
   const ui = postingUi(lang);
   const lower = (value: string) => value.charAt(0).toLowerCase() + value.slice(1);
-  const rangeStart = isTania ? CALENDAR_START : "2026-11-06";
-  const rangeEnd = isTania ? CALENDAR_END : WORKER_VISIBLE_THROUGH;
+  const workerDates = openDates(today).filter((date) => date <= WORKER_VISIBLE_THROUGH);
+  const rangeStart = isTania ? CALENDAR_START : workerDates[0] ?? today;
+  const rangeEnd = isTania ? CALENDAR_END : workerDates[workerDates.length - 1] ?? WORKER_VISIBLE_THROUGH;
   const range =
     lang === "en"
       ? ui.range(formatDay(rangeStart, lang), formatDay(rangeEnd, lang))

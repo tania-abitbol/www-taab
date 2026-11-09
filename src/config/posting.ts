@@ -2,36 +2,16 @@
 
 export const CALENDAR_START = "2026-11-05";
 export const CALENDAR_END = "2026-11-15";
-/** Workers only see the current list. The rest stays on Tania's screen. */
-export const WORKER_VISIBLE_THROUGH = "2026-11-08";
+/** Workers see the current list, through Sunday 15 Nov. Past days stay off their screen. */
+export const WORKER_VISIBLE_THROUGH = "2026-11-15";
 export const FRIDAY_CREATE_MINUTES = 30;
 export const FRIDAY_WARM_MINUTES = 10;
 export const SATURDAY_ACCOUNT_MINUTES = 20;
 export const SUNDAY_WARM_MINUTES = 20;
-export const MONDAY_PHOTO_MINUTES = 5;
-export const MONDAY_BIO_MINUTES = 5;
-export const MONDAY_WARM_BEFORE = 8;
-export const MONDAY_POST_MINUTES = 5;
-export const MONDAY_WARM_AFTER = 8;
-export const MONDAY_COMPTE2_MINUTES = 14;
-export const MONDAY_COMPTE3_MINUTES = 15;
-export const TUESDAY_WARM_BEFORE = 8;
-export const TUESDAY_POST_MINUTES = 5;
-export const TUESDAY_WARM_AFTER = 8;
-export const TUESDAY_COMPTE2_WARM = 5;
-export const TUESDAY_COMPTE2_PROFILE = 5;
-export const TUESDAY_COMPTE2_POST = 5;
-export const TUESDAY_COMPTE2_WARM_AFTER = 5;
-export const TUESDAY_COMPTE3_MINUTES = 19;
-/** Wednesday: the one account that does not post, then 8 + 5 + 8 on each of the other two. */
-export const WEDNESDAY_WARM_ONLY = 18;
-export const WEDNESDAY_WARM_BEFORE = 8;
-export const WEDNESDAY_POST_MINUTES = 5;
-export const WEDNESDAY_WARM_AFTER = 8;
-/** Thursday through Sunday: every account posts, 8 + 5 + 7. */
-export const ALL_WARM_BEFORE = 8;
-export const ALL_POST_MINUTES = 5;
-export const ALL_WARM_AFTER = 7;
+/** From Monday 9 Nov, each account is 20 minutes. A bio day splits that account into 10 + 10. */
+export const PROFILE_SETUP_MINUTES = 10;
+export const PROFILE_WARM_MINUTES = 10;
+export const ACCOUNT_BLOCK_MINUTES = 20;
 
 export const SLOTS = [
   { id: "17-18", label: "17:00–18:00", short: "17–18" },
@@ -116,25 +96,69 @@ export const calendarDates = () => {
   return dates;
 };
 
-const post = (date: string, index: number, publishers: string[], repeatsDay7 = false): DayPlan => ({
+type WeekStep = { account: 0 | 1 | 2; kind: "profile" | "post" | "warm" };
+
+/** Order matches the brief: bio account first when that is how the day was described. */
+const WEEK_STEPS: Record<string, WeekStep[]> = {
+  "2026-11-09": [
+    { account: 0, kind: "profile" },
+    { account: 1, kind: "warm" },
+    { account: 2, kind: "warm" },
+  ],
+  "2026-11-10": [
+    { account: 0, kind: "post" },
+    { account: 1, kind: "warm" },
+    { account: 2, kind: "warm" },
+  ],
+  "2026-11-11": [
+    { account: 1, kind: "profile" },
+    { account: 0, kind: "post" },
+    { account: 2, kind: "warm" },
+  ],
+  "2026-11-12": [
+    { account: 0, kind: "post" },
+    { account: 1, kind: "post" },
+    { account: 2, kind: "warm" },
+  ],
+  "2026-11-13": [
+    { account: 2, kind: "profile" },
+    { account: 0, kind: "post" },
+    { account: 1, kind: "post" },
+  ],
+  "2026-11-14": [
+    { account: 0, kind: "post" },
+    { account: 1, kind: "post" },
+    { account: 2, kind: "post" },
+  ],
+  "2026-11-15": [
+    { account: 0, kind: "post" },
+    { account: 1, kind: "post" },
+    { account: 2, kind: "post" },
+  ],
+};
+
+const publishersOn = (date: string) =>
+  (WEEK_STEPS[date] ?? []).filter((step) => step.kind === "post").map((step) => ACCOUNTS[step.account].id);
+
+const post = (date: string, index: number): DayPlan => ({
   date,
   index,
   kind: "post",
-  repeatsDay7,
-  publishers,
+  repeatsDay7: false,
+  publishers: publishersOn(date),
 });
 
 export const DAY_PLANS: DayPlan[] = [
   { date: "2026-11-06", index: 1, kind: "friday", repeatsDay7: false, publishers: [] },
   { date: "2026-11-07", index: 2, kind: "saturday", repeatsDay7: false, publishers: [] },
   { date: "2026-11-08", index: 3, kind: "sunday", repeatsDay7: false, publishers: [] },
-  post("2026-11-09", 4, ["fr"]),
-  post("2026-11-10", 5, ["fr", "es"]),
-  post("2026-11-11", 6, ["fr", "es"]),
-  post("2026-11-12", 7, ["fr", "es", "us"]),
-  post("2026-11-13", 7, ["fr", "es", "us"], true),
-  post("2026-11-14", 7, ["fr", "es", "us"], true),
-  post("2026-11-15", 7, ["fr", "es", "us"], true),
+  post("2026-11-09", 4),
+  post("2026-11-10", 5),
+  post("2026-11-11", 6),
+  post("2026-11-12", 7),
+  post("2026-11-13", 8),
+  post("2026-11-14", 9),
+  post("2026-11-15", 10),
 ];
 
 /** Day tasks are written through this date. */
@@ -199,29 +223,24 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
       label: line(SUNDAY_WARM_MINUTES, say.warm(name(index), say.noPostToday)),
     }));
   }
-  if (plan.date === "2026-11-09") {
-    const compte1 = name(0);
-    return [
-      { id: `photo-${ACCOUNTS[0].id}`, label: line(MONDAY_PHOTO_MINUTES, say.sundayPhoto(compte1)) },
-      { id: `bio-${ACCOUNTS[0].id}`, label: line(MONDAY_BIO_MINUTES, say.sundayBio(compte1)) },
-      { id: "warm-before", label: line(MONDAY_WARM_BEFORE, say.warm(name(0), say.beforePost)) },
-      { id: "post", label: line(MONDAY_POST_MINUTES, say.post(name(0))) },
-      { id: "warm-after", label: line(MONDAY_WARM_AFTER, say.warm(name(0), say.afterPost)) },
-      { id: "warm-2", label: line(MONDAY_COMPTE2_MINUTES, say.warm(name(1), say.noPostToday)) },
-      { id: "warm-3", label: line(MONDAY_COMPTE3_MINUTES, say.warm(name(2), say.noPostToday)) },
-    ];
-  }
-  if (plan.date === "2026-11-10") {
-    return [
-      { id: "warm-before-1", label: line(TUESDAY_WARM_BEFORE, say.warm(name(0), say.beforePost)) },
-      { id: "post-1", label: line(TUESDAY_POST_MINUTES, say.post(name(0))) },
-      { id: "warm-after-1", label: line(TUESDAY_WARM_AFTER, say.warm(name(0), say.afterPost)) },
-      { id: "warm-before-2", label: line(TUESDAY_COMPTE2_WARM, say.warm(name(1), say.beforePost)) },
-      { id: "profile-2", label: line(TUESDAY_COMPTE2_PROFILE, say.tuesdayProfile(name(1))) },
-      { id: "post-2", label: line(TUESDAY_COMPTE2_POST, say.post(name(1))) },
-      { id: "warm-after-2", label: line(TUESDAY_COMPTE2_WARM_AFTER, say.warm(name(1), say.afterPost)) },
-      { id: "warm-3", label: line(TUESDAY_COMPTE3_MINUTES, say.warm(name(2), say.noChange)) },
-    ];
+  const steps = WEEK_STEPS[plan.date];
+  if (steps) {
+    return steps.flatMap((step) => {
+      const account = name(step.account);
+      const id = ACCOUNTS[step.account].id;
+      if (step.kind === "profile") {
+        return [
+          { id: `profile-${id}`, label: line(PROFILE_SETUP_MINUTES, say.profile(account)) },
+          { id: `photo-${id}`, label: say.photoRule, parent: `profile-${id}` },
+          { id: `bio-${id}`, label: say.bioRule, parent: `profile-${id}` },
+          { id: `warm-${id}`, label: line(PROFILE_WARM_MINUTES, say.warm(account, say.thenWarm)) },
+        ];
+      }
+      if (step.kind === "post") {
+        return [{ id: `post-${id}`, label: line(ACCOUNT_BLOCK_MINUTES, say.post(account)) }];
+      }
+      return [{ id: `warm-${id}`, label: line(ACCOUNT_BLOCK_MINUTES, say.warm(account, say.noPostToday)) }];
+    });
   }
   if (plan.kind === "saturday") {
     return ACCOUNTS.map((account, index) => ({
@@ -229,29 +248,7 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
       label: line(SATURDAY_ACCOUNT_MINUTES, say.warm(name(index))),
     }));
   }
-  if (plan.publishers.length === 2) {
-    return ACCOUNTS.flatMap((account, index) =>
-      plan.publishers.includes(account.id)
-        ? [
-            { id: `warm-before-${account.id}`, label: line(WEDNESDAY_WARM_BEFORE, say.warm(name(index), say.beforePost)) },
-            { id: `post-${account.id}`, label: line(WEDNESDAY_POST_MINUTES, say.post(name(index))) },
-            { id: `warm-after-${account.id}`, label: line(WEDNESDAY_WARM_AFTER, say.warm(name(index), say.afterPost)) },
-          ]
-        : [{ id: `warm-${account.id}`, label: line(WEDNESDAY_WARM_ONLY, say.warm(name(index), say.noPostToday)) }]
-    );
-  }
-  if (plan.publishers.length === 3) {
-    return ACCOUNTS.flatMap((account, index) => [
-      { id: `warm-before-${account.id}`, label: line(ALL_WARM_BEFORE, say.warm(name(index), say.beforePost)) },
-      { id: `post-${account.id}`, label: line(ALL_POST_MINUTES, say.post(name(index))) },
-      { id: `warm-after-${account.id}`, label: line(ALL_WARM_AFTER, say.warm(name(index), say.afterPost)) },
-    ]);
-  }
-  return ACCOUNTS.map((account, index) =>
-    plan.publishers.includes(account.id)
-      ? { id: `pub-${account.id}`, label: line(ALL_POST_MINUTES, say.post(name(index))) }
-      : { id: `warm-${account.id}`, label: line(WEDNESDAY_WARM_ONLY, say.warm(name(index), say.noPostToday)) }
-  );
+  return [];
 };
 
 export const dayReady = (plan: DayPlan, state: DayState) => {
@@ -319,15 +316,11 @@ type Phrases = {
   noProfile: string;
   warm: (account: string, before?: string) => string;
   post: (account: string) => string;
-  sundayPhoto: (account: string) => string;
-  sundayBio: (account: string) => string;
-  tuesdayProfile: (account: string) => string;
-  beforePost: string;
-  afterPost: string;
+  profile: (account: string) => string;
+  photoRule: string;
+  bioRule: string;
+  thenWarm: string;
   noPostToday: string;
-  noPost: string;
-  afterProfile: string;
-  noChange: string;
 };
 
 const phrases: Record<PostingLang, Phrases> = {
@@ -340,19 +333,12 @@ const phrases: Record<PostingLang, Phrases> = {
     warm: (account, before = "") =>
       `${account}. ${before}Ouvre ce compte et reste dessus, comme si c'était ton TikTok. Passe un bon moment. Fais défiler, regarde ce qui t'intéresse, et passe le reste. Tu n'aimes pas tout, tu ne commentes pas tout, tu ne regardes pas chaque vidéo jusqu'au bout. De temps en temps, un like, un petit commentaire ou un abonnement, seulement quand ça te plaît vraiment. Ça doit rester naturel. Tu ne postes rien.`,
     post: (account) =>
-      `${account}. C'est maintenant que tu postes. Ouvre le diaporama. Choisis une musique dans TikTok. Appuie sur Publier. Attends de voir la vidéo sur le profil.`,
-    sundayPhoto: (account) =>
-      `Mettre une photo de profil au ${account}. Va sur le profil, appuie sur la photo, et change-la. Photo d'une fille normale, Pinterest ou une photo que tu as déjà, pas de photo IA. Seulement le ${account}.`,
-    sundayBio: (account) =>
-      `Mettre une bio au ${account}. Appuie sur Modifier le profil, puis sur Bio. Écris une bio courte, personnelle, normale, gentille et sympathique. Deux lignes suffisent. Seulement le ${account}.`,
-    tuesdayProfile: (account) =>
-      `${account}. Change la photo et la bio, puis tu postes. Photo : appuie sur la photo, mets une fille normale, Pinterest ou une photo que tu as déjà, pas de photo IA. Bio : appuie sur Modifier le profil, écris une bio courte, personnelle, normale, gentille et sympathique.`,
-    beforePost: "Avant de poster. ",
-    afterPost: "Juste après avoir posté. ",
+      `${account}. Tu postes le diaporama du jour. Il est sur cette page, tu le télécharges. Choisis une musique dans TikTok. Appuie sur Publier. Attends de voir la vidéo sur le profil.`,
+    profile: (account) => `${account}. Écris une bio et mets une photo de profil.`,
+    photoRule: "La photo vient de Pinterest, ou c'est une photo que tu as déjà. Pas d'image générée par IA.",
+    bioRule: "La bio est naturelle, écrite par toi. Elle ne parle pas des applications. Pas de texte généré par IA.",
+    thenWarm: "Ensuite. ",
     noPostToday: "Tu ne postes pas aujourd'hui. ",
-    noPost: "Tu ne postes pas. ",
-    afterProfile: "La photo et la bio sont faites. ",
-    noChange: "Tu ne postes pas. Tu ne changes ni la photo ni la bio. ",
   },
   es: {
     create: (first, second, third) =>
@@ -363,19 +349,12 @@ const phrases: Record<PostingLang, Phrases> = {
     warm: (account, before = "") =>
       `${account}. ${before}Abre esta cuenta y quédate ahí, como si fuera tu TikTok. Pasa un buen rato. Desliza, mira lo que te interesa y salta el resto. No des like a todo, no comentes todo, no mires cada vídeo hasta el final. De vez en cuando, un like, un comentario corto o un seguimiento, solo cuando de verdad te guste. Tiene que parecer natural. No publicas nada.`,
     post: (account) =>
-      `${account}. Ahora sí publicas. Abre el carrusel. Elige una música en TikTok. Pulsa Publicar. Espera a ver el vídeo en el perfil.`,
-    sundayPhoto: (account) =>
-      `Pon una foto de perfil en ${account}. Ve al perfil, pulsa la foto y cámbiala. Una chica normal: de Pinterest o una foto que ya tengas. Nada de foto hecha por IA. Solo ${account}.`,
-    sundayBio: (account) =>
-      `Pon una bio en ${account}. Pulsa Editar perfil y luego Bio. Escribe una bio corta, personal, normal, amable y simpática. Dos líneas bastan. Solo ${account}.`,
-    tuesdayProfile: (account) =>
-      `${account}. Cambia la foto y la bio, y luego publicas. Foto: pulsa la foto y pon una chica normal, de Pinterest o una foto que ya tengas, nada de IA. Bio: pulsa Editar perfil y escribe una bio corta, personal, normal, amable y simpática.`,
-    beforePost: "Antes de publicar. ",
-    afterPost: "Justo después de publicar. ",
+      `${account}. Publicas el carrusel del día. Está en esta página, lo descargas. Elige una música en TikTok. Pulsa Publicar. Espera a ver el vídeo en el perfil.`,
+    profile: (account) => `${account}. Escribe una bio y pon una foto de perfil.`,
+    photoRule: "La foto sale de Pinterest, o es una foto que ya tienes. Nada de imagen generada por IA.",
+    bioRule: "La bio es natural, escrita por ti. No habla de las aplicaciones. Nada de texto generado por IA.",
+    thenWarm: "Después. ",
     noPostToday: "Hoy no publicas. ",
-    noPost: "No publicas. ",
-    afterProfile: "La foto y la bio ya están. ",
-    noChange: "No publicas. No cambies ni la foto ni la bio. ",
   },
   en: {
     create: (first, second, third) =>
@@ -386,19 +365,12 @@ const phrases: Record<PostingLang, Phrases> = {
     warm: (account, before = "") =>
       `${account}. ${before}Open this account and stay on it, as if it were your TikTok. Have a good time. Scroll, watch what you like, and skip the rest. Do not like everything, do not comment on everything, and do not watch every video all the way through. Now and then, a like, a short comment, or a follow, only when you really like it. It has to feel natural. You do not post anything.`,
     post: (account) =>
-      `${account}. Now you post. Open the slideshow. Pick a song in TikTok. Tap Post. Wait until you see the video on the profile.`,
-    sundayPhoto: (account) =>
-      `Put a profile photo on ${account}. Go to the profile, tap the photo, and change it. A normal girl: from Pinterest, or a photo you already have. No AI photo. Only ${account}.`,
-    sundayBio: (account) =>
-      `Put a bio on ${account}. Tap Edit profile, then Bio. Write a short, personal, normal, kind bio. Two lines is enough. Only ${account}.`,
-    tuesdayProfile: (account) =>
-      `${account}. Change the photo and the bio, then you post. Photo: tap the photo and use a normal girl, from Pinterest or a photo you already have, no AI. Bio: tap Edit profile and write a short, personal, normal, kind bio.`,
-    beforePost: "Before you post. ",
-    afterPost: "Right after you post. ",
+      `${account}. You post the day's slideshow. It is on this page, you download it. Pick a song in TikTok. Tap Post. Wait until you see the video on the profile.`,
+    profile: (account) => `${account}. Write a bio and add a profile photo.`,
+    photoRule: "The photo comes from Pinterest, or it is a photo you already have. No AI-generated image.",
+    bioRule: "The bio is natural, written by you. It does not mention the apps. No AI-generated text.",
+    thenWarm: "Then. ",
     noPostToday: "You do not post today. ",
-    noPost: "You do not post. ",
-    afterProfile: "The photo and the bio are done. ",
-    noChange: "You do not post. Do not change the photo or the bio. ",
   },
 };
 
