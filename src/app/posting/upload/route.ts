@@ -9,6 +9,7 @@ import {
   proofFileName,
   proofPartCount,
 } from "~/server/postingProofs";
+import { writeLocalProofPart } from "~/server/postingLocalProof";
 import { proofStorageReady, rememberProof, saveProofFile, writeProofPart } from "~/server/postingProofStore";
 
 export const runtime = "nodejs";
@@ -26,7 +27,7 @@ export async function POST(request: Request) {
   const session = readSession(cookies().get(DASHBOARD_COOKIE)?.value);
   const profileId = session?.role && session.role !== "tania" ? session.role : null;
   if (!profileId) return NextResponse.json({ error: "denied" }, { status: 401 });
-  if (!proofStorageReady()) return NextResponse.json({ error: "store" }, { status: 503 });
+  const localStore = !proofStorageReady();
 
   const date = request.headers.get("x-proof-date");
   const generation = request.headers.get("x-proof-generation") ?? "";
@@ -54,6 +55,10 @@ export async function POST(request: Request) {
   }
 
   try {
+    if (localStore) {
+      await writeLocalProofPart(profileId, date, part, parts, body, rawName, rawType);
+      return NextResponse.json({ ok: true });
+    }
     await writeProofPart(profileId, date, generation, part, body);
     if (part === parts - 1) {
       const file = cleanProofFile({

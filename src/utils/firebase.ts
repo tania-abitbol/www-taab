@@ -22,14 +22,8 @@ export const initializeFirebase = (): {
   if (!app) {
     app = initializeApp(firebaseConfig);
 
-    if (typeof window !== "undefined") {
-      if (process.env.NODE_ENV === "production") {
-        analytics = getAnalytics(app);
-      } else {
-        console.log(
-          "[Firebase Analytics] Running in development mode. No events will be sent."
-        );
-      }
+    if (typeof window !== "undefined" && firebaseConfig.measurementId) {
+      analytics = getAnalytics(app);
     }
   }
   return { app, analytics };

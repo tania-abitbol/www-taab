@@ -12,6 +12,8 @@ import {
   proofPartKey,
   proofWindow,
 } from "~/server/postingProofs";
+import { liveWork } from "~/server/postingLive";
+import { localProofNames } from "~/server/postingLocalProof";
 
 const PROOFS = "posting-proofs";
 const WORK = "posting-work";
@@ -129,7 +131,7 @@ export const readProofRange = async (profileId: string, date: string, file: Proo
   return Buffer.concat(chunks);
 };
 
-export const loadWork = async (profileId: string): Promise<ProfileWork> => {
+const storedWork = async (profileId: string): Promise<ProfileWork> => {
   const raw = (await readJson(WORK, `work-${profileId}`)) as { days?: Record<string, unknown> } | null;
   const days: Record<string, DayWork> = {};
   if (raw?.days && typeof raw.days === "object") {
@@ -140,6 +142,23 @@ export const loadWork = async (profileId: string): Promise<ProfileWork> => {
     }
   }
   return { days };
+};
+
+const withLocalProofs = async (profileId: string, work: ProfileWork): Promise<ProfileWork> => {
+  if (proofStorageReady()) return work;
+  const names = await localProofNames(profileId);
+  if (!names) return work;
+  const days = { ...work.days };
+  for (const [date, name] of Object.entries(names)) {
+    const previous = days[date] ?? emptyDayWork();
+    days[date] = { ...previous, proofName: name };
+  }
+  return { days };
+};
+
+export const loadWork = async (profileId: string): Promise<ProfileWork> => {
+  const live = await liveWork(profileId);
+  return withLocalProofs(profileId, live ?? (await storedWork(profileId)));
 };
 
 export const loadAllWork = async (profileIds: string[]) => {

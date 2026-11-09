@@ -9,6 +9,7 @@ import {
   profileIdForCode,
   updateProfile,
 } from "~/config/postingProfiles";
+import { readLivePosting } from "~/server/postingLive";
 
 const FILE = path.join(process.cwd(), ".data", "posting-profiles.json");
 const STORE = "posting-profiles";
@@ -121,6 +122,8 @@ const writeFileStore = async (profiles: PostingProfile[]) => {
 const seeded = () => DEFAULT_PROFILES.map((profile) => ({ ...profile }));
 
 const loadProfiles = async (strict: boolean): Promise<PostingProfile[]> => {
+  const live = await readLivePosting();
+  if (live?.profiles.length) return live.profiles;
   const blobs = await readBlobs();
   if (Array.isArray(blobs)) return blobs;
   if (blobs === null) return seeded();

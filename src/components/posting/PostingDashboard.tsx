@@ -3,7 +3,6 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 
 import {
-  ACCOUNTS,
   CALENDAR_END,
   CALENDAR_START,
   DAY_PLANS,
@@ -12,18 +11,20 @@ import {
   Desk,
   SLOTS,
   SlotId,
-  accountRole,
   checksFor,
   dayHeading,
   dayReady,
   emptyDayState,
+  CheckItem,
   formatDay,
+  formatMinutes,
   formatShortDay,
+  isSlotId,
   madridToday,
   PostingLang,
+  accountWord,
   displayName,
   langFromName,
-  suiviDates,
   personMark,
   postingUi,
   slotsFor,
@@ -38,8 +39,150 @@ type ManagedProfile = { id: string; name: string; code?: string };
 const fieldClass =
   "h-12 w-full rounded-xl border border-gray-300 bg-white px-4 font-body text-base text-black placeholder:text-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-1";
 
+const emojiFont = { fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif' };
+
+const taskEmoji = (id: string) => {
+  if (id === "create") return "👩‍💻";
+  if (id === "username") return "🏷️";
+  if (id === "no-profile") return "🚫";
+  if (id.startsWith("photo-")) return "📸";
+  if (id.startsWith("bio-")) return "✍️";
+  if (id.startsWith("profile-")) return "👤";
+  if (id.startsWith("post-")) return "🚀";
+  return "🔥";
+};
+
+const TimeBadge = ({ minutes }: { minutes: number }) => {
+  const tone = minutes >= 30 ? "bg-bae-primaryLight" : minutes >= 20 ? "bg-[#FFF3C4]" : "bg-vouv-primaryLight";
+  return (
+    <span className={`inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 font-body text-xs font-bold text-black ${tone}`}>
+      <span aria-hidden className="text-sm leading-none" style={emojiFont}>
+        ⏱️
+      </span>
+      {formatMinutes(minutes)}
+    </span>
+  );
+};
+
+const TaskCopy = ({ label, large }: { label: string; large?: boolean }) => {
+  const lines = label.split("\n").map((line) => line.trim()).filter(Boolean);
+  return (
+    <span className="flex flex-col gap-1.5">
+      {lines.map((line, index) => (
+        <span
+          key={`${index}-${line.slice(0, 24)}`}
+          className={
+            line.startsWith("•")
+              ? "text-sm leading-relaxed"
+              : index === 0
+                ? `${large ? "text-lg" : ""} font-bold leading-snug`
+                : "text-sm leading-relaxed"
+          }
+        >
+          {line}
+        </span>
+      ))}
+    </span>
+  );
+};
+
+const ACCOUNT_TONE = [
+  { ink: "#1D6FB8", frame: "#9DCEF5" },
+  { ink: "#C45C12", frame: "#F3C091" },
+  { ink: "#6B3FA0", frame: "#D2B4EE" },
+] as const;
+
+const accountIndexFromId = (id: string) => (id.endsWith("-fr") ? 0 : id.endsWith("-es") ? 1 : id.endsWith("-us") ? 2 : null);
+
+const accountGroups = (checks: CheckItem[]) => {
+  const groups: { account: number | null; items: CheckItem[] }[] = [];
+  for (const check of checks) {
+    const account = accountIndexFromId(check.id);
+    const last = groups[groups.length - 1];
+    if (last && last.account === account) last.items.push(check);
+    else groups.push({ account, items: [check] });
+  }
+  return groups;
+};
+
+const actionLabel = (label: string, title: string | null) =>
+  title && label.startsWith(`${title}\n`) ? label.slice(title.length + 1) : label;
+
+const AccountChecks = ({
+  checks,
+  lang,
+  item,
+}: {
+  checks: CheckItem[];
+  lang: PostingLang;
+  item: (check: CheckItem, label: string) => JSX.Element;
+}) => (
+  <div className="mt-4 flex flex-col gap-4">
+    {accountGroups(checks).map((group) => {
+      const tone = group.account === null ? null : ACCOUNT_TONE[group.account];
+      const title = group.account === null ? null : accountWord(group.account, lang);
+      return (
+        <div
+          key={group.items[0].id}
+          className={tone ? "rounded-2xl border-2 px-3 py-3" : undefined}
+          style={tone ? { borderColor: tone.frame } : undefined}
+        >
+          {title && tone ? (
+            <p className="font-title text-2xl leading-none tracking-tight" style={{ color: tone.ink }}>
+              {title}
+            </p>
+          ) : null}
+          <ul className={title ? "mt-3 flex flex-col gap-5" : "flex flex-col gap-5"}>
+            {group.items.map((check) => (
+              <li key={check.id} className={check.parent ? "ml-8" : ""}>
+                {item(check, actionLabel(check.label, title))}
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+    })}
+  </div>
+);
+
+const TaskFace = ({ check, label, large }: { check: CheckItem; label: string; large?: boolean }) => (
+  <>
+    <span aria-hidden className="mt-0.5 text-[1.35rem] leading-none" style={emojiFont}>
+      {taskEmoji(check.id)}
+    </span>
+    <span className="flex min-w-0 flex-1 flex-col gap-2">
+      {typeof check.minutes === "number" ? <TimeBadge minutes={check.minutes} /> : null}
+      <TaskCopy label={label} large={large} />
+      {check.note ? (
+        <span className="rounded-xl bg-[#E7F6EC] px-3 py-2 font-body text-sm font-normal leading-relaxed text-[#146C36]">
+          {check.note}
+        </span>
+      ) : null}
+    </span>
+  </>
+);
+
 const proofKey = (personId: string, date: string) => `proof:${personId}:${date}`;
-const slideKey = (date: string, accountId: string) => `tania:${date}:${accountId}`;
+const SLIDES_FROM = "2026-11-10";
+const slideKey = (date: string, profileId: string, index = 0) => `tania:${date}:${profileId}:${index}`;
+const legacySlideKey = (date: string, accountId: string) => `tania:${date}:${accountId}`;
+const accountForLang = (value: PostingLang) => (value === "es" ? "es" : value === "en" ? "us" : "fr");
+const slidePeople = (people: { id: string; name: string }[]) =>
+  [...people].sort((a, b) => {
+    const rank = (name: string) => {
+      const key = displayName(name).toLowerCase();
+      if (key === "ghada") return 0;
+      if (key === "peches") return 1;
+      if (key === "karol") return 2;
+      return 3;
+    };
+    return rank(a.name) - rank(b.name);
+  });
+const slideCopy = {
+  fr: { button: "Télécharger toutes les images", note: "Tu fais le diaporama avec ces images." },
+  es: { button: "Descargar todas las imágenes", note: "Haces el carrusel con estas imágenes." },
+  en: { button: "Download all the images", note: "You make the slideshow with these images." },
+};
 
 const uploadProof = (file: File, date: string, onProgress: (percent: number) => void) =>
   new Promise<void>((resolve, reject) => {
@@ -116,14 +259,18 @@ const ProofFeedback = ({
   );
 };
 
+const SUNDAY_VIDEO = "2026-11-08";
+
 export const PostingDashboard = ({
   role,
   profiles,
   work = {},
+  retrySunday = false,
 }: {
   role: string;
   profiles: ManagedProfile[];
   work?: Record<string, ProfileWork>;
+  retrySunday?: boolean;
 }) => {
   const remoteProofs: ProofRecord[] = Object.entries(work).flatMap(([profileId, profile]) =>
     Object.entries(profile.days)
@@ -157,6 +304,22 @@ export const PostingDashboard = ({
 
   useEffect(() => {
     const loaded = readDesk();
+    if (role === "tania") {
+      for (const [profileId, profile] of Object.entries(work)) {
+        const slotsForPerson = { ...(loaded.slots[profileId] ?? {}) };
+        const daysForPerson = { ...(loaded.days[profileId] ?? {}) };
+        for (const [date, remote] of Object.entries(profile.days)) {
+          slotsForPerson[date] = remote.slot && isSlotId(remote.slot) ? [remote.slot] : [];
+          daysForPerson[date] = {
+            checks: remote.checks,
+            proofName: remote.proofName,
+            validated: remote.validated,
+          };
+        }
+        loaded.slots = { ...loaded.slots, [profileId]: slotsForPerson };
+        loaded.days = { ...loaded.days, [profileId]: daysForPerson };
+      }
+    }
     const mine = role === "tania" ? null : work[role];
     if (mine) {
       const slotsForPerson = { ...(loaded.slots[role] ?? {}) };
@@ -207,9 +370,11 @@ export const PostingDashboard = ({
           }
         }
         for (const [date, files] of Object.entries(loaded.taniaFiles)) {
-          for (const accountId of Object.keys(files)) {
-            const blob = await loadBlob(slideKey(date, accountId));
-            if (blob) remember(slideKey(date, accountId), blob);
+          for (const [accountId, names] of Object.entries(files)) {
+            for (let index = 0; index < names.length; index += 1) {
+              const blob = (await loadBlob(slideKey(date, accountId, index))) ?? (index === 0 ? await loadBlob(legacySlideKey(date, accountId)) : null);
+              if (blob) remember(slideKey(date, accountId, index), blob);
+            }
           }
         }
       } catch {
@@ -285,12 +450,8 @@ export const PostingDashboard = ({
         fail(prepared.error === "size" ? ui.proofTooBig : ui.proofFail);
         return;
       }
-      if (prepared.local) {
-        await saveBlob(proofKey(person.id, date), file);
-        setProofNote({ date, percent: 100, text: ui.proofSending(100), name: prepared.name });
-      } else {
-        await uploadProof(file, date, (percent) => setProofNote({ date, percent, text: ui.proofSending(percent), name: prepared.name }));
-      }
+      if (prepared.local) await saveBlob(proofKey(person.id, date), file);
+      await uploadProof(file, date, (percent) => setProofNote({ date, percent, text: ui.proofSending(percent), name: prepared.name }));
       const saved = await commitProof(date, prepared.name);
       if (!saved.ok && prepared.local) throw new Error("commit");
       setUrls((current) => ({ ...current, [proofKey(person.id, date)]: URL.createObjectURL(file) }));
@@ -304,19 +465,38 @@ export const PostingDashboard = ({
     }
   };
 
-  const onSlide = async (date: string, accountId: string, file: File | undefined) => {
-    if (!file) return;
+  const onSlides = async (date: string, accountId: string, list: FileList | null) => {
+    const files = [...(list ?? [])].filter((file) => file.type.startsWith("image/"));
+    if (files.length === 0) return;
     setFileError("");
     try {
-      await saveBlob(slideKey(date, accountId), file);
-      setUrls((current) => ({ ...current, [slideKey(date, accountId)]: URL.createObjectURL(file) }));
+      const nextUrls: Record<string, string> = {};
+      for (let index = 0; index < files.length; index += 1) {
+        await saveBlob(slideKey(date, accountId, index), files[index]);
+        nextUrls[slideKey(date, accountId, index)] = URL.createObjectURL(files[index]);
+      }
+      setUrls((current) => ({ ...current, ...nextUrls }));
       update((current) => ({
         ...current,
-        taniaFiles: { ...current.taniaFiles, [date]: { ...current.taniaFiles[date], [accountId]: file.name } },
+        taniaFiles: {
+          ...current.taniaFiles,
+          [date]: { ...current.taniaFiles[date], [accountId]: files.map((file) => file.name) },
+        },
       }));
     } catch {
       setFileError("Le fichier n'a pas été gardé dans ce navigateur.");
     }
+  };
+
+  const downloadSlides = (date: string, accountId: string, names: string[]) => {
+    names.forEach((name, index) => {
+      const href = urls[slideKey(date, accountId, index)];
+      if (!href) return;
+      const link = document.createElement("a");
+      link.href = href;
+      link.download = name || `image-${index + 1}`;
+      link.click();
+    });
   };
 
   const addPerson = async (event: FormEvent) => {
@@ -373,48 +553,29 @@ export const PostingDashboard = ({
           <p className="mt-2 max-w-prose font-body text-sm leading-relaxed text-gray-700">{range}</p>
         </header>
 
-        {isTania && (
-          <section className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
-            <h2 className="font-title text-2xl tracking-tight">Suivi</h2>
-            <p className="mt-1 font-body text-sm leading-relaxed text-gray-700">
-              Heure, cases et vidéo de chaque personne, y compris les jours passés.
+        {retrySunday && (
+          <section className="rounded-3xl bg-white p-5 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
+            <h2 className="font-title text-2xl tracking-tight">Sunday, November 8</h2>
+            <p className="mt-2 max-w-prose font-body text-sm leading-relaxed text-gray-700">
+              Sunday's video is unreadable. Please send it again here.
             </p>
-            <div className="mt-4 flex flex-col gap-6">
-              {profiles.map((worker) => (
-                <div key={worker.id}>
-                  <h3 className="font-title text-xl tracking-tight">{displayName(worker.name)}</h3>
-                  <div className="mt-2 flex flex-col gap-3">
-                    {suiviDates(today).map((date) => {
-                      const day = work[worker.id]?.days[date];
-                      const plan = DAY_PLANS.find((item) => item.date === date);
-                      const done = plan ? checksFor(plan, "fr").filter((item) => day?.checks[item.id]) : [];
-                      const slot = SLOTS.find((item) => item.id === day?.slot);
-                      return (
-                        <article key={date} className="border-t border-gray-200 pt-3">
-                          <p className="font-body text-base font-bold">{formatDay(date)}</p>
-                          <p className="mt-1 font-body text-sm">{slot ? slot.label : "Pas d'heure"}</p>
-                          {done.length > 0 ? (
-                            <ul className="mt-1 font-body text-sm leading-relaxed text-gray-700">
-                              {done.map((item) => (
-                                <li key={item.id}>{item.label.split(". ")[0]}</li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <p className="mt-1 font-body text-sm text-gray-700">Aucune case</p>
-                          )}
-                          {day?.proofName ? (
-                            <ProofThumb src={`/posting/proof/${worker.id}/${date}`} label={displayName(worker.name)} />
-                          ) : (
-                            <p className="mt-1 font-body text-sm text-gray-700">Pas de vidéo</p>
-                          )}
-                          <p className="mt-1 font-body text-sm">{day?.validated ? "Journée validée" : "Journée pas validée"}</p>
-                        </article>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <input
+              type="file"
+              accept="video/*"
+              aria-label="Sunday's video"
+              className="mt-4 block w-full font-body text-sm"
+              onChange={(event) => {
+                const chosen = event.target.files?.[0];
+                event.target.value = "";
+                void onProof(SUNDAY_VIDEO, chosen);
+              }}
+            />
+            <ProofFeedback
+              active={proofNote?.date === SUNDAY_VIDEO}
+              percent={proofNote?.date === SUNDAY_VIDEO ? proofNote.percent : 0}
+              text={proofNote?.date === SUNDAY_VIDEO ? proofNote.text : ""}
+              error={proofError?.date === SUNDAY_VIDEO ? proofError.text : null}
+            />
           </section>
         )}
 
@@ -495,43 +656,56 @@ export const PostingDashboard = ({
               <section key={plan.date} className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
                 <p className="font-body text-sm text-gray-700">{dayHeading(plan)}</p>
                 <h2 className="font-title text-2xl tracking-tight">{formatDay(plan.date)}</h2>
-                <ul className="mt-3 flex flex-col gap-2">
-                  {checks.map((check) => (
-                    <li key={check.id} className={check.parent ? "ml-8 font-body text-sm leading-relaxed text-gray-700" : "font-body text-sm leading-relaxed"}>
-                      {check.label}
-                    </li>
-                  ))}
-                </ul>
-                <RemoteProofs date={plan.date} proofs={remoteProofs} profiles={profiles} />
-                {plan.publishers.length > 0 && (
-                  <div className="mt-4 flex flex-col gap-4">
-                    {ACCOUNTS.filter((account) => plan.publishers.includes(account.id)).map((account) => {
-                      const fileName = desk.taniaFiles[plan.date]?.[account.id];
+                <AccountChecks
+                  checks={checks}
+                  lang="fr"
+                  item={(check, label) => (
+                    <label className={`flex items-start gap-3 font-body ${check.parent ? "text-sm text-gray-800" : "text-base"}`}>
+                      <input
+                        type="checkbox"
+                        checked={profiles.every((worker) => work[worker.id]?.days[plan.date]?.checks[check.id] === true)}
+                        onClick={(event) => event.preventDefault()}
+                        onChange={() => undefined}
+                        aria-readonly="true"
+                        className={`shrink-0 accent-black ${check.parent ? "mt-0.5 h-4 w-4" : "mt-1 h-5 w-5"}`}
+                      />
+                      <TaskFace check={check} label={label} large={!check.parent} />
+                    </label>
+                  )}
+                />
+                <div className="mt-5 flex flex-wrap gap-4">
+                  {profiles.map((worker) => {
+                    const day = work[worker.id]?.days[plan.date];
+                    if (!day?.proofName) return null;
+                    const name = displayName(worker.name);
+                    return (
+                      <div key={worker.id} className="w-[180px]">
+                        <ProofThumb src={`/posting/proof/${worker.id}/${plan.date}`} label={name} />
+                        <p className="mt-2 text-center font-body text-sm font-bold">{name}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+                {plan.date >= SLIDES_FROM && (
+                  <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                    {slidePeople(roster).map((worker) => {
+                      const names = desk.taniaFiles[plan.date]?.[worker.id] ?? [];
+                      const label = displayName(worker.name);
                       return (
-                        <div key={account.id}>
-                          <p className="font-body text-sm font-bold">
-                            {account.name} · {accountRole(plan, account.id)}
-                          </p>
-                          <label htmlFor={`upload-${plan.date}-${account.id}`} className="mt-1 block font-body text-sm">
-                            Diaporama
+                        <div key={worker.id} className="rounded-2xl bg-gray-100 p-3">
+                          <label htmlFor={`upload-${plan.date}-${worker.id}`} className="block font-body text-base font-bold">
+                            {label}
                           </label>
                           <input
-                            id={`upload-${plan.date}-${account.id}`}
+                            id={`upload-${plan.date}-${worker.id}`}
                             type="file"
-                            accept="image/*,video/*"
-                            onChange={(event) => void onSlide(plan.date, account.id, event.target.files?.[0])}
-                            className="mt-1 font-body text-sm"
+                            accept="image/*"
+                            multiple
+                            aria-label={label}
+                            onChange={(event) => void onSlides(plan.date, worker.id, event.target.files)}
+                            className="mt-2 block w-full font-body text-sm"
                           />
-                          {fileName && <p className="mt-1 font-body text-sm">{fileName}</p>}
-                          {urls[slideKey(plan.date, account.id)] && (
-                            <a
-                              href={urls[slideKey(plan.date, account.id)]}
-                              download={fileName || "diaporama"}
-                              className="mt-1 inline-block font-body text-sm font-bold underline"
-                            >
-                              Télécharger
-                            </a>
-                          )}
+                          {names.length > 0 && <p className="mt-2 font-body text-sm">{names.length} images</p>}
                         </div>
                       );
                     })}
@@ -547,27 +721,45 @@ export const PostingDashboard = ({
             <section key={plan.date} className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
               <p className="font-body text-sm text-gray-700">{dayHeading(plan, lang)}</p>
               <h2 className="font-title text-2xl tracking-tight">{formatDay(plan.date, lang)}</h2>
-              <ul className="mt-3 flex flex-col gap-2">
-                {checks.map((check) => (
-                  <li key={check.id} className={check.parent ? "ml-8" : ""}>
-                    <label
-                      htmlFor={`check-${plan.date}-${check.id}`}
-                      className={`flex items-start gap-3 font-body ${check.parent ? "min-h-9 text-sm" : "min-h-11 text-base"}`}
-                    >
-                      <input
-                        id={`check-${plan.date}-${check.id}`}
-                        type="checkbox"
-                        checked={state.checks[check.id] === true}
-                        onChange={(event) =>
-                          patchDay(plan.date, (day) => ({ ...day, checks: { ...day.checks, [check.id]: event.target.checked } }))
-                        }
-                        className={`shrink-0 accent-black ${check.parent ? "mt-0.5 h-4 w-4" : "mt-1 h-5 w-5"}`}
-                      />
-                      <span>{check.label}</span>
-                    </label>
-                  </li>
-                ))}
-              </ul>
+              <AccountChecks
+                checks={checks}
+                lang={lang}
+                item={(check, label) => (
+                  <label
+                    htmlFor={`check-${plan.date}-${check.id}`}
+                    className={`flex items-start gap-3 font-body ${check.parent ? "text-sm" : "text-base"}`}
+                  >
+                    <input
+                      id={`check-${plan.date}-${check.id}`}
+                      type="checkbox"
+                      checked={state.checks[check.id] === true}
+                      onChange={(event) =>
+                        patchDay(plan.date, (day) => ({ ...day, checks: { ...day.checks, [check.id]: event.target.checked } }))
+                      }
+                      className={`shrink-0 accent-black ${check.parent ? "mt-0.5 h-4 w-4" : "mt-1 h-5 w-5"}`}
+                    />
+                    <TaskFace check={check} label={label} large={!check.parent} />
+                  </label>
+                )}
+              />
+              {person && plan.date >= SLIDES_FROM && plan.publishers.includes(accountForLang(lang)) && (desk.taniaFiles[plan.date]?.[person.id]?.length ?? 0) > 0 && (
+                <div className="mt-4 rounded-2xl bg-gray-100 p-3">
+                  <p className="font-body text-sm leading-relaxed">{slideCopy[lang].note}</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {(desk.taniaFiles[plan.date]?.[person.id] ?? []).map((name, index) => {
+                      const href = urls[slideKey(plan.date, person.id, index)];
+                      return href ? <img key={`${name}-${index}`} src={href} alt="" className="h-20 w-20 rounded-xl object-cover" /> : null;
+                    })}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => downloadSlides(plan.date, person.id, desk.taniaFiles[plan.date]?.[person.id] ?? [])}
+                    className="mt-3 h-12 w-full rounded-xl bg-black px-4 font-body text-sm font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
+                  >
+                    {slideCopy[lang].button}
+                  </button>
+                </div>
+              )}
               <div className="mt-4 rounded-2xl bg-gray-100 p-3">
                 <h3 className="font-body text-base font-bold">{ui.proof}</h3>
                 <p className="mt-1 font-body text-sm leading-relaxed text-gray-700">
@@ -650,32 +842,6 @@ const ProofThumb = ({ src, label }: { src: string; label: string }) => {
         </div>
       )}
     </>
-  );
-};
-
-const RemoteProofs = ({
-  date,
-  proofs,
-  profiles,
-}: {
-  date: string;
-  proofs: ProofRecord[];
-  profiles: ManagedProfile[];
-}) => {
-  const rows = proofs.filter((item) => item.date === date);
-  if (!rows.length) return null;
-  return (
-    <div className="mt-4 flex flex-wrap gap-3">
-      {rows.map((row) => {
-        const name = profiles.find((item) => item.id === row.profileId)?.name ?? "";
-        return (
-          <div key={row.profileId}>
-            <p className="font-body text-sm font-bold">{name}</p>
-            <ProofThumb src={`/posting/proof/${row.profileId}/${row.date}`} label={displayName(name)} />
-          </div>
-        );
-      })}
-    </div>
   );
 };
 

@@ -69,7 +69,12 @@ export const parseDesk = (raw: string | null): Desk => {
         if (!isIsoDate(date) || !files || typeof files !== "object") continue;
         taniaFiles[date] = {};
         for (const [accountId, name] of Object.entries(files)) {
-          if (typeof name === "string" && name) taniaFiles[date][accountId] = name;
+          const names = Array.isArray(name)
+            ? name.filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+            : typeof name === "string" && name.trim()
+              ? [name]
+              : [];
+          if (names.length > 0) taniaFiles[date][accountId] = names;
         }
       }
     }

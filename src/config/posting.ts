@@ -12,6 +12,10 @@ export const SUNDAY_WARM_MINUTES = 20;
 export const PROFILE_SETUP_MINUTES = 10;
 export const PROFILE_WARM_MINUTES = 10;
 export const ACCOUNT_BLOCK_MINUTES = 20;
+/** A posting account, from Tuesday 10 Nov, splits its 20 minutes into a warm-up, the slideshow, then a warm-up. */
+export const POST_WARM_BEFORE_MINUTES = 8;
+export const POST_PUBLISH_MINUTES = 5;
+export const POST_WARM_AFTER_MINUTES = 7;
 
 export const SLOTS = [
   { id: "17-18", label: "17:00–18:00", short: "17–18" },
@@ -51,7 +55,7 @@ export type DayPlan = {
   publishers: string[];
 };
 
-export type CheckItem = { id: string; label: string; parent?: string };
+export type CheckItem = { id: string; label: string; parent?: string; minutes?: number; note?: string };
 
 export type DayState = {
   checks: Record<string, boolean>;
@@ -64,7 +68,7 @@ export type Desk = {
   slots: Record<string, Record<string, SlotId[]>>;
   weekValidated: Record<string, boolean>;
   days: Record<string, Record<string, DayState>>;
-  taniaFiles: Record<string, Record<string, string>>;
+  taniaFiles: Record<string, Record<string, string[]>>;
 };
 
 const DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
@@ -204,49 +208,58 @@ export const madridToday = (now = new Date()) =>
 /** Whole minutes only, as in “16 min” or “17 min”. */
 export const formatMinutes = (minutes: number) => `${Math.round(minutes)} min`;
 
-const line = (minutes: number, text: string) => `${formatMinutes(minutes)} · ${text}`;
+const task = (id: string, label: string, minutes?: number, parent?: string, note?: string): CheckItem => ({
+  id,
+  label,
+  ...(typeof minutes === "number" ? { minutes } : {}),
+  ...(parent ? { parent } : {}),
+  ...(note ? { note } : {}),
+});
 
 export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] => {
   const say = taskPhrases(lang);
   const name = (index: number) => accountWord(index, lang);
   if (plan.kind === "friday") {
     return [
-      { id: "create", label: line(FRIDAY_CREATE_MINUTES, say.create(name(0), name(1), name(2))) },
-      { id: "username", label: say.username, parent: "create" },
-      { id: "no-profile", label: say.noProfile, parent: "create" },
-      ...ACCOUNTS.map((account, index) => ({ id: `min-${account.id}`, label: line(FRIDAY_WARM_MINUTES, say.warm(name(index))) })),
+      task("create", say.create(name(0), name(1), name(2)), FRIDAY_CREATE_MINUTES),
+      task("username", say.username, undefined, "create"),
+      task("no-profile", say.noProfile, undefined, "create"),
+      ...ACCOUNTS.map((account, index) => task(`min-${account.id}`, say.warm(name(index)), FRIDAY_WARM_MINUTES)),
     ];
   }
   if (plan.kind === "sunday") {
-    return ACCOUNTS.map((account, index) => ({
-      id: `min-${account.id}`,
-      label: line(SUNDAY_WARM_MINUTES, say.warm(name(index), say.noPostToday)),
-    }));
+    return ACCOUNTS.map((account, index) =>
+      task(`min-${account.id}`, say.warm(name(index), say.noPostToday), SUNDAY_WARM_MINUTES)
+    );
   }
   const steps = WEEK_STEPS[plan.date];
   if (steps) {
-    return steps.flatMap((step) => {
+    const engage = plan.date === "2026-11-09" ? say.engageMore : undefined;
+    return [...steps]
+      .sort((a, b) => a.account - b.account)
+      .flatMap((step) => {
       const account = name(step.account);
       const id = ACCOUNTS[step.account].id;
       if (step.kind === "profile") {
         return [
-          { id: `profile-${id}`, label: line(PROFILE_SETUP_MINUTES, say.profile(account)) },
-          { id: `photo-${id}`, label: say.photoRule, parent: `profile-${id}` },
-          { id: `bio-${id}`, label: say.bioRule, parent: `profile-${id}` },
-          { id: `warm-${id}`, label: line(PROFILE_WARM_MINUTES, say.warm(account, say.thenWarm)) },
+          task(`profile-${id}`, say.profile(account), PROFILE_SETUP_MINUTES),
+          task(`photo-${id}`, plan.date === "2026-11-09" ? say.photoMonday : say.photoRule, undefined, `profile-${id}`),
+          task(`bio-${id}`, say.bioRule, undefined, `profile-${id}`),
+          task(`warm-${id}`, say.warm(account, say.thenWarm), PROFILE_WARM_MINUTES, undefined, engage),
         ];
       }
       if (step.kind === "post") {
-        return [{ id: `post-${id}`, label: line(ACCOUNT_BLOCK_MINUTES, say.post(account)) }];
+        return [
+          task(`before-${id}`, say.postWarmBefore(account), POST_WARM_BEFORE_MINUTES),
+          task(`post-${id}`, say.post(account), POST_PUBLISH_MINUTES),
+          task(`after-${id}`, say.postWarmAfter(account), POST_WARM_AFTER_MINUTES),
+        ];
       }
-      return [{ id: `warm-${id}`, label: line(ACCOUNT_BLOCK_MINUTES, say.warm(account, say.noPostToday)) }];
+      return [task(`warm-${id}`, say.warm(account, say.noPostToday), ACCOUNT_BLOCK_MINUTES, undefined, engage)];
     });
   }
   if (plan.kind === "saturday") {
-    return ACCOUNTS.map((account, index) => ({
-      id: `min-${account.id}`,
-      label: line(SATURDAY_ACCOUNT_MINUTES, say.warm(name(index))),
-    }));
+    return ACCOUNTS.map((account, index) => task(`min-${account.id}`, say.warm(name(index)), SATURDAY_ACCOUNT_MINUTES));
   }
   return [];
 };
@@ -316,61 +329,232 @@ type Phrases = {
   noProfile: string;
   warm: (account: string, before?: string) => string;
   post: (account: string) => string;
+  postWarmBefore: (account: string) => string;
+  postWarmAfter: (account: string) => string;
   profile: (account: string) => string;
   photoRule: string;
+  photoMonday: string;
   bioRule: string;
   thenWarm: string;
   noPostToday: string;
+  engageMore: string;
 };
+
+const block = (...parts: Array<string | undefined>) => parts.filter((part) => part && part.trim()).join("\n");
 
 const phrases: Record<PostingLang, Phrases> = {
   fr: {
     create: (first, second, third) =>
-      `Crée 3 comptes TikTok neufs : un pour le ${first}, un pour le ${second}, un pour le ${third}. Chacun part de zéro. N'utilise pas un compte déjà ouvert. Pour chaque compte, prends un e-mail et/ou un numéro de téléphone de ton pays. Ça peut être les tiens. Le compte se crée dans ton pays : je ne suis pas dans le bon pays, je ne peux pas le faire à ta place. Le compte t'appartient, ce sont tes informations. Je ne le reprendrai jamais pour moi. À la fin de cette mission, tu peux supprimer les comptes sans souci. Tu n'enregistres pas cette partie : il peut y avoir des mots de passe. Tu filmes seulement les 30 minutes où tu fais défiler.`,
-    username:
-      "Nom d'utilisateur. Pour chaque compte, choisis un nom cohérent : un prénom courant de fille, dans le pays où tu postes. C'est toi qui choisis. Pas un nom en rapport avec mes applications.",
-    noProfile: "Pas de photo et pas de bio. Pour le moment, tu ne mets ni photo de profil ni bio. Tu crées seulement les comptes.",
+      block(
+        "Crée 3 comptes TikTok neufs.",
+        `Un pour le ${first}, un pour le ${second}, un pour le ${third}.`,
+        "• Chacun part de zéro",
+        "• Pas un compte déjà ouvert",
+        "• Un e-mail ou un numéro de téléphone de ton pays",
+        "• Le compte t'appartient",
+        "• Je ne le reprendrai jamais",
+        "• Tu peux supprimer les comptes sans souci",
+        "• Tu n'enregistres pas cette partie",
+        "• Il peut y avoir des mots de passe"
+      ),
+    username: block(
+      "Nom d'utilisateur",
+      "• Un prénom courant de fille",
+      "• Dans le pays où tu postes",
+      "• C'est toi qui choisis",
+      "• Pas un nom en rapport avec mes applications"
+    ),
+    noProfile: block("Pas de photo et pas de bio", "• Tu ne mets ni photo de profil ni bio", "• Tu crées seulement les comptes"),
     warm: (account, before = "") =>
-      `${account}. ${before}Ouvre ce compte et reste dessus, comme si c'était ton TikTok. Passe un bon moment. Fais défiler, regarde ce qui t'intéresse, et passe le reste. Tu n'aimes pas tout, tu ne commentes pas tout, tu ne regardes pas chaque vidéo jusqu'au bout. De temps en temps, un like, un petit commentaire ou un abonnement, seulement quand ça te plaît vraiment. Ça doit rester naturel. Tu ne postes rien.`,
+      block(
+        account,
+        before.trim(),
+        "Reste dessus, comme si c'était ton TikTok.",
+        "Passe un bon moment.",
+        "• Fais défiler, regarde ce qui t'intéresse",
+        "• Tu n'aimes pas tout",
+        "• Un like, seulement quand ça te plaît vraiment",
+        "• Tu ne postes rien"
+      ),
+    postWarmBefore: (account) =>
+      block(
+        account,
+        "Échauffement.",
+        "Reste dessus, comme si c'était ton TikTok.",
+        "• Fais défiler, regarde ce qui t'intéresse",
+        "• Un like, seulement quand ça te plaît vraiment"
+      ),
     post: (account) =>
-      `${account}. Tu postes le diaporama du jour. Il est sur cette page, tu le télécharges. Choisis une musique dans TikTok. Appuie sur Publier. Attends de voir la vidéo sur le profil.`,
-    profile: (account) => `${account}. Écris une bio et mets une photo de profil.`,
-    photoRule: "La photo vient de Pinterest, ou c'est une photo que tu as déjà. Pas d'image générée par IA.",
-    bioRule: "La bio est naturelle, écrite par toi. Elle ne parle pas des applications. Pas de texte généré par IA.",
-    thenWarm: "Ensuite. ",
-    noPostToday: "Tu ne postes pas aujourd'hui. ",
+      block(
+        account,
+        "Tu postes le diaporama du jour.",
+        "• Il est sur cette page, tu le télécharges",
+        "• Choisis une musique dans TikTok",
+        "• Appuie sur Publier",
+        "• Attends de voir la vidéo sur le profil"
+      ),
+    postWarmAfter: (account) =>
+      block(
+        account,
+        "Échauffement après.",
+        "Reste dessus, comme si c'était ton TikTok.",
+        "• Fais défiler, regarde ce qui t'intéresse",
+        "• Tu ne postes plus"
+      ),
+    profile: (account) => block(account, "Écris une bio et mets une photo de profil."),
+    photoRule: block("La photo", "• Elle vient de Pinterest, ou c'est une photo que tu as déjà", "• Pas d'image générée par IA"),
+    photoMonday: block(
+      "La photo",
+      "• Un screen d'une fille sur Pinterest, ou une photo que tu as déjà",
+      "• Pas d'image générée par IA"
+    ),
+    bioRule: block("La bio", "• Naturelle, écrite par toi", "• Elle ne parle pas des applications", "• Pas de texte généré par IA"),
+    thenWarm: "Ensuite.",
+    noPostToday: "Tu ne postes pas aujourd'hui.",
+    engageMore:
+      "Aujourd'hui, abonne-toi un peu plus, like et commente un peu plus. Engage-toi un peu plus dans les vidéos. Tu peux en swiper plein si elles ne t'intéressent pas.",
   },
   es: {
     create: (first, second, third) =>
-      `Crea 3 cuentas de TikTok nuevas: una para ${first}, una para ${second} y una para ${third}. Cada una empieza de cero. No uses una cuenta que ya esté abierta. Para cada cuenta, usa un correo y/o un número de teléfono de tu país. Pueden ser los tuyos. La cuenta se crea en tu país: yo no estoy en el país correcto, no puedo hacerlo por ti. La cuenta es tuya, son tus datos. Nunca me la quedaré. Al final de esta misión, puedes borrar las cuentas sin problema. No grabes esta parte: puede haber contraseñas. Graba solo los 30 minutos en los que deslizas.`,
-    username:
-      "Nombre de usuario. Para cada cuenta, elige un nombre coherente: un nombre común de chica, del país donde publicas. Lo eliges tú. Nada relacionado con mis aplicaciones.",
-    noProfile: "Sin foto y sin bio. Por ahora no pongas foto de perfil ni bio. Solo creas las cuentas.",
+      block(
+        "Crea 3 cuentas de TikTok nuevas.",
+        `Una para ${first}, una para ${second} y una para ${third}.`,
+        "• Cada una empieza de cero",
+        "• No uses una cuenta ya abierta",
+        "• Un correo o un número de tu país",
+        "• La cuenta es tuya",
+        "• Nunca me la quedaré",
+        "• Puedes borrar las cuentas sin problema",
+        "• No grabes esta parte",
+        "• Puede haber contraseñas"
+      ),
+    username: block(
+      "Nombre de usuario",
+      "• Un nombre común de chica",
+      "• Del país donde publicas",
+      "• Lo eliges tú",
+      "• Nada relacionado con mis aplicaciones"
+    ),
+    noProfile: block("Sin foto y sin bio", "• Ni foto de perfil ni bio", "• Solo creas las cuentas"),
     warm: (account, before = "") =>
-      `${account}. ${before}Abre esta cuenta y quédate ahí, como si fuera tu TikTok. Pasa un buen rato. Desliza, mira lo que te interesa y salta el resto. No des like a todo, no comentes todo, no mires cada vídeo hasta el final. De vez en cuando, un like, un comentario corto o un seguimiento, solo cuando de verdad te guste. Tiene que parecer natural. No publicas nada.`,
+      block(
+        account,
+        before.trim(),
+        "Como si fuera tu TikTok.",
+        "Pasa un buen rato.",
+        "• Desliza, mira lo que te interesa",
+        "• No des like a todo",
+        "• Un like, solo cuando de verdad te guste",
+        "• No publicas nada"
+      ),
+    postWarmBefore: (account) =>
+      block(
+        account,
+        "Calentamiento.",
+        "Como si fuera tu TikTok.",
+        "• Desliza, mira lo que te interesa",
+        "• Un like, solo cuando de verdad te guste"
+      ),
     post: (account) =>
-      `${account}. Publicas el carrusel del día. Está en esta página, lo descargas. Elige una música en TikTok. Pulsa Publicar. Espera a ver el vídeo en el perfil.`,
-    profile: (account) => `${account}. Escribe una bio y pon una foto de perfil.`,
-    photoRule: "La foto sale de Pinterest, o es una foto que ya tienes. Nada de imagen generada por IA.",
-    bioRule: "La bio es natural, escrita por ti. No habla de las aplicaciones. Nada de texto generado por IA.",
-    thenWarm: "Después. ",
-    noPostToday: "Hoy no publicas. ",
+      block(
+        account,
+        "Publicas el carrusel del día.",
+        "• Está en esta página, lo descargas",
+        "• Elige una música en TikTok",
+        "• Pulsa Publicar",
+        "• Espera a ver el vídeo en el perfil"
+      ),
+    postWarmAfter: (account) =>
+      block(
+        account,
+        "Calentamiento después.",
+        "Como si fuera tu TikTok.",
+        "• Desliza, mira lo que te interesa",
+        "• Ya no publicas"
+      ),
+    profile: (account) => block(account, "Escribe una bio y pon una foto de perfil."),
+    photoRule: block("La foto", "• Sale de Pinterest, o es una foto que ya tienes", "• Nada de imagen generada por IA"),
+    photoMonday: block(
+      "La foto",
+      "• Un screen de una chica en Pinterest, o una foto que ya tienes",
+      "• Nada de imagen generada por IA"
+    ),
+    bioRule: block("La bio", "• Natural, escrita por ti", "• No habla de las aplicaciones", "• Nada de texto generado por IA"),
+    thenWarm: "Después.",
+    noPostToday: "Hoy no publicas.",
+    engageMore:
+      "Hoy, suscríbete un poco más, dale like y comenta un poco más. Implícate un poco más en los vídeos. Puedes deslizar muchas si no te interesan.",
   },
   en: {
     create: (first, second, third) =>
-      `Create 3 new TikTok accounts: one for ${first}, one for ${second}, and one for ${third}. Each one starts from zero. Do not use an account that is already open. For each account, use an email and/or a phone number from your country. They can be your own. The account has to be created in your country: I am not in the right country, so I cannot do it for you. The account belongs to you, because it uses your details. I will never take it for myself. At the end of this mission, you can delete the accounts without any problem. Do not record this part: there may be passwords. Record only the 30 minutes when you scroll.`,
-    username:
-      "Username. For each account, pick a normal name: a common girl's name, from the country you post in. You choose it. Nothing related to my apps.",
-    noProfile: "No photo and no bio. For now, do not add a profile photo or a bio. You only create the accounts.",
+      block(
+        "Create 3 new TikTok accounts.",
+        `One for ${first}, one for ${second}, and one for ${third}.`,
+        "• Each one starts from zero",
+        "• Do not use an account that is already open",
+        "• An email or a phone number from your country",
+        "• The account belongs to you",
+        "• I will never take it for myself",
+        "• You can delete the accounts without any problem",
+        "• Do not record this part",
+        "• There may be passwords"
+      ),
+    username: block(
+      "Username",
+      "• A common girl's name",
+      "• From the country you post in",
+      "• You choose it",
+      "• Nothing related to my apps"
+    ),
+    noProfile: block("No photo and no bio", "• No profile photo and no bio", "• You only create the accounts"),
     warm: (account, before = "") =>
-      `${account}. ${before}Open this account and stay on it, as if it were your TikTok. Have a good time. Scroll, watch what you like, and skip the rest. Do not like everything, do not comment on everything, and do not watch every video all the way through. Now and then, a like, a short comment, or a follow, only when you really like it. It has to feel natural. You do not post anything.`,
+      block(
+        account,
+        before.trim(),
+        "As if it were your TikTok.",
+        "Have a good time.",
+        "• Scroll, watch what you like",
+        "• Do not like everything",
+        "• A like, only when you really like it",
+        "• You do not post anything"
+      ),
+    postWarmBefore: (account) =>
+      block(
+        account,
+        "Warm-up.",
+        "As if it were your TikTok.",
+        "• Scroll, watch what you like",
+        "• A like, only when you really like it"
+      ),
     post: (account) =>
-      `${account}. You post the day's slideshow. It is on this page, you download it. Pick a song in TikTok. Tap Post. Wait until you see the video on the profile.`,
-    profile: (account) => `${account}. Write a bio and add a profile photo.`,
-    photoRule: "The photo comes from Pinterest, or it is a photo you already have. No AI-generated image.",
-    bioRule: "The bio is natural, written by you. It does not mention the apps. No AI-generated text.",
-    thenWarm: "Then. ",
-    noPostToday: "You do not post today. ",
+      block(
+        account,
+        "You post the day's slideshow.",
+        "• It is on this page, you download it",
+        "• Pick a song in TikTok",
+        "• Tap Post",
+        "• Wait until you see the video on the profile"
+      ),
+    postWarmAfter: (account) =>
+      block(
+        account,
+        "Warm-up after.",
+        "As if it were your TikTok.",
+        "• Scroll, watch what you like",
+        "• You do not post anymore"
+      ),
+    profile: (account) => block(account, "Write a bio and add a profile photo."),
+    photoRule: block("The photo", "• It comes from Pinterest, or it is a photo you already have", "• No AI-generated image"),
+    photoMonday: block(
+      "The photo",
+      "• A screenshot of a girl on Pinterest, or a photo you already have",
+      "• No AI-generated image"
+    ),
+    bioRule: block("The bio", "• Natural, written by you", "• It does not mention the apps", "• No AI-generated text"),
+    thenWarm: "Then.",
+    noPostToday: "You do not post today.",
+    engageMore:
+      "Today, follow a bit more, like and comment a bit more. Engage a bit more with the videos. You can swipe through plenty if they don't interest you.",
   },
 };
 
