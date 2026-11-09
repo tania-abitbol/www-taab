@@ -635,7 +635,7 @@ export const PostingDashboard = ({
 
         {visiblePlans(isTania).map((plan) => {
           const checks = checksFor(plan, isTania ? "fr" : lang);
-          if (isTania && plan.kind !== "post") {
+          if (isTania) {
             return (
               <section key={plan.date} className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
                 <p className="font-body text-sm text-gray-700">{dayHeading(plan)}</p>
@@ -668,53 +668,20 @@ export const PostingDashboard = ({
                             className="mt-1 font-body text-sm"
                           />
                           {fileName && <p className="mt-1 font-body text-sm">{fileName}</p>}
+                          {urls[slideKey(plan.date, account.id)] && (
+                            <a
+                              href={urls[slideKey(plan.date, account.id)]}
+                              download={fileName || "diaporama"}
+                              className="mt-1 inline-block font-body text-sm font-bold underline"
+                            >
+                              Télécharger
+                            </a>
+                          )}
                         </div>
                       );
                     })}
                   </div>
                 )}
-              </section>
-            );
-          }
-          if (isTania && plan.kind === "post") {
-            return (
-              <section key={plan.date} className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
-                <p className="font-body text-sm text-gray-700">{dayHeading(plan)}</p>
-                <h2 className="font-title text-2xl tracking-tight">{formatDay(plan.date)}</h2>
-                <div className="mt-3 flex flex-col gap-4">
-                  {ACCOUNTS.map((account) => {
-                    const roleLabel = accountRole(plan, account.id);
-                    const fileName = desk.taniaFiles[plan.date]?.[account.id];
-                    return (
-                      <div key={account.id}>
-                        <p className="font-body text-sm font-bold">
-                          {account.name} · {roleLabel}
-                        </p>
-                        <label htmlFor={`upload-${plan.date}-${account.id}`} className="mt-1 block font-body text-sm">
-                          Diaporama
-                        </label>
-                        <input
-                          id={`upload-${plan.date}-${account.id}`}
-                          type="file"
-                          accept="image/*,video/*"
-                          onChange={(event) => void onSlide(plan.date, account.id, event.target.files?.[0])}
-                          className="mt-1 font-body text-sm"
-                        />
-                        {fileName && <p className="mt-1 font-body text-sm">{fileName}</p>}
-                        {urls[slideKey(plan.date, account.id)] && (
-                          <a
-                            href={urls[slideKey(plan.date, account.id)]}
-                            download={fileName || "diaporama"}
-                            className="mt-1 inline-block font-body text-sm font-bold underline"
-                          >
-                            Télécharger
-                          </a>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-                <RemoteProofs date={plan.date} proofs={remoteProofs} profiles={profiles} />
               </section>
             );
           }
