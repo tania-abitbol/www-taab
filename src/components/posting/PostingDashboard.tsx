@@ -403,7 +403,7 @@ export const PostingDashboard = ({
                             <p className="mt-1 font-body text-sm text-gray-700">Aucune case</p>
                           )}
                           {day?.proofName ? (
-                            <video src={`/posting/proof/${worker.id}/${date}`} controls className="mt-2 w-full rounded-2xl bg-black" />
+                            <ProofThumb src={`/posting/proof/${worker.id}/${date}`} label={displayName(worker.name)} />
                           ) : (
                             <p className="mt-1 font-body text-sm text-gray-700">Pas de vidéo</p>
                           )}
@@ -621,6 +621,38 @@ export const PostingDashboard = ({
   );
 };
 
+const ProofThumb = ({ src, label }: { src: string; label: string }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label={`Lire la vidéo de ${label}`}
+        className="relative mt-2 block h-auto min-h-[120px] w-[180px] max-w-full overflow-hidden rounded-2xl bg-black text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
+      >
+        <video src={src} preload="metadata" muted playsInline className="pointer-events-none block h-auto w-full" />
+        <span className="pointer-events-none absolute bottom-2 left-2 rounded-full bg-white px-2 py-1 font-body text-xs font-bold">Lire</span>
+      </button>
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" role="dialog" aria-modal="true" aria-label={`Vidéo de ${label}`}>
+          <button type="button" className="absolute inset-0 cursor-default" aria-label="Fermer" onClick={() => setOpen(false)} />
+          <div className="relative z-10 w-full max-w-sm">
+            <video src={src} controls autoPlay playsInline className="max-h-[80vh] w-full rounded-2xl bg-black" />
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="mt-3 h-12 w-full rounded-xl bg-white font-body text-base font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
 const RemoteProofs = ({
   date,
   proofs,
@@ -633,13 +665,16 @@ const RemoteProofs = ({
   const rows = proofs.filter((item) => item.date === date);
   if (!rows.length) return null;
   return (
-    <div className="mt-4 flex flex-col gap-3">
-      {rows.map((row) => (
-        <div key={row.profileId}>
-          <p className="font-body text-sm font-bold">{profiles.find((item) => item.id === row.profileId)?.name}</p>
-          <video src={`/posting/proof/${row.profileId}/${row.date}`} controls className="mt-2 w-full rounded-2xl bg-black" />
-        </div>
-      ))}
+    <div className="mt-4 flex flex-wrap gap-3">
+      {rows.map((row) => {
+        const name = profiles.find((item) => item.id === row.profileId)?.name ?? "";
+        return (
+          <div key={row.profileId}>
+            <p className="font-body text-sm font-bold">{name}</p>
+            <ProofThumb src={`/posting/proof/${row.profileId}/${row.date}`} label={displayName(name)} />
+          </div>
+        );
+      })}
     </div>
   );
 };
