@@ -1,3 +1,6 @@
+import { mkdir, readFile, writeFile } from "fs/promises";
+import path from "path";
+
 import {
   DayWork,
   ProfileWork,
@@ -6,6 +9,7 @@ import {
   cleanProofFile,
   emptyDayWork,
   emptyProfileWork,
+  proofAllowed,
   proofFileName,
   proofMetaKey,
   proofObjectKey,
@@ -13,7 +17,7 @@ import {
   proofWindow,
 } from "~/server/postingProofs";
 import { liveWork } from "~/server/postingLive";
-import { localProofNames } from "~/server/postingLocalProof";
+import { deleteLocalProof, localProofNames } from "~/server/postingLocalProof";
 
 const PROOFS = "posting-proofs";
 const WORK = "posting-work";
@@ -43,7 +47,7 @@ const blobsContext = (): BlobsContext | null => {
 const endpoint = (context: BlobsContext, store: string, key: string) =>
   new URL(`/api/v1/blobs/${context.siteID}/${store}/${key}`, context.apiURL || "https://api.netlify.com");
 
-const sign = async (store: string, key: string, method: "GET" | "PUT") => {
+const sign = async (store: string, key: string, method: "GET" | "PUT" | "DELETE") => {
   const context = blobsContext();
   if (!context?.siteID || !context.token) return null;
   const response = await fetch(endpoint(context, store, key), {
@@ -77,6 +81,14 @@ const writeJson = async (store: string, key: string, value: unknown) => {
     signal: AbortSignal.timeout(8000),
   });
   if (!response.ok) throw new Error("proof-write");
+};
+
+const discard = async (store: string, key: string) => {
+  const url = await sign(store, key, "DELETE");
+  if (!url) return;
+  const response = await fetch(url, { method: "DELETE", signal: AbortSignal.timeout(8000) });
+  if (response.status === 404 || response.ok) return;
+  throw new Error("proof-delete");
 };
 
 let queue = Promise.resolve();
@@ -180,6 +192,63 @@ export const rememberProof = (profileId: string, date: string, name: string) =>
     const previous = current.days[date] ?? emptyDayWork();
     current.days[date] = { ...previous, proofName: proofFileName(name) };
     await writeJson(WORK, `work-${profileId}`, current);
+  });
+
+export const deleteStoredProof = async (profileId: string, date: string) => {
+  if (!proofAllowed(profileId, date, 1)) return;
+  await deleteLocalProof(profileId, date);
+  if (!proofStorageReady()) return;
+  const file = await loadProofFile(profileId, date);
+  if (file) {
+    for (let part = 0; part < file.parts; part += 1) {
+      await discard(PROOFS, proofPartKey(profileId, date, file.generation, part));
+    }
+  }
+  await discard(PROOFS, proofMetaKey(profileId, date));
+  await discard(PROOFS, proofObjectKey(profileId, date));
+};
+
+export const clearDayProof = (profileId: string, date: string) =>
+  enqueue(async () => {
+    if (!proofStorageReady() || !proofAllowed(profileId, date, 1)) return;
+    const current = await storedWork(profileId);
+    const day = current.days[date];
+    if (!day?.proofName) return;
+    current.days[date] = { ...day, proofName: null };
+    await writeJson(WORK, `work-${profileId}`, current);
+  });
+
+const removedPath = path.join(process.cwd(), ".data", "posting-removed-days.json");
+const REMOVED_KEY = "removed-days";
+
+const cleanDates = (value: unknown) => {
+  if (!value || typeof value !== "object") return [];
+  const dates = (value as { dates?: unknown }).dates;
+  if (!Array.isArray(dates)) return [];
+  return [...new Set(dates.filter((date): date is string => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)))];
+};
+
+export const loadRemovedDays = async () => {
+  if (proofStorageReady()) return cleanDates(await readJson(WORK, REMOVED_KEY));
+  try {
+    return cleanDates(JSON.parse(await readFile(removedPath, "utf8")));
+  } catch {
+    return [];
+  }
+};
+
+export const rememberRemovedDay = (date: string) =>
+  enqueue(async () => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+    const current = await loadRemovedDays();
+    if (current.includes(date)) return;
+    const next = { dates: [...current, date] };
+    if (proofStorageReady()) {
+      await writeJson(WORK, REMOVED_KEY, next);
+      return;
+    }
+    await mkdir(path.dirname(removedPath), { recursive: true });
+    await writeFile(removedPath, JSON.stringify(next));
   });
 
 export const listProofs = async (profileId?: string) => {

@@ -1,7 +1,7 @@
-import { mkdir, open, readFile, writeFile } from "fs/promises";
+import { mkdir, open, readFile, rm, writeFile } from "fs/promises";
 import path from "path";
 
-import { proofFileName } from "~/server/postingProofs";
+import { proofAllowed, proofFileName } from "~/server/postingProofs";
 
 const root = path.join(process.cwd(), ".data", "posting-proofs");
 
@@ -40,6 +40,18 @@ export const writeLocalProofPart = async (
   const index = await readIndex();
   index[profileId] = { ...(index[profileId] ?? {}), [date]: clean };
   await writeFile(path.join(root, "index.json"), JSON.stringify(index));
+};
+
+export const deleteLocalProof = async (profileId: string, date: string) => {
+  if (!proofAllowed(profileId, date, 1)) return;
+  const index = await readIndex();
+  if (index[profileId]?.[date]) {
+    delete index[profileId][date];
+    if (Object.keys(index[profileId]).length === 0) delete index[profileId];
+    await mkdir(root, { recursive: true });
+    await writeFile(path.join(root, "index.json"), JSON.stringify(index));
+  }
+  await rm(folder(profileId, date), { recursive: true, force: true });
 };
 
 export const localProofNames = async (profileId: string) => {

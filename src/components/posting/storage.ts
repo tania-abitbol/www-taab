@@ -79,7 +79,17 @@ export const parseDesk = (raw: string | null): Desk => {
         }
       }
     }
-    return { people, slots, weekValidated, days, taniaFiles };
+    const captions: Desk["captions"] = {};
+    if (parsed.captions && typeof parsed.captions === "object") {
+      for (const [date, byProfile] of Object.entries(parsed.captions)) {
+        if (!isIsoDate(date) || !byProfile || typeof byProfile !== "object") continue;
+        captions[date] = {};
+        for (const [profileId, value] of Object.entries(byProfile)) {
+          if (typeof value === "string") captions[date][profileId] = value.slice(0, 500);
+        }
+      }
+    }
+    return { people, slots, weekValidated, days, taniaFiles, captions };
   } catch {
     return base;
   }
@@ -113,6 +123,17 @@ export const saveBlob = async (key: string, blob: Blob) => {
   await new Promise<void>((resolve, reject) => {
     const tx = db.transaction(STORE, "readwrite");
     tx.objectStore(STORE).put(blob, key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+  db.close();
+};
+
+export const deleteBlob = async (key: string) => {
+  const db = await openDb();
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(STORE, "readwrite");
+    tx.objectStore(STORE).delete(key);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });

@@ -18,6 +18,7 @@ const {
   accountRole,
   checksFor,
   chooseSlot,
+  dayIsValidated,
   dayReady,
   emptyDayState,
   formatMinutes,
@@ -161,19 +162,53 @@ assert.equal(POST_WARM_BEFORE_MINUTES + POST_PUBLISH_MINUTES + POST_WARM_AFTER_M
 const tuesday = checksFor(DAY_PLANS[4]);
 assert.equal(tuesday[0].minutes, 8);
 assert.ok(tuesday[0].label.startsWith("Compte 1"));
-assert.ok(tuesday[0].label.includes("Échauffement."));
+assert.ok(tuesday[0].label.includes("Échauffement précis."));
+assert.ok(tuesday[0].label.includes("5 comptes d'influenceurs"));
 assert.equal(tuesday[1].minutes, 5);
 assert.ok(tuesday[1].label.includes("diaporama du jour"));
-assert.ok(tuesday[1].label.includes("tu le télécharges"));
+assert.ok(tuesday[1].label.includes("Tu le télécharges ici."));
+assert.ok(tuesday[1].label.includes("musique TikTok du moment"));
+assert.ok(tuesday[1].label.includes("Copie cette description."));
 assert.ok(tuesday[1].label.includes("Appuie sur Publier"));
 assert.equal(tuesday[2].minutes, 7);
 assert.ok(tuesday[2].label.includes("Échauffement après"));
+assert.ok(tuesday[2].label.includes("Interagis de façon naturelle."));
+const tuesdayEs = checksFor(DAY_PLANS[4], "es");
+assert.ok(tuesdayEs[0].label.includes("Calentamiento preciso."));
+assert.ok(tuesdayEs[1].label.includes("Lo descargas aquí."));
+assert.ok(tuesdayEs[1].label.includes("Copia esta descripción."));
+assert.ok(tuesdayEs[2].label.includes("Interactúa con naturalidad."));
+const tuesdayEn = checksFor(DAY_PLANS[4], "en");
+assert.ok(tuesdayEn[0].label.includes("Precise warm-up."));
+assert.ok(tuesdayEn[1].label.includes("Download it here."));
+assert.ok(tuesdayEn[1].label.includes("Copy this caption."));
+assert.ok(tuesdayEn[2].label.includes("Interact in a natural way."));
+assert.equal(checksFor(DAY_PLANS[5]).find((item) => item.id === "before-fr").label.includes("Échauffement précis"), false);
 assert.equal(tuesday[3].minutes, 20);
 assert.ok(tuesday[3].label.startsWith("Compte 2"));
-assert.ok(tuesday[3].label.includes("Tu ne postes pas aujourd'hui"));
+assert.ok(tuesday[3].label.includes("Focus objectif."));
+assert.equal(tuesday[3].label.includes("Tu ne postes pas aujourd'hui"), false);
+assert.equal(tuesday[0].label.includes("Focus objectif."), false);
+assert.ok(tuesday[3].label.includes("30 abonnements"));
+assert.ok(tuesday[3].label.includes("vraie personne"));
+assert.ok(tuesday[3].label.includes("pas trop connus"));
+assert.equal(tuesday[3].label.includes("Appuie sur Publier"), false);
 assert.equal(tuesday[4].minutes, 20);
 assert.ok(tuesday[4].label.startsWith("Compte 3"));
+assert.equal(tuesday[4].label, tuesday[3].label.replace("Compte 2", "Compte 3"));
 assert.equal(tuesday.filter((item) => item.label.includes("Appuie sur Publier")).length, 1);
+assert.equal(tuesday[0].label.includes("30 abonnements"), false);
+assert.equal(checksFor(DAY_PLANS[5]).some((item) => item.label.includes("30 abonnements")), false);
+assert.ok(tuesdayEs.find((item) => item.id === "warm-es").label.includes("Focus objetivo."));
+assert.equal(tuesdayEs.find((item) => item.id === "warm-es").label.includes("Hoy no publicas."), false);
+assert.ok(tuesdayEs.find((item) => item.id === "warm-es").label.includes("30 seguidos"));
+assert.ok(tuesdayEs.find((item) => item.id === "warm-us").label.includes("persona real"));
+assert.equal(tuesdayEs.find((item) => item.id === "warm-es").label.includes("Pulsa Publicar"), false);
+assert.ok(tuesdayEn.find((item) => item.id === "warm-us").label.includes("Focus: the goal."));
+assert.equal(tuesdayEn.find((item) => item.id === "warm-us").label.includes("You do not post today."), false);
+assert.ok(tuesdayEn.find((item) => item.id === "warm-es").label.includes("real person"));
+assert.ok(tuesdayEn.find((item) => item.id === "warm-us").label.includes("at least 30 accounts"));
+assert.equal(tuesdayEn.find((item) => item.id === "warm-us").label.includes("Tap Post"), false);
 assert.equal(timedMinutes(tuesday), 60);
 assert.equal(tuesday.some((item) => /\b(FR|ES|US)\b|16 min 40|seconde/.test(item.label)), false);
 assert.deepEqual(DAY_PLANS[2].publishers, []);
@@ -234,12 +269,12 @@ assert.equal(checksFor(DAY_PLANS[3], "es")[1].label.includes("ya tienen"), false
 assert.ok(checksFor(DAY_PLANS[3], "en")[1].label.includes("you already have"));
 assert.equal(checksFor(DAY_PLANS[3], "en")[1].label.includes("they already have"), false);
 assert.ok(checksFor(DAY_PLANS[3], "es")[2].label.includes("aplicaciones"));
-assert.ok(checksFor(DAY_PLANS[4], "es").find((item) => item.id === "post-fr").label.includes("lo descargas"));
+assert.ok(checksFor(DAY_PLANS[4], "es").find((item) => item.id === "post-fr").label.includes("Lo descargas aquí."));
 assert.ok(checksFor(DAY_PLANS[4], "es")[0].label.includes("Calentamiento"));
 assert.ok(checksFor(DAY_PLANS[3], "en")[1].label.includes("No AI-generated image"));
 assert.ok(checksFor(DAY_PLANS[3], "en")[2].label.includes("does not mention the apps"));
-assert.ok(checksFor(DAY_PLANS[4], "en").find((item) => item.id === "post-fr").label.includes("you download it"));
-assert.ok(checksFor(DAY_PLANS[4], "en")[0].label.includes("Warm-up"));
+assert.ok(checksFor(DAY_PLANS[4], "en").find((item) => item.id === "post-fr").label.includes("Download it here."));
+assert.ok(checksFor(DAY_PLANS[4], "en")[0].label.includes("Precise warm-up."));
 for (const plan of DAY_PLANS.filter((item) => item.date >= "2026-11-09")) {
   for (const lang of ["fr", "es", "en"]) {
     const word = lang === "es" ? "Cuenta" : lang === "en" ? "Account" : "Compte";
@@ -294,6 +329,9 @@ assert.equal(langFromName("Profil 1"), "fr");
 assert.ok(postingUi("fr").slotsHelp.includes("une seule heure"));
 assert.ok(postingUi("es").slotsHelp.includes("una sola hora"));
 assert.ok(postingUi("en").weekEdit.includes("still change"));
+assert.equal(postingUi("fr").slotsVary, "Ne fais pas toujours la même heure. Varie, pour que l'algorithme comprenne que tu n'es pas un robot en automatique.");
+assert.equal(postingUi("es").slotsVary, "No hagas siempre la misma hora. Varía, para que el algoritmo entienda que no eres un robot en automático.");
+assert.equal(postingUi("en").slotsVary, "Don't always pick the same hour. Switch it up, so the algorithm sees you're not a robot on autopilot.");
 assert.equal(checksFor(DAY_PLANS[0], "es")[3].minutes, 10);
 assert.ok(checksFor(DAY_PLANS[0], "es")[3].label.startsWith("Cuenta 1"));
 assert.ok(checksFor(DAY_PLANS[0], "es")[0].label.includes("empieza de cero"));
@@ -319,4 +357,13 @@ assert.deepEqual(proofWindow(PROOF_PART_BYTES, 3, PROOF_PART_BYTES - 1, PROOF_PA
 assert.equal(cleanProofFile({ name: "3 - Ambition.mp4", size: 10, parts: 1, partSize: PROOF_PART_BYTES, type: "video/mp4", generation: "abc12345" })?.name, "3 - Ambition.mp4");
 assert.equal(cleanProofFile({ name: "a.mp4", size: 10, parts: 2, partSize: PROOF_PART_BYTES, type: "video/mp4", generation: "abc12345" }), null);
 assert.equal(proofFileName("../secret.mp4"), "secret.mp4");
+assert.equal(dayIsValidated({ p1: { validated: true, proofName: "a.mp4", checks: { create: true } } }), true);
+assert.equal(
+  dayIsValidated({
+    p1: { validated: true, proofName: "a.mp4" },
+    p2: { validated: false, proofName: "b.mp4" },
+  }),
+  false
+);
+assert.equal(dayIsValidated({ p1: { validated: false, checks: {} } }), false);
 console.log("posting codes ok");

@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 
 import { DashboardGate } from "~/components/dashboard/DashboardGate";
 import { DASHBOARD_COOKIE, readSession } from "~/server/dashboardSession";
-import { loadAllWork, loadWork } from "~/server/postingProofStore";
+import { loadAllWork, loadRemovedDays, loadWork } from "~/server/postingProofStore";
 import { listProfiles } from "~/server/postingProfileStore";
 import { redirect } from "next/navigation";
 
@@ -40,5 +40,6 @@ export default async function PostingPage({ searchParams }: { searchParams: { re
       : { [session.role]: await loadWork(session.role).catch(() => ({ days: {} })) };
   const retrySunday =
     session.role !== "tania" && profiles.some((profile) => profile.id === session.role && profile.code === "333330");
-  return <PostingDashboard role={session.role} profiles={visible} work={work} retrySunday={retrySunday} />;
+  const removedDays = session.role === "tania" ? await loadRemovedDays().catch(() => []) : [];
+  return <PostingDashboard role={session.role} profiles={visible} work={work} retrySunday={retrySunday} removedDays={removedDays} />;
 }

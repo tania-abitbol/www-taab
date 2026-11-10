@@ -69,6 +69,7 @@ export type Desk = {
   weekValidated: Record<string, boolean>;
   days: Record<string, Record<string, DayState>>;
   taniaFiles: Record<string, Record<string, string[]>>;
+  captions: Record<string, Record<string, string>>;
 };
 
 const DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
@@ -180,6 +181,7 @@ export const emptyDesk = (): Desk => ({
   weekValidated: {},
   days: {},
   taniaFiles: {},
+  captions: {},
 });
 
 export const formatDay = (iso: string, lang: PostingLang = "fr") => {
@@ -249,11 +251,15 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
         ];
       }
       if (step.kind === "post") {
+        const precise = plan.date === "2026-11-10" && id === "fr";
         return [
-          task(`before-${id}`, say.postWarmBefore(account), POST_WARM_BEFORE_MINUTES),
-          task(`post-${id}`, say.post(account), POST_PUBLISH_MINUTES),
-          task(`after-${id}`, say.postWarmAfter(account), POST_WARM_AFTER_MINUTES),
+          task(`before-${id}`, precise ? say.tuesdayWarmBefore(account) : say.postWarmBefore(account), POST_WARM_BEFORE_MINUTES),
+          task(`post-${id}`, precise ? say.tuesdayPost(account) : say.post(account), POST_PUBLISH_MINUTES),
+          task(`after-${id}`, precise ? say.tuesdayWarmAfter(account) : say.postWarmAfter(account), POST_WARM_AFTER_MINUTES),
         ];
+      }
+      if (plan.date === "2026-11-10") {
+        return [task(`warm-${id}`, say.tuesdayNoPost(account), ACCOUNT_BLOCK_MINUTES)];
       }
       return [task(`warm-${id}`, say.warm(account, say.noPostToday), ACCOUNT_BLOCK_MINUTES, undefined, engage)];
     });
@@ -268,6 +274,17 @@ export const dayReady = (plan: DayPlan, state: DayState) => {
   if (!state.proofName) return false;
   const checks = checksFor(plan);
   return checks.length > 0 && checks.every((check) => state.checks[check.id] === true);
+};
+
+/** A shared day can be removed once every profile that worked it has validated. */
+export const dayIsValidated = (
+  days: Record<string, { checks?: Record<string, boolean>; proofName?: string | null; validated?: boolean } | undefined>
+) => {
+  const concerned = Object.values(days).filter((day) => {
+    if (!day) return false;
+    return day.validated === true || Boolean(day.proofName) || Object.values(day.checks ?? {}).some(Boolean);
+  });
+  return concerned.length > 0 && concerned.every((day) => day.validated === true);
 };
 
 export const slotsFor = (desk: Desk, personId: string, date: string): SlotId[] => {
@@ -331,6 +348,10 @@ type Phrases = {
   post: (account: string) => string;
   postWarmBefore: (account: string) => string;
   postWarmAfter: (account: string) => string;
+  tuesdayWarmBefore: (account: string) => string;
+  tuesdayPost: (account: string) => string;
+  tuesdayWarmAfter: (account: string) => string;
+  tuesdayNoPost: (account: string) => string;
   profile: (account: string) => string;
   photoRule: string;
   photoMonday: string;
@@ -400,6 +421,43 @@ const phrases: Record<PostingLang, Phrases> = {
         "Reste dessus, comme si c'était ton TikTok.",
         "• Fais défiler, regarde ce qui t'intéresse",
         "• Tu ne postes plus"
+      ),
+    tuesdayWarmBefore: (account) =>
+      block(
+        account,
+        "Échauffement précis.",
+        "• Va sur 5 comptes d'influenceurs de ton pays que tu connais. Abonne-toi, regarde leurs vidéos, et réponds à des commentaires déjà là.",
+        "• Retourne sur le Pour toi. Défile, abonne-toi et commente au moins 5 vidéos."
+      ),
+    tuesdayPost: (account) =>
+      block(
+        account,
+        "Tu postes le diaporama du jour.",
+        "• Tu le télécharges ici.",
+        "• Choisis une musique TikTok du moment, une que tu connais et que tu entends souvent.",
+        "• Copie cette description.",
+        "• Appuie sur Publier.",
+        "• Attends de voir la vidéo sur le profil."
+      ),
+    tuesdayWarmAfter: (account) =>
+      block(
+        account,
+        "Échauffement après.",
+        "• Retourne sur le Pour toi.",
+        "• Fais défiler, regarde ce qui t'intéresse.",
+        "• Tu ne postes plus.",
+        "• Interagis de façon naturelle."
+      ),
+    tuesdayNoPost: (account) =>
+      block(
+        account,
+        "Focus objectif.",
+        "Objectif : au moins 30 abonnements à la fin, et montrer à TikTok que tu es une vraie personne.",
+        "• Défile comme si c'était ton TikTok. Passe un bon moment. Commente, et réponds à des commentaires déjà là.",
+        "• Va sur des influenceurs que tu connais, pas trop connus, pour que TikTok voie que tu es du pays.",
+        "• Tu n'aimes pas tout.",
+        "• Abonne-toi jusqu'à au moins 30 abonnements.",
+        "• Un like seulement quand ça te plaît vraiment."
       ),
     profile: (account) => block(account, "Écris une bio et mets une photo de profil."),
     photoRule: block("La photo", "• Elle vient de Pinterest, ou c'est une photo que tu as déjà", "• Pas d'image générée par IA"),
@@ -472,6 +530,43 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Desliza, mira lo que te interesa",
         "• Ya no publicas"
       ),
+    tuesdayWarmBefore: (account) =>
+      block(
+        account,
+        "Calentamiento preciso.",
+        "• Entra en 5 cuentas de influencers de tu país que conoces. Síguelas, mira sus vídeos y responde a comentarios que ya están ahí.",
+        "• Vuelve al Para ti. Desliza, suscríbete y comenta al menos 5 vídeos."
+      ),
+    tuesdayPost: (account) =>
+      block(
+        account,
+        "Publicas el carrusel del día.",
+        "• Lo descargas aquí.",
+        "• Elige una música de TikTok del momento, una que conoces y que oyes a menudo.",
+        "• Copia esta descripción.",
+        "• Pulsa Publicar.",
+        "• Espera a ver el vídeo en el perfil."
+      ),
+    tuesdayWarmAfter: (account) =>
+      block(
+        account,
+        "Calentamiento después.",
+        "• Vuelve al Para ti.",
+        "• Desliza, mira lo que te interesa.",
+        "• Ya no publicas.",
+        "• Interactúa con naturalidad."
+      ),
+    tuesdayNoPost: (account) =>
+      block(
+        account,
+        "Focus objetivo.",
+        "Objetivo: al menos 30 seguidos al final, y mostrarle a TikTok que eres una persona real.",
+        "• Desliza como si fuera tu TikTok. Pasa un buen rato. Comenta y responde a comentarios que ya están ahí.",
+        "• Entra en influencers que conoces, no muy conocidos, para que TikTok vea que eres del país.",
+        "• No le des like a todo.",
+        "• Sigue cuentas hasta tener al menos 30 seguidos.",
+        "• Un like solo cuando de verdad te guste."
+      ),
     profile: (account) => block(account, "Escribe una bio y pon una foto de perfil."),
     photoRule: block("La foto", "• Sale de Pinterest, o es una foto que ya tienes", "• Nada de imagen generada por IA"),
     photoMonday: block(
@@ -543,6 +638,43 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Scroll, watch what you like",
         "• You do not post anymore"
       ),
+    tuesdayWarmBefore: (account) =>
+      block(
+        account,
+        "Precise warm-up.",
+        "• Go to 5 influencer accounts from your country that you know. Follow them, watch their videos, and reply to comments that are already there.",
+        "• Go back to For You. Scroll, follow, and comment on at least 5 videos."
+      ),
+    tuesdayPost: (account) =>
+      block(
+        account,
+        "You post today's slideshow.",
+        "• Download it here.",
+        "• Pick a TikTok song of the moment, one you know and hear often.",
+        "• Copy this caption.",
+        "• Tap Post.",
+        "• Wait until you see the video on the profile."
+      ),
+    tuesdayWarmAfter: (account) =>
+      block(
+        account,
+        "Warm-up after.",
+        "• Go back to For You.",
+        "• Scroll, watch what interests you.",
+        "• You do not post anymore.",
+        "• Interact in a natural way."
+      ),
+    tuesdayNoPost: (account) =>
+      block(
+        account,
+        "Focus: the goal.",
+        "Goal: at least 30 accounts you follow by the end, and show TikTok that you are a real person.",
+        "• Scroll as if it were your TikTok. Have a good time. Comment, and reply to comments that are already there.",
+        "• Go to influencers you know, not too well known, so TikTok sees that you are from the country.",
+        "• You do not like everything.",
+        "• Keep following until you follow at least 30 accounts.",
+        "• A like only when you really like it."
+      ),
     profile: (account) => block(account, "Write a bio and add a profile photo."),
     photoRule: block("The photo", "• It comes from Pinterest, or it is a photo you already have", "• No AI-generated image"),
     photoMonday: block(
@@ -567,6 +699,7 @@ export const postingUi = (lang: PostingLang) =>
       range: (start: string, end: string) => `Du ${start} au ${end}.`,
       slots: "Tes heures",
       slotsHelp: "Choisis une seule heure par jour. L'heure en noir est la tienne. Pour changer, appuie sur une autre.",
+      slotsVary: "Ne fais pas toujours la même heure. Varie, pour que l'algorithme comprenne que tu n'es pas un robot en automatique.",
       pickOne: "Aucune heure pour l'instant.",
       picked: (hour: string) => `Tu as choisi ${hour}.`,
       missingHours: (days: string) => `Il manque encore : ${days}.`,
@@ -599,6 +732,7 @@ export const postingUi = (lang: PostingLang) =>
       range: (start: string, end: string) => `Del ${start} al ${end}.`,
       slots: "Tus horas",
       slotsHelp: "Elige una sola hora por día. La hora en negro es la tuya. Para cambiar, pulsa otra.",
+      slotsVary: "No hagas siempre la misma hora. Varía, para que el algoritmo entienda que no eres un robot en automático.",
       pickOne: "Todavía no hay hora.",
       picked: (hour: string) => `Has elegido ${hour}.`,
       missingHours: (days: string) => `Todavía falta: ${days}.`,
@@ -631,6 +765,7 @@ export const postingUi = (lang: PostingLang) =>
       range: (start: string, end: string) => `From ${start} to ${end}.`,
       slots: "Your hours",
       slotsHelp: "Pick one hour each day. The black hour is yours. To change it, tap another hour.",
+      slotsVary: "Don't always pick the same hour. Switch it up, so the algorithm sees you're not a robot on autopilot.",
       pickOne: "No hour yet.",
       picked: (hour: string) => `You picked ${hour}.`,
       missingHours: (days: string) => `Still missing: ${days}.`,

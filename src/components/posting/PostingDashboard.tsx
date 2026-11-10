@@ -6,7 +6,10 @@ import {
   CALENDAR_END,
   CALENDAR_START,
   DAY_PLANS,
+  WORKER_VISIBLE_THROUGH,
   calendarDates,
+  chooseSlot,
+  dateLocale,
   DayState,
   Desk,
   SLOTS,
@@ -15,6 +18,7 @@ import {
   dayHeading,
   dayReady,
   emptyDayState,
+  openDates,
   CheckItem,
   formatDay,
   formatMinutes,
@@ -30,11 +34,16 @@ import {
   slotsFor,
 } from "~/config/posting";
 import { leavePosting } from "~/app/dashboard/creator/actions";
-import {   addManagedProfile, commitProof, deleteManagedProfile, prepareProofUpload, saveManagedProfile, saveMyDay } from "~/app/posting/actions";
+import {   addManagedProfile, commitProof, deleteManagedProfile, deleteValidatedDay, prepareProofUpload, saveManagedProfile, saveMyDay } from "~/app/posting/actions";
 import { PROOF_PART_BYTES, proofPartCount, type DayWork, type ProfileWork, type ProofRecord } from "~/server/postingProofs";
-import { loadBlob, readDesk, saveBlob, writeDesk } from "~/components/posting/storage";
+import { deleteBlob, loadBlob, readDesk, saveBlob, writeDesk } from "~/components/posting/storage";
 
 type ManagedProfile = { id: string; name: string; code?: string };
+
+const hourText = (short: string) => {
+  const [start, end] = short.split("–");
+  return `${start}h–${end}h`;
+};
 
 const fieldClass =
   "h-12 w-full rounded-xl border border-gray-300 bg-white px-4 font-body text-base text-black placeholder:text-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-1";
@@ -64,24 +73,96 @@ const TimeBadge = ({ minutes }: { minutes: number }) => {
   );
 };
 
-const TaskCopy = ({ label, large }: { label: string; large?: boolean }) => {
+const lineClass = (line: string, index: number, large?: boolean) =>
+  line.startsWith("•")
+    ? "text-sm leading-relaxed"
+    : index === 0
+      ? `${large ? "text-lg" : ""} font-bold leading-snug`
+      : "text-sm leading-relaxed";
+
+const CopyCaptionButton = ({ id, text, copy, copied }: { id: string; text: string; copy: string; copied: string }) => {
+  const [done, setDone] = useState(false);
+  const value = text.trim();
+  const onCopy = async () => {
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+    } catch {
+      const area = document.createElement("textarea");
+      area.value = value;
+      document.body.appendChild(area);
+      area.select();
+      document.execCommand("copy");
+      area.remove();
+    }
+    setDone(true);
+  };
+  return (
+    <button
+      id={id}
+      type="button"
+      disabled={!value}
+      onMouseDown={(event) => event.preventDefault()}
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        void onCopy();
+      }}
+      className="inline-flex h-10 shrink-0 items-center rounded-xl border border-black bg-white px-3 font-body text-sm font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:opacity-40"
+    >
+      {done && value ? copied : copy}
+    </button>
+  );
+};
+
+const TaskCopy = ({ label, large, slides }: { label: string; large?: boolean; slides?: SlideLineActions }) => {
   const lines = label.split("\n").map((line) => line.trim()).filter(Boolean);
   return (
     <span className="flex flex-col gap-1.5">
-      {lines.map((line, index) => (
-        <span
-          key={`${index}-${line.slice(0, 24)}`}
-          className={
-            line.startsWith("•")
-              ? "text-sm leading-relaxed"
-              : index === 0
-                ? `${large ? "text-lg" : ""} font-bold leading-snug`
-                : "text-sm leading-relaxed"
-          }
-        >
-          {line}
-        </span>
-      ))}
+      {lines.map((line, index) => {
+        const key = `${index}-${line.slice(0, 24)}`;
+        const plain = line.replace(/^•\s*/, "");
+        const textClass = lineClass(line, index, large);
+        if (slides && plain === slides.downloadLine) {
+          return (
+            <span key={key} className="flex flex-wrap items-center gap-2">
+              <span className={textClass}>{line}</span>
+              <button
+                id={`download-slides-${slides.date}`}
+                type="button"
+                disabled={slides.namesCount === 0}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  slides.onDownload();
+                }}
+                className="inline-flex h-10 shrink-0 items-center rounded-xl bg-black px-3 font-body text-sm font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:opacity-40"
+              >
+                {slides.downloadLabel}
+              </button>
+            </span>
+          );
+        }
+        if (slides && plain === slides.copyLine) {
+          return (
+            <span key={key} className="flex flex-wrap items-center gap-2">
+              <span className={textClass}>{line}</span>
+              <span className="flex min-w-[12rem] flex-1 items-center gap-2">
+                <span className="min-w-0 flex-1 rounded-xl bg-gray-100 px-3 py-2 font-body text-sm font-normal leading-relaxed">
+                  {slides.caption.trim() || slides.emptyCaption}
+                </span>
+                <CopyCaptionButton id={`copy-caption-${slides.date}`} text={slides.caption} copy={slides.copyLabel} copied={slides.copiedLabel} />
+              </span>
+            </span>
+          );
+        }
+        return (
+          <span key={key} className={textClass}>
+            {line}
+          </span>
+        );
+      })}
     </span>
   );
 };
@@ -145,14 +226,14 @@ const AccountChecks = ({
   </div>
 );
 
-const TaskFace = ({ check, label, large }: { check: CheckItem; label: string; large?: boolean }) => (
+const TaskFace = ({ check, label, large, slides }: { check: CheckItem; label: string; large?: boolean; slides?: SlideLineActions }) => (
   <>
     <span aria-hidden className="mt-0.5 text-[1.35rem] leading-none" style={emojiFont}>
       {taskEmoji(check.id)}
     </span>
     <span className="flex min-w-0 flex-1 flex-col gap-2">
       {typeof check.minutes === "number" ? <TimeBadge minutes={check.minutes} /> : null}
-      <TaskCopy label={label} large={large} />
+      <TaskCopy label={label} large={large} slides={slides} />
       {check.note ? (
         <span className="rounded-xl bg-[#E7F6EC] px-3 py-2 font-body text-sm font-normal leading-relaxed text-[#146C36]">
           {check.note}
@@ -164,6 +245,7 @@ const TaskFace = ({ check, label, large }: { check: CheckItem; label: string; la
 
 const proofKey = (personId: string, date: string) => `proof:${personId}:${date}`;
 const SLIDES_FROM = "2026-11-10";
+const TUESDAY = "2026-11-10";
 const slideKey = (date: string, profileId: string, index = 0) => `tania:${date}:${profileId}:${index}`;
 const legacySlideKey = (date: string, accountId: string) => `tania:${date}:${accountId}`;
 const accountForLang = (value: PostingLang) => (value === "es" ? "es" : value === "en" ? "us" : "fr");
@@ -179,9 +261,49 @@ const slidePeople = (people: { id: string; name: string }[]) =>
     return rank(a.name) - rank(b.name);
   });
 const slideCopy = {
-  fr: { button: "Télécharger toutes les images", note: "Tu fais le diaporama avec ces images." },
-  es: { button: "Descargar todas las imágenes", note: "Haces el carrusel con estas imágenes." },
-  en: { button: "Download all the images", note: "You make the slideshow with these images." },
+  fr: {
+    button: "Télécharger toutes les images",
+    note: "Tu fais le diaporama avec ces images.",
+    download: "Télécharger les images",
+    downloadLine: "Tu le télécharges ici.",
+    copy: "Copier",
+    copyLine: "Copie cette description.",
+    copied: "Copié.",
+    noCaption: "Pas encore de description.",
+  },
+  es: {
+    button: "Descargar todas las imágenes",
+    note: "Haces el carrusel con estas imágenes.",
+    download: "Descargar las imágenes",
+    downloadLine: "Lo descargas aquí.",
+    copy: "Copiar",
+    copyLine: "Copia esta descripción.",
+    copied: "Copiado.",
+    noCaption: "Todavía no hay descripción.",
+  },
+  en: {
+    button: "Download all the images",
+    note: "You make the slideshow with these images.",
+    download: "Download the images",
+    downloadLine: "Download it here.",
+    copy: "Copy",
+    copyLine: "Copy this caption.",
+    copied: "Copied.",
+    noCaption: "No caption yet.",
+  },
+};
+
+type SlideLineActions = {
+  date: string;
+  downloadLabel: string;
+  downloadLine: string;
+  namesCount: number;
+  onDownload: () => void;
+  copyLabel: string;
+  copiedLabel: string;
+  copyLine: string;
+  caption: string;
+  emptyCaption: string;
 };
 
 const uploadProof = (file: File, date: string, onProgress: (percent: number) => void) =>
@@ -266,11 +388,13 @@ export const PostingDashboard = ({
   profiles,
   work = {},
   retrySunday = false,
+  removedDays = [],
 }: {
   role: string;
   profiles: ManagedProfile[];
   work?: Record<string, ProfileWork>;
   retrySunday?: boolean;
+  removedDays?: string[];
 }) => {
   const remoteProofs: ProofRecord[] = Object.entries(work).flatMap(([profileId, profile]) =>
     Object.entries(profile.days)
@@ -288,6 +412,9 @@ export const PostingDashboard = ({
   const [newName, setNewName] = useState("");
   const [newCode, setNewCode] = useState("");
   const [profileError, setProfileError] = useState("");
+  const [hiddenDays, setHiddenDays] = useState(removedDays);
+  const [deletingDate, setDeletingDate] = useState<string | null>(null);
+  const [dayError, setDayError] = useState<string | null>(null);
   const isTania = role === "tania";
   const lang: PostingLang = isTania ? "fr" : langFromName(profiles.find((item) => item.id === role)?.name ?? "");
   const ui = postingUi(lang);
@@ -407,6 +534,13 @@ export const PostingDashboard = ({
   const person = isTania ? null : roster.find((item) => item.id === role) ?? null;
   const people = isTania ? roster : [];
 
+  const slotDates = openDates(today).filter((date) => date <= WORKER_VISIBLE_THROUGH);
+  const missingDays = person ? slotDates.filter((date) => slotsFor(desk, person.id, date).length === 0) : [];
+  const missingNames = new Intl.ListFormat(dateLocale(lang), { type: "conjunction" }).format(
+    missingDays.map((date) => lower(formatDay(date, lang)))
+  );
+  const weekSaved = person ? desk.weekValidated[person.id] === true : false;
+
   const publishDay = (date: string, desk: Desk) => {
     if (!person) return;
     const record = desk.days[person.id]?.[date];
@@ -415,6 +549,40 @@ export const PostingDashboard = ({
       checks: record?.checks ?? {},
       validated: record?.validated === true,
       proofName: record?.proofName ?? null,
+    });
+  };
+
+  const toggleSlot = (date: string, slotId: SlotId) => {
+    if (!person) return;
+    update((current) => {
+      const next = {
+        ...current,
+        slots: {
+          ...current.slots,
+          [person.id]: { ...current.slots[person.id], [date]: chooseSlot(slotsFor(current, person.id, date), slotId) },
+        },
+      };
+      publishDay(date, next);
+      return next;
+    });
+  };
+
+  const removeDay = async (date: string) => {
+    if (!isTania || deletingDate) return;
+    setDayError(null);
+    setDeletingDate(date);
+    const result = await deleteValidatedDay(date);
+    setDeletingDate(null);
+    if (!result.ok) {
+      setDayError(date);
+      return;
+    }
+    setHiddenDays((current) => (current.includes(date) ? current : [...current, date]));
+    await Promise.all(roster.map((worker) => deleteBlob(proofKey(worker.id, date)).catch(() => undefined)));
+    setUrls((current) => {
+      const next = { ...current };
+      for (const worker of roster) delete next[proofKey(worker.id, date)];
+      return next;
     });
   };
 
@@ -486,6 +654,16 @@ export const PostingDashboard = ({
     } catch {
       setFileError("Le fichier n'a pas été gardé dans ce navigateur.");
     }
+  };
+
+  const saveCaption = (date: string, profileId: string, value: string) => {
+    update((current) => ({
+      ...current,
+        captions: {
+        ...(current.captions ?? {}),
+        [date]: { ...(current.captions?.[date] ?? {}), [profileId]: value.slice(0, 500) },
+      },
+    }));
   };
 
   const downloadSlides = (date: string, accountId: string, names: string[]) => {
@@ -649,7 +827,81 @@ export const PostingDashboard = ({
           </section>
         )}
 
-        {visiblePlans(isTania).map((plan) => {
+        {!isTania && person && (
+          <section aria-label={ui.slots} className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
+            <h2 className="font-title text-2xl tracking-tight">{ui.slots}</h2>
+            <p className="mt-2 font-body text-base leading-relaxed text-gray-700">{ui.slotsHelp}</p>
+            <p className="mt-3 rounded-xl bg-[#E7F6EC] px-3 py-2 font-body text-sm font-normal leading-relaxed text-[#146C36]">{ui.slotsVary}</p>
+            <ul className="mt-4 flex flex-col gap-4">
+              {slotDates.map((date) => {
+                const chosen = slotsFor(desk, person.id, date)[0];
+                const chosenSlot = SLOTS.find((slot) => slot.id === chosen);
+                return (
+                  <li key={date} className="border-t border-gray-200 pt-4 first:border-t-0 first:pt-0">
+                    <p className="font-body text-base font-bold">
+                      {formatDay(date, lang)}
+                      {date === today ? `, ${ui.todayWord}` : ""}
+                    </p>
+                    <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                      {SLOTS.map((slot) => {
+                        const selected = chosen === slot.id;
+                        return (
+                          <button
+                            key={slot.id}
+                            id={`slot-${date}-${slot.id}`}
+                            type="button"
+                            aria-pressed={selected}
+                            aria-label={`${formatDay(date, lang)} ${slot.label}`}
+                            onClick={() => toggleSlot(date, slot.id)}
+                            className={`flex h-12 items-center justify-center rounded-xl px-2 font-body text-base font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-black ${
+                              selected ? "bg-black text-white" : "bg-gray-100 text-black"
+                            }`}
+                          >
+                            {hourText(slot.short)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="mt-2 font-body text-sm leading-relaxed text-gray-700">
+                      {chosenSlot ? ui.picked(hourText(chosenSlot.short)) : ui.pickOne}
+                    </p>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="mt-4 border-t border-gray-200 pt-4">
+              {missingDays.length > 0 && (
+                <p className="font-body text-base leading-relaxed text-gray-700">
+                  {missingDays.length > 3 ? ui.missingCount(missingDays.length) : ui.missingHours(missingNames)}
+                </p>
+              )}
+              {missingDays.length === 0 && !weekSaved && (
+                <p className="font-body text-base leading-relaxed text-gray-700">{ui.readyHours}</p>
+              )}
+              {weekSaved ? (
+                <div id="validate-week" className={`${missingDays.length > 0 ? "mt-3" : ""} rounded-xl border border-black px-4 py-3`}>
+                  <p className="font-body text-base font-bold">{ui.weekDone}</p>
+                  <p className="mt-1 font-body text-sm leading-relaxed text-gray-700">{ui.weekEdit}</p>
+                </div>
+              ) : (
+                <button
+                  id="validate-week"
+                  type="button"
+                  onClick={() =>
+                    update((current) => ({ ...current, weekValidated: { ...current.weekValidated, [person.id]: true } }))
+                  }
+                  className="mt-3 h-12 w-full rounded-xl bg-black px-4 font-body text-base font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
+                >
+                  {ui.validateWeek}
+                </button>
+              )}
+            </div>
+          </section>
+        )}
+
+        {visiblePlans(isTania)
+          .filter((plan) => !(isTania && hiddenDays.includes(plan.date)))
+          .map((plan) => {
           const checks = checksFor(plan, isTania ? "fr" : lang);
           if (isTania) {
             return (
@@ -706,11 +958,36 @@ export const PostingDashboard = ({
                             className="mt-2 block w-full font-body text-sm"
                           />
                           {names.length > 0 && <p className="mt-2 font-body text-sm">{names.length} images</p>}
+                          {plan.date === TUESDAY && (
+                            <textarea
+                              id={`caption-${plan.date}-${worker.id}`}
+                              value={desk.captions?.[plan.date]?.[worker.id] ?? ""}
+                              onChange={(event) => saveCaption(plan.date, worker.id, event.target.value)}
+                              rows={3}
+                              placeholder="Description du jour"
+                              aria-label={`Description de ${label}`}
+                              className="mt-3 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 font-body text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
+                            />
+                          )}
                         </div>
                       );
                     })}
                   </div>
                 )}
+                <div className="mt-5">
+                  <button
+                    id={`delete-day-${plan.date}`}
+                    type="button"
+                    disabled={deletingDate === plan.date}
+                    onClick={() => void removeDay(plan.date)}
+                    className="h-12 w-full rounded-xl border border-black bg-white px-4 font-body text-base font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:opacity-40"
+                  >
+                    Supprimer ce jour
+                  </button>
+                  {dayError === plan.date && (
+                    <p className="mt-2 font-body text-sm text-[#C8102E]">Le jour n&apos;a pas été supprimé. Réessaie.</p>
+                  )}
+                </div>
               </section>
             );
           }
@@ -738,11 +1015,32 @@ export const PostingDashboard = ({
                       }
                       className={`shrink-0 accent-black ${check.parent ? "mt-0.5 h-4 w-4" : "mt-1 h-5 w-5"}`}
                     />
-                    <TaskFace check={check} label={label} large={!check.parent} />
+                    <TaskFace
+                      check={check}
+                      label={label}
+                      large={!check.parent}
+                      slides={
+                        person && plan.date === TUESDAY && check.id === "post-fr"
+                          ? {
+                              date: plan.date,
+                              downloadLabel: slideCopy[lang].download,
+                              downloadLine: slideCopy[lang].downloadLine,
+                              namesCount: (desk.taniaFiles[plan.date]?.[person.id] ?? []).length,
+                              onDownload: () =>
+                                downloadSlides(plan.date, person.id, desk.taniaFiles[plan.date]?.[person.id] ?? []),
+                              copyLabel: slideCopy[lang].copy,
+                              copiedLabel: slideCopy[lang].copied,
+                              copyLine: slideCopy[lang].copyLine,
+                              caption: desk.captions?.[plan.date]?.[person.id] ?? "",
+                              emptyCaption: slideCopy[lang].noCaption,
+                            }
+                          : undefined
+                      }
+                    />
                   </label>
                 )}
               />
-              {person && plan.date >= SLIDES_FROM && plan.publishers.includes(accountForLang(lang)) && (desk.taniaFiles[plan.date]?.[person.id]?.length ?? 0) > 0 && (
+              {person && plan.date > TUESDAY && plan.publishers.includes(accountForLang(lang)) && (desk.taniaFiles[plan.date]?.[person.id]?.length ?? 0) > 0 && (
                 <div className="mt-4 rounded-2xl bg-gray-100 p-3">
                   <p className="font-body text-sm leading-relaxed">{slideCopy[lang].note}</p>
                   <div className="mt-3 flex flex-wrap gap-2">
