@@ -116,8 +116,8 @@ const WEEK_STEPS: Record<string, WeekStep[]> = {
     { account: 2, kind: "warm" },
   ],
   "2026-11-11": [
-    { account: 1, kind: "profile" },
     { account: 0, kind: "post" },
+    { account: 1, kind: "post" },
     { account: 2, kind: "warm" },
   ],
   "2026-11-12": [
