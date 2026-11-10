@@ -145,6 +145,17 @@ const WEEK_STEPS: Record<string, WeekStep[]> = {
 const publishersOn = (date: string) =>
   (WEEK_STEPS[date] ?? []).filter((step) => step.kind === "post").map((step) => ACCOUNTS[step.account].id);
 
+/** Follow target for the focus block. Tuesday stays at 30. */
+const focusFollows = (date: string) =>
+  ({
+    "2026-11-10": 30,
+    "2026-11-11": 40,
+    "2026-11-12": 50,
+    "2026-11-13": 60,
+    "2026-11-14": 70,
+    "2026-11-15": 80,
+  })[date];
+
 const post = (date: string, index: number): DayPlan => ({
   date,
   index,
@@ -237,6 +248,7 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
   const steps = WEEK_STEPS[plan.date];
   if (steps) {
     const engage = plan.date === "2026-11-09" ? say.engageMore : undefined;
+    const follows = focusFollows(plan.date);
     return [...steps]
       .sort((a, b) => a.account - b.account)
       .flatMap((step) => {
@@ -247,19 +259,35 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
           task(`profile-${id}`, say.profile(account), PROFILE_SETUP_MINUTES),
           task(`photo-${id}`, plan.date === "2026-11-09" ? say.photoMonday : say.photoRule, undefined, `profile-${id}`),
           task(`bio-${id}`, say.bioRule, undefined, `profile-${id}`),
-          task(`warm-${id}`, say.warm(account, say.thenWarm), PROFILE_WARM_MINUTES, undefined, engage),
+          task(
+            `warm-${id}`,
+            typeof follows === "number" && plan.date >= "2026-11-11" && plan.date <= "2026-11-13"
+              ? say.focusNoPost(account, follows)
+              : say.warm(account, say.thenWarm),
+            PROFILE_WARM_MINUTES,
+            undefined,
+            engage,
+          ),
         ];
       }
       if (step.kind === "post") {
         const precise = plan.date === "2026-11-10" && id === "fr";
+        const weekendGoal =
+          (plan.date === "2026-11-14" || plan.date === "2026-11-15") && typeof follows === "number"
+            ? say.focusGoal(follows)
+            : undefined;
         return [
-          task(`before-${id}`, precise ? say.tuesdayWarmBefore(account) : say.postWarmBefore(account), POST_WARM_BEFORE_MINUTES),
+          task(
+            `before-${id}`,
+            precise ? say.tuesdayWarmBefore(account) : say.postWarmBefore(account, weekendGoal),
+            POST_WARM_BEFORE_MINUTES,
+          ),
           task(`post-${id}`, precise ? say.tuesdayPost(account) : say.post(account), POST_PUBLISH_MINUTES),
           task(`after-${id}`, precise ? say.tuesdayWarmAfter(account) : say.postWarmAfter(account), POST_WARM_AFTER_MINUTES),
         ];
       }
-      if (plan.date === "2026-11-10") {
-        return [task(`warm-${id}`, say.tuesdayNoPost(account), ACCOUNT_BLOCK_MINUTES)];
+      if (typeof follows === "number" && plan.date >= "2026-11-10") {
+        return [task(`warm-${id}`, say.focusNoPost(account, follows), ACCOUNT_BLOCK_MINUTES)];
       }
       return [task(`warm-${id}`, say.warm(account, say.noPostToday), ACCOUNT_BLOCK_MINUTES, undefined, engage)];
     });
@@ -346,12 +374,13 @@ type Phrases = {
   noProfile: string;
   warm: (account: string, before?: string) => string;
   post: (account: string) => string;
-  postWarmBefore: (account: string) => string;
+  postWarmBefore: (account: string, goal?: string) => string;
   postWarmAfter: (account: string) => string;
   tuesdayWarmBefore: (account: string) => string;
   tuesdayPost: (account: string) => string;
   tuesdayWarmAfter: (account: string) => string;
-  tuesdayNoPost: (account: string) => string;
+  focusGoal: (count: number) => string;
+  focusNoPost: (account: string, count: number) => string;
   profile: (account: string) => string;
   photoRule: string;
   photoMonday: string;
@@ -397,10 +426,11 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Un like, seulement quand ça te plaît vraiment",
         "• Tu ne postes rien"
       ),
-    postWarmBefore: (account) =>
+    postWarmBefore: (account, goal) =>
       block(
         account,
         "Échauffement.",
+        goal,
         "Reste dessus, comme si c'était ton TikTok.",
         "• Fais défiler, regarde ce qui t'intéresse",
         "• Un like, seulement quand ça te plaît vraiment"
@@ -448,15 +478,17 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Tu ne postes plus.",
         "• Interagis de façon naturelle."
       ),
-    tuesdayNoPost: (account) =>
+    focusGoal: (count) =>
+      `Objectif : au moins ${count} abonnements à la fin, et montrer à TikTok que tu es une vraie personne.`,
+    focusNoPost: (account, count) =>
       block(
         account,
         "Focus objectif.",
-        "Objectif : au moins 30 abonnements à la fin, et montrer à TikTok que tu es une vraie personne.",
+        `Objectif : au moins ${count} abonnements à la fin, et montrer à TikTok que tu es une vraie personne.`,
         "• Défile comme si c'était ton TikTok. Passe un bon moment. Commente, et réponds à des commentaires déjà là.",
         "• Va sur des influenceurs que tu connais, pas trop connus, pour que TikTok voie que tu es du pays.",
         "• Tu n'aimes pas tout.",
-        "• Abonne-toi jusqu'à au moins 30 abonnements.",
+        `• Abonne-toi jusqu'à au moins ${count} abonnements.`,
         "• Un like seulement quand ça te plaît vraiment."
       ),
     profile: (account) => block(account, "Écris une bio et mets une photo de profil."),
@@ -505,10 +537,11 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Un like, solo cuando de verdad te guste",
         "• No publicas nada"
       ),
-    postWarmBefore: (account) =>
+    postWarmBefore: (account, goal) =>
       block(
         account,
         "Calentamiento.",
+        goal,
         "Como si fuera tu TikTok.",
         "• Desliza, mira lo que te interesa",
         "• Un like, solo cuando de verdad te guste"
@@ -556,15 +589,16 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Ya no publicas.",
         "• Interactúa con naturalidad."
       ),
-    tuesdayNoPost: (account) =>
+    focusGoal: (count) => `Objetivo: al menos ${count} seguidos al final, y mostrarle a TikTok que eres una persona real.`,
+    focusNoPost: (account, count) =>
       block(
         account,
         "Focus objetivo.",
-        "Objetivo: al menos 30 seguidos al final, y mostrarle a TikTok que eres una persona real.",
+        `Objetivo: al menos ${count} seguidos al final, y mostrarle a TikTok que eres una persona real.`,
         "• Desliza como si fuera tu TikTok. Pasa un buen rato. Comenta y responde a comentarios que ya están ahí.",
         "• Entra en influencers que conoces, no muy conocidos, para que TikTok vea que eres del país.",
         "• No le des like a todo.",
-        "• Sigue cuentas hasta tener al menos 30 seguidos.",
+        `• Sigue cuentas hasta tener al menos ${count} seguidos.`,
         "• Un like solo cuando de verdad te guste."
       ),
     profile: (account) => block(account, "Escribe una bio y pon una foto de perfil."),
@@ -613,10 +647,11 @@ const phrases: Record<PostingLang, Phrases> = {
         "• A like, only when you really like it",
         "• You do not post anything"
       ),
-    postWarmBefore: (account) =>
+    postWarmBefore: (account, goal) =>
       block(
         account,
         "Warm-up.",
+        goal,
         "As if it were your TikTok.",
         "• Scroll, watch what you like",
         "• A like, only when you really like it"
@@ -664,15 +699,17 @@ const phrases: Record<PostingLang, Phrases> = {
         "• You do not post anymore.",
         "• Interact in a natural way."
       ),
-    tuesdayNoPost: (account) =>
+    focusGoal: (count) =>
+      `Goal: at least ${count} accounts you follow by the end, and show TikTok that you are a real person.`,
+    focusNoPost: (account, count) =>
       block(
         account,
         "Focus: the goal.",
-        "Goal: at least 30 accounts you follow by the end, and show TikTok that you are a real person.",
+        `Goal: at least ${count} accounts you follow by the end, and show TikTok that you are a real person.`,
         "• Scroll as if it were your TikTok. Have a good time. Comment, and reply to comments that are already there.",
         "• Go to influencers you know, not too well known, so TikTok sees that you are from the country.",
         "• You do not like everything.",
-        "• Keep following until you follow at least 30 accounts.",
+        `• Keep following until you follow at least ${count} accounts.`,
         "• A like only when you really like it."
       ),
     profile: (account) => block(account, "Write a bio and add a profile photo."),

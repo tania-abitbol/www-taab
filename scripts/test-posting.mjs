@@ -235,9 +235,16 @@ assert.ok(wednesday[4].label.includes("que tu as déjà"));
 assert.equal(wednesday[4].label.includes("qu'elles ont déjà"), false);
 assert.equal(wednesday[6].minutes, 10);
 assert.ok(wednesday[6].label.startsWith("Compte 2"));
+assert.ok(wednesday[6].label.includes("Focus objectif."));
+assert.ok(wednesday[6].label.includes("40 abonnements"));
+assert.ok(wednesday[3].label.includes("Écris une bio"));
+assert.equal(wednesday[0].label.includes("Focus objectif."), false);
+assert.equal(wednesday[0].label.includes("40 abonnements"), false);
 assert.equal(wednesday[7].minutes, 20);
 assert.ok(wednesday[7].label.startsWith("Compte 3"));
-assert.ok(wednesday[7].label.includes("Tu ne postes pas aujourd'hui"));
+assert.ok(wednesday[7].label.includes("Focus objectif."));
+assert.ok(wednesday[7].label.includes("40 abonnements"));
+assert.equal(wednesday[7].label.includes("Tu ne postes pas aujourd'hui"), false);
 assert.equal(timedMinutes(wednesday), 60);
 assert.equal(wednesday.some((item) => /\b(FR|ES|US)\b/.test(item.label)), false);
 const thursday = checksFor(DAY_PLANS[6]);
@@ -247,14 +254,37 @@ const sundayNext = checksFor(DAY_PLANS[9]);
 assert.equal(thursday.filter((item) => item.label.includes("Appuie sur Publier")).length, 2);
 assert.equal(thursday.at(-1).minutes, 20);
 assert.ok(thursday.at(-1).label.startsWith("Compte 3"));
+assert.ok(thursday.at(-1).label.includes("Focus objectif."));
+assert.ok(thursday.at(-1).label.includes("50 abonnements"));
+assert.equal(thursday.find((item) => item.id === "before-fr").label.includes("50 abonnements"), false);
 assert.equal(fridayNext.find((item) => item.id === "profile-us").minutes, 10);
 assert.ok(fridayNext.find((item) => item.id === "profile-us").label.startsWith("Compte 3"));
 assert.ok(fridayNext.find((item) => item.id === "profile-us").label.includes("Écris une bio"));
+assert.ok(fridayNext.find((item) => item.id === "warm-us").label.includes("Focus objectif."));
+assert.ok(fridayNext.find((item) => item.id === "warm-us").label.includes("60 abonnements"));
+assert.equal(fridayNext.find((item) => item.id === "warm-us").minutes, 10);
+assert.equal(fridayNext.find((item) => item.id === "before-fr").label.includes("60 abonnements"), false);
 assert.ok(fridayNext.findIndex((item) => item.id === "post-fr") < fridayNext.findIndex((item) => item.id === "post-es"));
 assert.ok(fridayNext.findIndex((item) => item.id === "post-es") < fridayNext.findIndex((item) => item.id === "profile-us"));
 assert.equal(fridayNext.filter((item) => item.label.includes("Appuie sur Publier")).length, 2);
 assert.equal(saturdayNext.filter((item) => item.label.includes("Appuie sur Publier")).length, 3);
-assert.equal(sundayNext.map((item) => item.label).join("|"), saturdayNext.map((item) => item.label).join("|"));
+assert.ok(saturdayNext.find((item) => item.id === "before-fr").label.includes("70 abonnements"));
+assert.ok(saturdayNext.find((item) => item.id === "before-es").label.includes("70 abonnements"));
+assert.ok(saturdayNext.find((item) => item.id === "before-us").label.includes("70 abonnements"));
+assert.equal(saturdayNext.find((item) => item.id === "post-fr").label.includes("70 abonnements"), false);
+assert.equal(saturdayNext.find((item) => item.id === "after-fr").label.includes("70 abonnements"), false);
+assert.equal(saturdayNext.find((item) => item.id === "before-fr").minutes, 8);
+assert.ok(sundayNext.find((item) => item.id === "before-fr").label.includes("80 abonnements"));
+assert.equal(sundayNext.find((item) => item.id === "post-us").label.includes("Appuie sur Publier"), true);
+assert.equal(
+  sundayNext.map((item) => item.label.replaceAll("80", "70")).join("|"),
+  saturdayNext.map((item) => item.label).join("|"),
+);
+assert.ok(checksFor(DAY_PLANS[5], "es").find((item) => item.id === "warm-us").label.includes("40 seguidos"));
+assert.ok(checksFor(DAY_PLANS[6], "en").find((item) => item.id === "warm-us").label.includes("at least 50 accounts"));
+assert.ok(checksFor(DAY_PLANS[8], "en").find((item) => item.id === "before-us").label.includes("at least 70 accounts"));
+assert.ok(checksFor(DAY_PLANS[9], "es").find((item) => item.id === "before-es").label.includes("80 seguidos"));
+assert.equal(checksFor(DAY_PLANS[3]).some((item) => item.label.includes("Focus objectif.")), false);
 assert.equal(timedMinutes(thursday) + timedMinutes(fridayNext) + timedMinutes(saturdayNext) + timedMinutes(sundayNext), 240);
 for (const plan of DAY_PLANS.filter((item) => item.date >= "2026-11-09")) {
   for (const lang of ["fr", "es", "en"]) {
