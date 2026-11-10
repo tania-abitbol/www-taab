@@ -23,6 +23,9 @@ const {
   emptyDayState,
   formatMinutes,
   langFromName,
+  calendarDate,
+  timeZoneForGirl,
+  workerVisiblePlans,
   WORKER_VISIBLE_THROUGH,
   openDates,
   openPlans,
@@ -433,6 +436,26 @@ assert.equal(ACCOUNTS.map((account) => account.task).join(","), "Compte 1,Compte
 assert.equal(langFromName("Ghada - FR"), "fr");
 assert.equal(langFromName("Peches - ES"), "es");
 assert.equal(langFromName("Karol - US"), "en");
+assert.equal(timeZoneForGirl("Ghada - FR"), "Europe/Paris");
+assert.equal(timeZoneForGirl("Peches - ES"), "Europe/Madrid");
+assert.equal(timeZoneForGirl("Karol - US"), "America/New_York");
+assert.equal(timeZoneForGirl("Karol - EN"), "America/New_York");
+const stillMondayInNewYork = new Date("2026-11-09T23:30:00Z");
+assert.equal(calendarDate("Europe/Paris", stillMondayInNewYork), "2026-11-10");
+assert.equal(calendarDate("Europe/Madrid", stillMondayInNewYork), "2026-11-10");
+assert.equal(calendarDate("America/New_York", stillMondayInNewYork), "2026-11-09");
+const datesFor = (name, now) => workerVisiblePlans(name, now).map((plan) => plan.date);
+assert.equal(datesFor("Ghada - FR", stillMondayInNewYork).includes("2026-11-09"), false);
+assert.equal(datesFor("Ghada - FR", stillMondayInNewYork)[0], "2026-11-10");
+assert.equal(datesFor("Peches - ES", stillMondayInNewYork).includes("2026-11-09"), false);
+assert.equal(datesFor("Karol - US", stillMondayInNewYork)[0], "2026-11-09");
+assert.equal(datesFor("Karol - EN", stillMondayInNewYork).includes("2026-11-09"), true);
+const tuesdayInNewYork = new Date("2026-11-10T05:30:00Z");
+assert.equal(calendarDate("America/New_York", tuesdayInNewYork), "2026-11-10");
+assert.equal(datesFor("Karol - US", tuesdayInNewYork).includes("2026-11-09"), false);
+assert.equal(datesFor("Karol - US", tuesdayInNewYork)[0], "2026-11-10");
+assert.equal(DAY_PLANS.some((plan) => plan.date === "2026-11-09"), true);
+assert.equal(DAY_PLANS.some((plan) => plan.date === "2026-11-06"), true);
 assert.equal(langFromName("Profil 1"), "fr");
 assert.ok(postingUi("fr").slotsHelp.includes("une seule heure"));
 assert.ok(postingUi("es").slotsHelp.includes("una sola hora"));

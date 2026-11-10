@@ -372,6 +372,33 @@ export const personMark = (person: Person) => {
   return person.name.slice(0, 2);
 };
 
+/** Each girl hides a past day when that date is already over where she is. */
+export const timeZoneForGirl = (name: string) => {
+  const key = displayName(name).toLowerCase().split(/[\s-–—]/)[0];
+  if (key === "ghada") return "Europe/Paris";
+  if (key === "peches") return "Europe/Madrid";
+  if (key === "karol") return "America/New_York";
+  const lang = langFromName(name);
+  if (lang === "es") return "Europe/Madrid";
+  if (lang === "en") return "America/New_York";
+  return "Europe/Paris";
+};
+
+/** Calendar day in that timezone, as YYYY-MM-DD. */
+export const calendarDate = (timeZone: string, now = new Date()) =>
+  new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
+
+/** Days still on a girl's screen: from her local today through Sunday 15 Nov. */
+export const workerVisiblePlans = (name: string, now = new Date()) => {
+  const today = calendarDate(timeZoneForGirl(name), now);
+  return DAY_PLANS.filter((plan) => plan.date >= today && plan.date <= WORKER_VISIBLE_THROUGH);
+};
+
 /** Locale sits at the end of the profile name: "Ghada - FR". */
 export type PostingLang = "fr" | "es" | "en";
 

@@ -7,7 +7,9 @@ import {
   CALENDAR_END,
   CALENDAR_START,
   DAY_PLANS,
+  WORKER_VISIBLE_THROUGH,
   calendarDates,
+  workerVisiblePlans,
   chooseSlot,
   DayState,
   Desk,
@@ -490,12 +492,19 @@ export const PostingDashboard = ({
     setBoard(next);
   };
   const isTania = role === "tania";
-  const lang: PostingLang = isTania ? "fr" : langFromName(profiles.find((item) => item.id === role)?.name ?? "");
+  const girlName = isTania ? "" : profiles.find((item) => item.id === role)?.name ?? "";
+  const [clock, setClock] = useState(() => new Date());
+  useEffect(() => {
+    if (isTania) return;
+    const timer = window.setInterval(() => setClock(new Date()), 60_000);
+    return () => window.clearInterval(timer);
+  }, [isTania]);
+  const lang: PostingLang = isTania ? "fr" : langFromName(girlName);
   const ui = postingUi(lang);
   const lower = (value: string) => value.charAt(0).toLowerCase() + value.slice(1);
-  const workerPlans = DAY_PLANS.filter((plan) => plan.date >= "2026-11-09" && plan.date <= "2026-11-15");
-  const rangeStart = isTania ? CALENDAR_START : "2026-11-09";
-  const rangeEnd = isTania ? CALENDAR_END : "2026-11-15";
+  const workerPlans = isTania ? [] : workerVisiblePlans(girlName, clock);
+  const rangeStart = isTania ? CALENDAR_START : workerPlans[0]?.date ?? WORKER_VISIBLE_THROUGH;
+  const rangeEnd = isTania ? CALENDAR_END : WORKER_VISIBLE_THROUGH;
   const range =
     lang === "en"
       ? ui.range(formatDay(rangeStart, lang), formatDay(rangeEnd, lang))
