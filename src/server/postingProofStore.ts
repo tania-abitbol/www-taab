@@ -2,9 +2,9 @@ import { mkdir, readFile, writeFile } from "fs/promises";
 import path from "path";
 
 import {
-  DayWork,
-  ProfileWork,
-  ProofFile,
+  type DayWork,
+  type ProfileWork,
+  type ProofFile,
   cleanDayWork,
   cleanProofFile,
   emptyDayWork,
@@ -68,7 +68,11 @@ const readJson = async (store: string, key: string) => {
   const response = await fetch(url, { signal: AbortSignal.timeout(8000) });
   if (response.status === 404) return null;
   if (!response.ok) return null;
-  return response.json();
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
 };
 
 const writeJson = async (store: string, key: string, value: unknown) => {
@@ -84,16 +88,29 @@ const writeJson = async (store: string, key: string, value: unknown) => {
 };
 
 /** Netlify deletes a blob on the API itself. DELETE does not return a signed URL. */
-const discard = async (store: string, key: string) => {
+const discard = async (store: string, key: string, signal?: AbortSignal) => {
+  if (signal?.aborted) return;
   const context = blobsContext();
   if (!context?.siteID || !context.token) return;
   const response = await fetch(endpoint(context, store, key), {
     method: "DELETE",
     headers: { authorization: `Bearer ${context.token}` },
-    signal: AbortSignal.timeout(8000),
+    signal,
   });
   if (response.status === 200 || response.status === 204 || response.status === 404) return;
   throw new Error("proof-delete");
+};
+
+const runPool = async (jobs: Array<() => Promise<void>>, limit: number, signal?: AbortSignal) => {
+  let cursor = 0;
+  const workers = Array.from({ length: Math.min(limit, jobs.length) }, async () => {
+    while (!signal?.aborted && cursor < jobs.length) {
+      const job = jobs[cursor];
+      cursor += 1;
+      await job?.().catch(() => undefined);
+    }
+  });
+  await Promise.all(workers);
 };
 
 let queue = Promise.resolve();
@@ -199,18 +216,37 @@ export const rememberProof = (profileId: string, date: string, name: string) =>
     await writeJson(WORK, `work-${profileId}`, current);
   });
 
-export const deleteStoredProof = async (profileId: string, date: string) => {
-  if (!proofAllowed(profileId, date, 1)) return;
+export const deleteStoredProof = async (profileId: string, date: string, signal?: AbortSignal) => {
+  if (!proofAllowed(profileId, date, 1) || signal?.aborted) return;
   await deleteLocalProof(profileId, date);
-  if (!proofStorageReady()) return;
+  if (!proofStorageReady() || signal?.aborted) return;
   const file = await loadProofFile(profileId, date);
   if (file) {
-    for (let part = 0; part < file.parts; part += 1) {
-      await discard(PROOFS, proofPartKey(profileId, date, file.generation, part));
-    }
+    const jobs = Array.from({ length: file.parts }, (_, part) => () =>
+      discard(PROOFS, proofPartKey(profileId, date, file.generation, part), signal),
+    );
+    await runPool(jobs, 32, signal);
   }
-  await discard(PROOFS, proofMetaKey(profileId, date));
-  await discard(PROOFS, proofObjectKey(profileId, date));
+  if (signal?.aborted) return;
+  await discard(PROOFS, proofMetaKey(profileId, date), signal).catch(() => undefined);
+  await discard(PROOFS, proofObjectKey(profileId, date), signal).catch(() => undefined);
+};
+
+/** Hide the day before touching its videos. A Friday proof can be thousands of parts. */
+export const forgetPostedDay = async (profileIds: string[], date: string) => {
+  await rememberRemovedDay(date);
+  await Promise.all(profileIds.map((profileId) => clearDayProof(profileId, date).catch(() => undefined)));
+  const stop = new AbortController();
+  const timer = setTimeout(() => stop.abort(), 5000);
+  try {
+    await Promise.race([
+      Promise.all(profileIds.map((profileId) => deleteStoredProof(profileId, date, stop.signal).catch(() => undefined))),
+      new Promise<void>((resolve) => stop.signal.addEventListener("abort", () => resolve(), { once: true })),
+    ]);
+  } finally {
+    clearTimeout(timer);
+    stop.abort();
+  }
 };
 
 export const clearDayProof = (profileId: string, date: string) =>

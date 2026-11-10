@@ -1,5 +1,5 @@
-import { normalizeProfiles, PostingProfile } from "~/config/postingProfiles";
-import { cleanDayWork, emptyProfileWork, ProfileWork } from "~/server/postingProofs";
+import { normalizeProfiles, type PostingProfile } from "~/config/postingProfiles";
+import { cleanDayWork, emptyProfileWork, type ProfileWork } from "~/server/postingProofs";
 
 const ORIGIN = "https://taabapps.com";
 const TTL_MS = 10_000;

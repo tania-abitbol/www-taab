@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 import { DASHBOARD_COOKIE, readSession } from "~/server/dashboardSession";
 import { planFor } from "~/config/posting";
 import { DayWork, cleanDayWork, proofAllowed, proofFileName } from "~/server/postingProofs";
-import { clearDayProof, deleteStoredProof, loadWork, proofStorageReady, rememberProof, rememberRemovedDay, saveWorkDay } from "~/server/postingProofStore";
+import { forgetPostedDay, loadWork, proofStorageReady, rememberProof, saveWorkDay } from "~/server/postingProofStore";
 import { changeProfile, createProfile, listProfiles, removeProfile } from "~/server/postingProfileStore";
 
 const refused = { ok: false as const, error: "Seul le code de Tania peut gérer les profils." };
@@ -74,11 +74,10 @@ export const deleteValidatedDay = async (date: string) => {
   if (!planFor(date)) return { ok: false as const, error: "date" as const };
   try {
     const profiles = await listProfiles();
-    for (const profile of profiles) {
-      await deleteStoredProof(profile.id, date);
-      await clearDayProof(profile.id, date);
-    }
-    await rememberRemovedDay(date);
+    await forgetPostedDay(
+      profiles.map((profile) => profile.id),
+      date,
+    );
     return { ok: true as const };
   } catch {
     return { ok: false as const, error: "store" as const };
