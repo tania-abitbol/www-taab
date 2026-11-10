@@ -55,7 +55,7 @@ export type DayPlan = {
   publishers: string[];
 };
 
-export type CheckItem = { id: string; label: string; parent?: string; minutes?: number; note?: string };
+export type CheckItem = { id: string; label: string; parent?: string; minutes?: number; note?: string; copyText?: string };
 
 export type DayState = {
   checks: Record<string, boolean>;
@@ -221,12 +221,13 @@ export const madridToday = (now = new Date()) =>
 /** Whole minutes only, as in “16 min” or “17 min”. */
 export const formatMinutes = (minutes: number) => `${Math.round(minutes)} min`;
 
-const task = (id: string, label: string, minutes?: number, parent?: string, note?: string): CheckItem => ({
+const task = (id: string, label: string, minutes?: number, parent?: string, note?: string, copyText?: string): CheckItem => ({
   id,
   label,
   ...(typeof minutes === "number" ? { minutes } : {}),
   ...(parent ? { parent } : {}),
   ...(note ? { note } : {}),
+  ...(copyText ? { copyText } : {}),
 });
 
 export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] => {
@@ -263,7 +264,14 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
             undefined,
             `profile-${id}`,
           ),
-          task(`bio-${id}`, say.bioRule, undefined, `profile-${id}`),
+          task(
+            `bio-${id}`,
+            plan.date === "2026-11-10" ? block(say.bioTitle, say.bioTuesday) : say.bioRule,
+            undefined,
+            `profile-${id}`,
+            undefined,
+            plan.date === "2026-11-10" ? say.bioTuesday : undefined,
+          ),
           task(
             `warm-${id}`,
             typeof follows === "number" && plan.date >= "2026-11-11" && plan.date <= "2026-11-13"
@@ -404,6 +412,8 @@ type Phrases = {
   profile: (account: string) => string;
   photoRule: string;
   photoMonday: string;
+  bioTitle: string;
+  bioTuesday: string;
   bioRule: string;
   thenWarm: string;
   noPostToday: string;
@@ -519,6 +529,8 @@ const phrases: Record<PostingLang, Phrases> = {
       "• Un screen d'une fille sur Pinterest, ou une photo que tu as déjà",
       "• Pas d'image générée par IA"
     ),
+    bioTitle: "La bio",
+    bioTuesday: "conseils amitié & meilleures amies 🫶 toujours avec le jeu vérité ou vérité",
     bioRule: block("La bio", "• Naturelle, écrite par toi", "• Elle ne parle pas des applications", "• Pas de texte généré par IA"),
     thenWarm: "Ensuite.",
     noPostToday: "Tu ne postes pas aujourd'hui.",
@@ -630,6 +642,8 @@ const phrases: Record<PostingLang, Phrases> = {
       "• Un screen de una chica en Pinterest, o una foto que ya tienes",
       "• Nada de imagen generada por IA"
     ),
+    bioTitle: "La bio",
+    bioTuesday: "consejos de amistad 🫶 siempre con el juego verdad o verdad",
     bioRule: block("La bio", "• Natural, escrita por ti", "• No habla de las aplicaciones", "• Nada de texto generado por IA"),
     thenWarm: "Después.",
     noPostToday: "Hoy no publicas.",
@@ -742,6 +756,8 @@ const phrases: Record<PostingLang, Phrases> = {
       "• A screenshot of a girl on Pinterest, or a photo you already have",
       "• No AI-generated image"
     ),
+    bioTitle: "The bio",
+    bioTuesday: "bestie advice & friendship tips 🫶 always with the truth or truth game",
     bioRule: block("The bio", "• Natural, written by you", "• It does not mention the apps", "• No AI-generated text"),
     thenWarm: "Then.",
     noPostToday: "You do not post today.",

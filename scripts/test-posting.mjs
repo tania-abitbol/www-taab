@@ -193,7 +193,10 @@ assert.equal(tuesday[3].label.includes("Focus objectif."), false);
 assert.equal(tuesday[4].id, "photo-es");
 assert.equal(tuesday[4].label, monday.find((item) => item.id === "photo-fr").label);
 assert.equal(tuesday[5].id, "bio-es");
-assert.equal(tuesday[5].label, monday.find((item) => item.id === "bio-fr").label);
+assert.equal(tuesday[5].copyText, "conseils amitié & meilleures amies 🫶 toujours avec le jeu vérité ou vérité");
+assert.ok(tuesday[5].label.includes(tuesday[5].copyText));
+assert.equal(tuesday[5].label.includes("écrite par toi"), false);
+assert.equal(monday.find((item) => item.id === "bio-fr").copyText, undefined);
 assert.equal(tuesday[6].minutes, 10);
 assert.ok(tuesday[6].label.startsWith("Compte 2"));
 assert.ok(tuesday[6].label.includes("Ensuite"));
@@ -211,8 +214,8 @@ assert.equal(tuesday.filter((item) => item.label.includes("Appuie sur Publier"))
 assert.equal(tuesday[0].label.includes("30 abonnements"), false);
 assert.equal(checksFor(DAY_PLANS[5]).some((item) => item.label.includes("30 abonnements")), false);
 assert.equal(tuesdayEs.find((item) => item.id === "photo-es").label, checksFor(DAY_PLANS[3], "es").find((item) => item.id === "photo-fr").label);
-assert.ok(tuesdayEs.find((item) => item.id === "bio-es").label.includes("escrita por ti"));
-assert.ok(tuesdayEs.find((item) => item.id === "bio-es").label.includes("aplicaciones"));
+assert.equal(tuesdayEs.find((item) => item.id === "bio-es").copyText, "consejos de amistad 🫶 siempre con el juego verdad o verdad");
+assert.equal(tuesdayEs.find((item) => item.id === "bio-es").label.includes("escrita por ti"), false);
 assert.ok(tuesdayEs.find((item) => item.id === "warm-es").label.includes("Después"));
 assert.equal(tuesdayEs.find((item) => item.id === "warm-es").label.includes("Focus objetivo."), false);
 assert.equal(tuesdayEs.find((item) => item.id === "warm-es").label.includes("Hoy no publicas."), false);
@@ -221,8 +224,13 @@ assert.ok(tuesdayEs.find((item) => item.id === "warm-us").label.includes("30 seg
 assert.ok(tuesdayEs.find((item) => item.id === "warm-us").label.includes("persona real"));
 assert.equal(tuesdayEs.find((item) => item.id === "warm-es").label.includes("Pulsa Publicar"), false);
 assert.equal(tuesdayEn.find((item) => item.id === "photo-es").label, checksFor(DAY_PLANS[3], "en").find((item) => item.id === "photo-fr").label);
-assert.ok(tuesdayEn.find((item) => item.id === "bio-es").label.includes("written by you"));
-assert.ok(tuesdayEn.find((item) => item.id === "bio-es").label.includes("does not mention the apps"));
+assert.equal(
+  tuesdayEn.find((item) => item.id === "bio-es").copyText,
+  "bestie advice & friendship tips 🫶 always with the truth or truth game",
+);
+assert.equal(tuesdayEn.find((item) => item.id === "bio-es").label.includes("written by you"), false);
+assert.ok(checksFor(DAY_PLANS[7]).find((item) => item.id === "bio-us").label.includes("écrite par toi"));
+assert.equal(checksFor(DAY_PLANS[7]).find((item) => item.id === "bio-us").copyText, undefined);
 assert.ok(tuesdayEn.find((item) => item.id === "warm-es").label.includes("Then."));
 assert.equal(tuesdayEn.find((item) => item.id === "warm-es").label.includes("Focus: the goal."), false);
 assert.ok(tuesdayEn.find((item) => item.id === "warm-us").label.includes("Focus: the goal."));

@@ -47,7 +47,7 @@ const blobsContext = (): BlobsContext | null => {
 const endpoint = (context: BlobsContext, store: string, key: string) =>
   new URL(`/api/v1/blobs/${context.siteID}/${store}/${key}`, context.apiURL || "https://api.netlify.com");
 
-const sign = async (store: string, key: string, method: "GET" | "PUT" | "DELETE") => {
+const sign = async (store: string, key: string, method: "GET" | "PUT") => {
   const context = blobsContext();
   if (!context?.siteID || !context.token) return null;
   const response = await fetch(endpoint(context, store, key), {
@@ -83,11 +83,16 @@ const writeJson = async (store: string, key: string, value: unknown) => {
   if (!response.ok) throw new Error("proof-write");
 };
 
+/** Netlify deletes a blob on the API itself. DELETE does not return a signed URL. */
 const discard = async (store: string, key: string) => {
-  const url = await sign(store, key, "DELETE");
-  if (!url) return;
-  const response = await fetch(url, { method: "DELETE", signal: AbortSignal.timeout(8000) });
-  if (response.status === 404 || response.ok) return;
+  const context = blobsContext();
+  if (!context?.siteID || !context.token) return;
+  const response = await fetch(endpoint(context, store, key), {
+    method: "DELETE",
+    headers: { authorization: `Bearer ${context.token}` },
+    signal: AbortSignal.timeout(8000),
+  });
+  if (response.status === 200 || response.status === 204 || response.status === 404) return;
   throw new Error("proof-delete");
 };
 

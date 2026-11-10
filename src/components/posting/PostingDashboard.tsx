@@ -113,7 +113,17 @@ const CopyCaptionButton = ({ id, text, copy, copied }: { id: string; text: strin
   );
 };
 
-const TaskCopy = ({ label, large, slides }: { label: string; large?: boolean; slides?: SlideLineActions }) => {
+const TaskCopy = ({
+  label,
+  large,
+  slides,
+  copy,
+}: {
+  label: string;
+  large?: boolean;
+  slides?: SlideLineActions;
+  copy?: { id: string; text: string; copy: string; copied: string };
+}) => {
   const lines = label.split("\n").map((line) => line.trim()).filter(Boolean);
   return (
     <span className="flex flex-col gap-1.5">
@@ -157,6 +167,14 @@ const TaskCopy = ({ label, large, slides }: { label: string; large?: boolean; sl
                   <CopyCaptionButton id={`copy-caption-${slides.date}`} text={slides.caption} copy={slides.copyLabel} copied={slides.copiedLabel} />
                 ) : null}
               </span>
+            </span>
+          );
+        }
+        if (copy && plain === copy.text) {
+          return (
+            <span key={key} className="flex flex-wrap items-center gap-2">
+              <span className={textClass}>{line}</span>
+              <CopyCaptionButton id={copy.id} text={copy.text} copy={copy.copy} copied={copy.copied} />
             </span>
           );
         }
@@ -229,14 +247,26 @@ const AccountChecks = ({
   </div>
 );
 
-const TaskFace = ({ check, label, large, slides }: { check: CheckItem; label: string; large?: boolean; slides?: SlideLineActions }) => (
+const TaskFace = ({
+  check,
+  label,
+  large,
+  slides,
+  copy,
+}: {
+  check: CheckItem;
+  label: string;
+  large?: boolean;
+  slides?: SlideLineActions;
+  copy?: { id: string; text: string; copy: string; copied: string };
+}) => (
   <>
     <span aria-hidden className="mt-0.5 text-[1.35rem] leading-none" style={emojiFont}>
       {taskEmoji(check.id)}
     </span>
     <span className="flex min-w-0 flex-1 flex-col gap-2">
       {typeof check.minutes === "number" ? <TimeBadge minutes={check.minutes} /> : null}
-      <TaskCopy label={label} large={large} slides={slides} />
+      <TaskCopy label={label} large={large} slides={slides} copy={copy} />
       {check.note ? (
         <span className="rounded-xl bg-[#E7F6EC] px-3 py-2 font-body text-sm font-normal leading-relaxed text-[#146C36]">
           {check.note}
@@ -661,8 +691,48 @@ export const PostingDashboard = ({
           [date]: { ...current.taniaFiles[date], [accountId]: files.map((file) => file.name) },
         },
       }));
+      const input = document.getElementById(`upload-${date}-${accountId}`);
+      if (input instanceof HTMLInputElement) input.value = "";
     } catch {
       setFileError("Le fichier n'a pas été gardé dans ce navigateur.");
+    }
+  };
+
+  const removeSlide = async (date: string, storageId: string, index: number) => {
+    const names = desk.taniaFiles[date]?.[storageId] ?? [];
+    if (!names[index]) return;
+    setFileError("");
+    try {
+      const kept: { name: string; blob: Blob | null }[] = [];
+      for (let i = 0; i < names.length; i += 1) {
+        if (i === index) continue;
+        const blob = (await loadBlob(slideKey(date, storageId, i))) ?? (i === 0 ? await loadBlob(legacySlideKey(date, storageId)) : null);
+        kept.push({ name: names[i], blob });
+      }
+      for (let i = 0; i < names.length; i += 1) await deleteBlob(slideKey(date, storageId, i));
+      await deleteBlob(legacySlideKey(date, storageId));
+      const nextUrls: Record<string, string> = {};
+      for (let i = 0; i < kept.length; i += 1) {
+        const blob = kept[i]?.blob;
+        if (!blob) continue;
+        await saveBlob(slideKey(date, storageId, i), blob);
+        nextUrls[slideKey(date, storageId, i)] = URL.createObjectURL(blob);
+      }
+      setUrls((current) => {
+        const next = { ...current };
+        for (let i = 0; i < names.length; i += 1) delete next[slideKey(date, storageId, i)];
+        return { ...next, ...nextUrls };
+      });
+      update((current) => {
+        const dateFiles = { ...(current.taniaFiles[date] ?? {}) };
+        if (kept.length === 0) delete dateFiles[storageId];
+        else dateFiles[storageId] = kept.map((item) => item.name);
+        return { ...current, taniaFiles: { ...current.taniaFiles, [date]: dateFiles } };
+      });
+      const input = document.getElementById(`upload-${date}-${storageId}`);
+      if (input instanceof HTMLInputElement) input.value = "";
+    } catch {
+      setFileError("L'image n'a pas été retirée.");
     }
   };
 
@@ -862,7 +932,30 @@ export const PostingDashboard = ({
                                     onChange={(event) => void onSlides(plan.date, storageId, event.target.files)}
                                     className="mt-2 block w-full font-body text-sm"
                                   />
-                                  {names.length > 0 && <p className="mt-2 font-body text-sm">{names.length} images</p>}
+                                  {names.length > 0 && (
+                                    <ul className="mt-3 flex flex-col gap-2">
+                                      {names.map((name, imageIndex) => {
+                                        const preview = urls[slideKey(plan.date, storageId, imageIndex)];
+                                        return (
+                                          <li key={`${storageId}-${imageIndex}-${name}`} className="flex items-center gap-2">
+                                            {preview ? (
+                                              <img src={preview} alt="" className="h-12 w-12 shrink-0 rounded-lg object-cover" />
+                                            ) : null}
+                                            <span className="min-w-0 flex-1 truncate font-body text-sm">{name}</span>
+                                            <button
+                                              id={`remove-slide-${plan.date}-${storageId}-${imageIndex}`}
+                                              type="button"
+                                              aria-label={`Retirer ${name}`}
+                                              onClick={() => void removeSlide(plan.date, storageId, imageIndex)}
+                                              className="inline-flex h-10 shrink-0 items-center rounded-xl border border-black bg-white px-3 font-body text-sm font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
+                                            >
+                                              Retirer
+                                            </button>
+                                          </li>
+                                        );
+                                      })}
+                                    </ul>
+                                  )}
                                   <textarea
                                     id={`caption-${plan.date}-${storageId}`}
                                     value={desk.captions?.[plan.date]?.[storageId] ?? ""}
@@ -894,7 +987,16 @@ export const PostingDashboard = ({
                         aria-readonly="true"
                         className={`shrink-0 accent-black ${check.parent ? "mt-0.5 h-4 w-4" : "mt-1 h-5 w-5"}`}
                       />
-                      <TaskFace check={check} label={label} large={!check.parent} />
+                      <TaskFace
+                        check={check}
+                        label={label}
+                        large={!check.parent}
+                        copy={
+                          check.copyText
+                            ? { id: `copy-bio-${plan.date}-${check.id}`, text: check.copyText, copy: slideCopy.fr.copy, copied: slideCopy.fr.copied }
+                            : undefined
+                        }
+                      />
                     </label>
                   )}
                 />
@@ -988,6 +1090,16 @@ export const PostingDashboard = ({
                       check={check}
                       label={label}
                       large={!check.parent}
+                      copy={
+                        check.copyText
+                          ? {
+                              id: `copy-bio-${plan.date}-${check.id}`,
+                              text: check.copyText,
+                              copy: slideCopy[lang].copy,
+                              copied: slideCopy[lang].copied,
+                            }
+                          : undefined
+                      }
                       slides={(() => {
                         const accountId = check.id.startsWith("post-") ? check.id.slice(5) : "";
                         if (!person || !accountId || plan.date < SLIDES_FROM || plan.date > SLIDES_UNTIL || !plan.publishers.includes(accountId)) {
