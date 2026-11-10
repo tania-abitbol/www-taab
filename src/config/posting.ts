@@ -299,7 +299,7 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
             plan.date === "2026-11-10"
               ? say.tuesdayWarmBefore(account, undefined, say.tuesdayForYou)
               : precise
-                ? say.tuesdayWarmBefore(account)
+                ? say.forYouWarmBefore(account)
                 : say.postWarmBefore(account),
             POST_WARM_BEFORE_MINUTES,
           ),
@@ -463,6 +463,7 @@ type Phrases = {
   postWarmAfter: (account: string) => string;
   tuesdayWarmBefore: (account: string, goal?: string, forYou?: string) => string;
   tuesdayForYou: string;
+  forYouWarmBefore: (account: string) => string;
   tuesdayPost: (account: string) => string;
   tuesdayWarmAfter: (account: string) => string;
   tuesdayClose: (account: string) => string;
@@ -555,6 +556,12 @@ const phrases: Record<PostingLang, Phrases> = {
       ),
     tuesdayForYou:
       "• Retourne sur le Pour toi. Défile, comporte-toi normalement et interagis avec les vidéos (likes, commentaires, abonnements) quand ça t'intéresse et que c'est du contenu de ton pays.",
+    forYouWarmBefore: (account) =>
+      block(
+        account,
+        "Échauffement précis.",
+        "• Va sur la page Pour toi. Défile, comporte-toi normalement et interagis avec les vidéos (likes, commentaires, abonnements) quand ça t'intéresse et que c'est du contenu de ton pays."
+      ),
     tuesdayPost: (account) =>
       block(
         account,
@@ -701,6 +708,12 @@ const phrases: Record<PostingLang, Phrases> = {
       ),
     tuesdayForYou:
       "• Vuelve al Para ti. Desliza, compórtate con normalidad e interactúa con los vídeos (likes, comentarios, seguimientos) cuando te interese y sea contenido de tu país.",
+    forYouWarmBefore: (account) =>
+      block(
+        account,
+        "Calentamiento preciso.",
+        "• Ve a la página Para ti. Desliza, compórtate con normalidad e interactúa con los vídeos (likes, comentarios, seguimientos) cuando te interese y sea contenido de tu país."
+      ),
     tuesdayPost: (account) =>
       block(
         account,
@@ -846,6 +859,12 @@ const phrases: Record<PostingLang, Phrases> = {
       ),
     tuesdayForYou:
       "• Go back to For You. Scroll, act normally, and interact with the videos (likes, comments, follows) when it interests you and it is content from your country.",
+    forYouWarmBefore: (account) =>
+      block(
+        account,
+        "Precise warm-up.",
+        "• Go to the For You page. Scroll, act normally, and interact with the videos (likes, comments, follows) when it interests you and it is content from your country."
+      ),
     tuesdayPost: (account) =>
       block(
         account,

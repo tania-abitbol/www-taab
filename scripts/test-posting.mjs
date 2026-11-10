@@ -216,7 +216,10 @@ assert.equal(
   "You need 20 or more follows in total on the account. At the end of this account's session, show me the profile to confirm there are 20 or more follows.",
 );
 assert.equal(checksFor(DAY_PLANS[5]).find((item) => item.id === "before-fr").label === tuesday[0].label, false);
-assert.ok(checksFor(DAY_PLANS[5]).find((item) => item.id === "before-fr").label.includes("commente au moins 5 vidéos"));
+assert.equal(checksFor(DAY_PLANS[5]).find((item) => item.id === "before-fr").label.includes("commente au moins 5 vidéos"), false);
+assert.ok(checksFor(DAY_PLANS[5]).find((item) => item.id === "before-fr").label.includes("Va sur la page Pour toi."));
+assert.equal((tuesday[0].label.match(/•/g) || []).length, 2);
+assert.equal((checksFor(DAY_PLANS[5]).find((item) => item.id === "before-fr").label.match(/•/g) || []).length, 1);
 assert.ok(checksFor(DAY_PLANS[5]).find((item) => item.id === "after-fr").label.includes("Échauffement après"));
 assert.equal(checksFor(DAY_PLANS[5]).find((item) => item.id === "after-fr").label.includes("20 abonnements"), false);
 assert.equal(tuesday[3].minutes, 10);
@@ -316,7 +319,9 @@ assert.equal(wednesday[2].minutes, 7);
 assert.equal(wednesday[3].minutes, 8);
 assert.ok(wednesday[3].label.startsWith("Compte 2"));
 assert.ok(wednesday[3].label.includes("Échauffement précis."));
-assert.ok(wednesday[3].label.includes("5 comptes d'influenceurs"));
+assert.equal(wednesday[3].label.includes("5 comptes d'influenceurs"), false);
+assert.ok(wednesday[3].label.includes("Va sur la page Pour toi."));
+assert.equal((wednesday[3].label.match(/•/g) || []).length, 1);
 assert.equal(wednesday[3].label.includes("Écris une bio"), false);
 assert.equal(wednesday[3].label.includes("40 abonnements"), false);
 assert.equal(wednesday[4].minutes, 5);
@@ -404,25 +409,29 @@ for (const plan of DAY_PLANS.filter((item) => item.date >= "2026-11-10" && item.
     const after = checksFor(plan).find((item) => item.id === `after-${id}`);
     assert.equal(before.minutes, 8, `${plan.date} ${id}`);
     assert.equal(after.minutes, 7, `${plan.date} ${id}`);
-    assert.ok(before.label.includes("5 comptes d'influenceurs"), `${plan.date} ${id}`);
-    assert.ok(before.label.includes("Retourne sur le Pour toi"), `${plan.date} ${id}`);
     assert.ok(after.label.includes("Tu ne postes plus."), `${plan.date} ${id}`);
     assert.ok(after.label.includes("Interagis de façon naturelle."), `${plan.date} ${id}`);
     if (plan.date === "2026-11-10") {
-      assert.ok(before.label.includes("comporte-toi normalement"), `${plan.date} ${id}`);
+      assert.ok(before.label.includes("5 comptes d'influenceurs"), `${plan.date} ${id}`);
+      assert.ok(before.label.includes("Retourne sur le Pour toi"), `${plan.date} ${id}`);
+      assert.equal((before.label.match(/•/g) || []).length, 2, `${plan.date} ${id}`);
     } else {
-      assert.ok(before.label.includes("commente au moins 5 vidéos"), `${plan.date} ${id}`);
-      assert.equal(before.label.includes("abonnements"), false, `${plan.date} ${id}`);
+      assert.equal(before.label.includes("5 comptes d'influenceurs"), false, `${plan.date} ${id}`);
+      assert.ok(before.label.includes("Va sur la page Pour toi."), `${plan.date} ${id}`);
+      assert.ok(before.label.includes("comporte-toi normalement"), `${plan.date} ${id}`);
+      assert.equal((before.label.match(/•/g) || []).length, 1, `${plan.date} ${id}`);
     }
   }
 }
-assert.ok(checksFor(DAY_PLANS[6], "es").find((item) => item.id === "before-es").label.includes("5 cuentas de influencers"));
+assert.ok(checksFor(DAY_PLANS[6], "es").find((item) => item.id === "before-es").label.includes("Ve a la página Para ti."));
+assert.equal(checksFor(DAY_PLANS[6], "es").find((item) => item.id === "before-es").label.includes("5 cuentas de influencers"), false);
 assert.ok(checksFor(DAY_PLANS[6], "es").find((item) => item.id === "after-es").label.includes("Interactúa con naturalidad."));
 assert.equal(checksFor(DAY_PLANS[6]).find((item) => item.id === "warm-us").label.includes("5 comptes d'influenceurs"), false);
 assert.ok(checksFor(DAY_PLANS[6], "es").find((item) => item.id === "post-es").label.includes("Lo descargas aquí."));
 assert.ok(checksFor(DAY_PLANS[6], "es").find((item) => item.id === "post-es").label.includes("Copia esta descripción."));
 assert.equal(checksFor(DAY_PLANS[6], "es").find((item) => item.id === "post-us"), undefined);
-assert.ok(checksFor(DAY_PLANS[8], "en").find((item) => item.id === "before-us").label.includes("5 influencer accounts"));
+assert.ok(checksFor(DAY_PLANS[8], "en").find((item) => item.id === "before-us").label.includes("Go to the For You page."));
+assert.equal(checksFor(DAY_PLANS[8], "en").find((item) => item.id === "before-us").label.includes("5 influencer accounts"), false);
 assert.equal(checksFor(DAY_PLANS[8], "en").find((item) => item.id === "before-us").label.includes("at least 70 accounts"), false);
 assert.equal(checksFor(DAY_PLANS[8], "en").find((item) => item.id === "after-us").goal, "You need 55 or more follows in total on the account.");
 assert.ok(checksFor(DAY_PLANS[8], "en").find((item) => item.id === "after-us").label.includes("Interact in a natural way."));
