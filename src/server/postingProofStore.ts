@@ -225,7 +225,7 @@ const cleanDates = (value: unknown) => {
   if (!value || typeof value !== "object") return [];
   const dates = (value as { dates?: unknown }).dates;
   if (!Array.isArray(dates)) return [];
-  return [...new Set(dates.filter((date): date is string => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)))];
+  return Array.from(new Set(dates.filter((date): date is string => typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date))));
 };
 
 export const loadRemovedDays = async () => {

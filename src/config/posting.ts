@@ -326,10 +326,12 @@ export const taskIsHers = (id: string, accountId: string) => {
 export const dayIsValidated = (
   days: Record<string, { checks?: Record<string, boolean>; proofName?: string | null; validated?: boolean } | undefined>
 ) => {
-  const concerned = Object.values(days).filter((day) => {
-    if (!day) return false;
-    return day.validated === true || Boolean(day.proofName) || Object.values(day.checks ?? {}).some(Boolean);
-  });
+  const concerned = Object.values(days).filter(
+    (day): day is NonNullable<(typeof days)[string]> => {
+      if (!day) return false;
+      return day.validated === true || Boolean(day.proofName) || Object.values(day.checks ?? {}).some(Boolean);
+    },
+  );
   return concerned.length > 0 && concerned.every((day) => day.validated === true);
 };
 
