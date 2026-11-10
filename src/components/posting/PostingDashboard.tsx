@@ -216,10 +216,12 @@ const actionLabel = (label: string, title: string | null) =>
 const AccountChecks = ({
   checks,
   lang,
+  date,
   item,
 }: {
   checks: CheckItem[];
   lang: PostingLang;
+  date: string;
   item: (check: CheckItem, label: string) => JSX.Element;
 }) => (
   <div className="mt-4 flex flex-col gap-4">
@@ -244,6 +246,15 @@ const AccountChecks = ({
               </li>
             ))}
           </ul>
+          {tone && group.items.some((check) => check.goal) ? (
+            <p
+              id={`session-goal-${date}-${group.account}`}
+              className="mt-4 rounded-xl px-3 py-2 font-body text-base font-bold leading-relaxed"
+              style={{ backgroundColor: tone.frame, color: tone.ink }}
+            >
+              {group.items.find((check) => check.goal)?.goal}
+            </p>
+          ) : null}
         </div>
       );
     })}
@@ -1138,6 +1149,7 @@ export const PostingDashboard = ({
                 <AccountChecks
                   checks={checks}
                   lang="fr"
+                  date={plan.date}
                   item={(check, label) => (
                     <label className={`flex items-start gap-3 font-body ${check.parent ? "text-sm text-gray-800" : "text-base"}`}>
                       <input
@@ -1233,6 +1245,7 @@ export const PostingDashboard = ({
               <AccountChecks
                 checks={checks}
                 lang={lang}
+                date={plan.date}
                 item={(check, label) => (
                   <label
                     htmlFor={`check-${plan.date}-${check.id}`}

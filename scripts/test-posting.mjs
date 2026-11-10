@@ -175,24 +175,48 @@ assert.ok(tuesday[1].label.includes("musique TikTok du moment"));
 assert.ok(tuesday[1].label.includes("Copie cette description."));
 assert.ok(tuesday[1].label.includes("Appuie sur Publier"));
 assert.equal(tuesday[2].minutes, 7);
+assert.ok(tuesday[0].label.includes("comporte-toi normalement"));
+assert.equal(tuesday[0].label.includes("commente au moins 5 vidéos"), false);
 assert.ok(tuesday[2].label.includes("Retourne sur le Pour toi."));
 assert.ok(tuesday[2].label.includes("Tu ne postes plus."));
 assert.ok(tuesday[2].label.includes("Interagis de façon naturelle."));
-assert.ok(tuesday[2].label.includes("20 abonnements ou plus"));
+assert.equal(tuesday[2].label.includes("20 abonnements"), false);
+assert.equal(tuesday[2].label.includes("ouvre le profil"), false);
+assert.equal(
+  tuesday[2].goal,
+  "Tu dois avoir 20 abonnements ou plus au total sur le compte. À la fin de la session de ce compte, montre-moi le profil pour valider qu'il y a bien 20 abonnements ou plus.",
+);
+assert.equal(tuesday[0].goal, undefined);
+assert.equal(tuesday[1].goal, undefined);
 assert.equal(tuesday[2].label.includes("Échauffement après"), false);
 const tuesdayEs = checksFor(DAY_PLANS[4], "es");
 assert.ok(tuesdayEs[0].label.includes("Calentamiento preciso."));
 assert.ok(tuesdayEs[1].label.includes("Lo descargas aquí."));
 assert.ok(tuesdayEs[1].label.includes("Copia esta descripción."));
+assert.ok(tuesdayEs[0].label.includes("compórtate con normalidad"));
+assert.equal(tuesdayEs[0].label.includes("comenta al menos 5 vídeos"), false);
 assert.ok(tuesdayEs[2].label.includes("Interactúa con naturalidad."));
-assert.ok(tuesdayEs[2].label.includes("20 seguidos o más"));
+assert.equal(tuesdayEs[2].label.includes("20 seguidos"), false);
+assert.equal(tuesdayEs[2].label.includes("abre el perfil"), false);
+assert.equal(
+  tuesdayEs[2].goal,
+  "Tienes que tener 20 seguidos o más en total en la cuenta. Al final de la sesión de esta cuenta, muéstrame el perfil para comprobar que hay 20 seguidos o más.",
+);
 const tuesdayEn = checksFor(DAY_PLANS[4], "en");
 assert.ok(tuesdayEn[0].label.includes("Precise warm-up."));
 assert.ok(tuesdayEn[1].label.includes("Download it here."));
 assert.ok(tuesdayEn[1].label.includes("Copy this caption."));
+assert.ok(tuesdayEn[0].label.includes("act normally"));
+assert.equal(tuesdayEn[0].label.includes("at least 5 videos"), false);
 assert.ok(tuesdayEn[2].label.includes("Interact in a natural way."));
-assert.ok(tuesdayEn[2].label.includes("20 or more accounts you follow"));
-assert.equal(checksFor(DAY_PLANS[5]).find((item) => item.id === "before-fr").label, tuesday[0].label);
+assert.equal(tuesdayEn[2].label.includes("20 or more follows"), false);
+assert.equal(tuesdayEn[2].label.includes("open the profile"), false);
+assert.equal(
+  tuesdayEn[2].goal,
+  "You need 20 or more follows in total on the account. At the end of this account's session, show me the profile to confirm there are 20 or more follows.",
+);
+assert.equal(checksFor(DAY_PLANS[5]).find((item) => item.id === "before-fr").label === tuesday[0].label, false);
+assert.ok(checksFor(DAY_PLANS[5]).find((item) => item.id === "before-fr").label.includes("commente au moins 5 vidéos"));
 assert.ok(checksFor(DAY_PLANS[5]).find((item) => item.id === "after-fr").label.includes("Échauffement après"));
 assert.equal(checksFor(DAY_PLANS[5]).find((item) => item.id === "after-fr").label.includes("20 abonnements"), false);
 assert.equal(tuesday[3].minutes, 10);
@@ -210,15 +234,24 @@ assert.equal(tuesday[6].minutes, 10);
 assert.ok(tuesday[6].label.startsWith("Compte 2"));
 assert.ok(tuesday[6].label.includes("Reste dessus, comme si c'était ton TikTok."));
 assert.ok(tuesday[6].label.includes("Tu ne postes rien."));
-assert.ok(tuesday[6].label.includes("30 abonnements"));
+assert.equal(tuesday[6].label.includes("30 abonnements"), false);
+assert.equal(tuesday[6].label.includes("25 abonnements"), false);
+assert.equal(
+  tuesday[6].goal,
+  "Tu dois avoir 25 abonnements ou plus au total sur le compte. À la fin de la session de ce compte, montre-moi le profil pour valider qu'il y a bien 25 abonnements ou plus.",
+);
 assert.equal(tuesday[6].label.includes("Focus objectif."), false);
 assert.equal(tuesday[6].label.includes("Ensuite"), false);
 assert.equal(tuesday[0].label.includes("Focus objectif."), false);
 assert.equal(tuesday[7].minutes, 20);
 assert.ok(tuesday[7].label.startsWith("Compte 3"));
-assert.ok(tuesday[7].label.includes("Focus objectif."));
-assert.ok(tuesday[7].label.includes("30 abonnements"));
-assert.ok(tuesday[7].label.includes("vraie personne"));
+assert.equal(tuesday[7].label.includes("Focus objectif."), false);
+assert.equal(tuesday[7].label.includes("30 abonnements"), false);
+assert.equal(tuesday[7].label.includes("vraie personne"), false);
+assert.equal(
+  tuesday[7].goal,
+  "Tu dois avoir 30 abonnements ou plus au total sur le compte. À la fin de la session de ce compte, montre-moi le profil pour valider qu'il y a bien 30 abonnements ou plus.",
+);
 assert.equal(tuesday[7].label.includes("Appuie sur Publier"), false);
 assert.equal(tuesday.filter((item) => item.label.includes("Appuie sur Publier")).length, 1);
 assert.equal(tuesday[0].label.includes("30 abonnements"), false);
@@ -227,14 +260,18 @@ assert.equal(tuesdayEs.find((item) => item.id === "photo-es").label, checksFor(D
 assert.equal(tuesdayEs.find((item) => item.id === "bio-es").copyText, "consejos de amistad 🫶 siempre con el juego verdad o verdad");
 assert.equal(tuesdayEs.find((item) => item.id === "bio-es").label.includes("escrita por ti"), false);
 assert.ok(tuesdayEs.find((item) => item.id === "warm-es").label.includes("Quédate, como si fuera tu TikTok."));
-assert.ok(tuesdayEs.find((item) => item.id === "warm-es").label.includes("30 seguidos"));
+assert.equal(tuesdayEs.find((item) => item.id === "warm-es").label.includes("30 seguidos"), false);
+assert.ok(tuesdayEs.find((item) => item.id === "warm-es").goal.includes("25 seguidos o más"));
+assert.ok(tuesdayEs.find((item) => item.id === "warm-es").goal.includes("muéstrame el perfil"));
 assert.ok(tuesdayEs.find((item) => item.id === "warm-es").label.includes("No publicas nada."));
 assert.equal(tuesdayEs.find((item) => item.id === "warm-es").label.includes("Focus objetivo."), false);
 assert.equal(tuesdayEs.find((item) => item.id === "warm-es").label.includes("Después"), false);
 assert.equal(tuesdayEs.find((item) => item.id === "warm-es").label.includes("Hoy no publicas."), false);
-assert.ok(tuesdayEs.find((item) => item.id === "warm-us").label.includes("Focus objetivo."));
-assert.ok(tuesdayEs.find((item) => item.id === "warm-us").label.includes("30 seguidos"));
-assert.ok(tuesdayEs.find((item) => item.id === "warm-us").label.includes("persona real"));
+assert.equal(tuesdayEs.find((item) => item.id === "warm-us").label.includes("Focus objetivo."), false);
+assert.equal(tuesdayEs.find((item) => item.id === "warm-us").label.includes("30 seguidos"), false);
+assert.equal(tuesdayEs.find((item) => item.id === "warm-us").label.includes("persona real"), false);
+assert.ok(tuesdayEs.find((item) => item.id === "warm-us").goal.includes("30 seguidos o más"));
+assert.ok(tuesdayEs.find((item) => item.id === "warm-us").goal.includes("muéstrame el perfil"));
 assert.equal(tuesdayEs.find((item) => item.id === "warm-es").label.includes("Pulsa Publicar"), false);
 assert.equal(tuesdayEn.find((item) => item.id === "photo-es").label, checksFor(DAY_PLANS[3], "en").find((item) => item.id === "photo-fr").label);
 assert.equal(
@@ -245,14 +282,18 @@ assert.equal(tuesdayEn.find((item) => item.id === "bio-es").label.includes("writ
 assert.ok(checksFor(DAY_PLANS[7]).find((item) => item.id === "bio-us").label.includes("écrite par toi"));
 assert.equal(checksFor(DAY_PLANS[7]).find((item) => item.id === "bio-us").copyText, undefined);
 assert.ok(tuesdayEn.find((item) => item.id === "warm-es").label.includes("Stay on it, as if it were your TikTok."));
-assert.ok(tuesdayEn.find((item) => item.id === "warm-es").label.includes("at least 30 accounts you follow"));
+assert.equal(tuesdayEn.find((item) => item.id === "warm-es").label.includes("30"), false);
+assert.ok(tuesdayEn.find((item) => item.id === "warm-es").goal.includes("25 or more follows"));
+assert.ok(tuesdayEn.find((item) => item.id === "warm-es").goal.includes("show me the profile"));
 assert.ok(tuesdayEn.find((item) => item.id === "warm-es").label.includes("You do not post anything."));
 assert.equal(tuesdayEn.find((item) => item.id === "warm-es").label.includes("Focus: the goal."), false);
 assert.equal(tuesdayEn.find((item) => item.id === "warm-es").label.includes("Then."), false);
-assert.ok(tuesdayEn.find((item) => item.id === "warm-us").label.includes("Focus: the goal."));
+assert.equal(tuesdayEn.find((item) => item.id === "warm-us").label.includes("Focus: the goal."), false);
 assert.equal(tuesdayEn.find((item) => item.id === "warm-us").label.includes("You do not post today."), false);
-assert.ok(tuesdayEn.find((item) => item.id === "warm-us").label.includes("real person"));
-assert.ok(tuesdayEn.find((item) => item.id === "warm-us").label.includes("at least 30 accounts"));
+assert.equal(tuesdayEn.find((item) => item.id === "warm-us").label.includes("real person"), false);
+assert.equal(tuesdayEn.find((item) => item.id === "warm-us").label.includes("30"), false);
+assert.ok(tuesdayEn.find((item) => item.id === "warm-us").goal.includes("30 or more follows"));
+assert.ok(tuesdayEn.find((item) => item.id === "warm-us").goal.includes("show me the profile"));
 assert.equal(tuesdayEn.find((item) => item.id === "warm-us").label.includes("Tap Post"), false);
 assert.equal(timedMinutes(tuesday), 60);
 assert.equal(tuesday.some((item) => /\b(FR|ES|US)\b|16 min 40|seconde/.test(item.label)), false);
@@ -289,8 +330,12 @@ assert.equal(wednesday[0].label.includes("Focus objectif."), false);
 assert.equal(wednesday[0].label.includes("40 abonnements"), false);
 assert.equal(wednesday[6].minutes, 20);
 assert.ok(wednesday[6].label.startsWith("Compte 3"));
-assert.ok(wednesday[6].label.includes("Focus objectif."));
-assert.ok(wednesday[6].label.includes("40 abonnements"));
+assert.equal(wednesday[6].label.includes("Focus objectif."), false);
+assert.equal(wednesday[6].label.includes("40 abonnements"), false);
+assert.equal(wednesday[6].goal, "Tu dois avoir 35 abonnements ou plus au total sur le compte.");
+assert.equal(wednesday.find((item) => item.id === "after-fr").goal, "Tu dois avoir 25 abonnements ou plus au total sur le compte.");
+assert.equal(wednesday.find((item) => item.id === "after-es").goal, "Tu dois avoir 30 abonnements ou plus au total sur le compte.");
+assert.equal(wednesday.find((item) => item.id === "after-fr").goal.includes("montre-moi"), false);
 assert.equal(wednesday[6].label.includes("Tu ne postes pas aujourd'hui"), false);
 const wednesdayEs = checksFor(DAY_PLANS[5], "es");
 assert.ok(wednesdayEs.find((item) => item.id === "before-es").label.includes("Calentamiento preciso."));
@@ -311,27 +356,38 @@ const sundayNext = checksFor(DAY_PLANS[9]);
 assert.equal(thursday.filter((item) => item.label.includes("Appuie sur Publier")).length, 2);
 assert.equal(thursday.at(-1).minutes, 20);
 assert.ok(thursday.at(-1).label.startsWith("Compte 3"));
-assert.ok(thursday.at(-1).label.includes("Focus objectif."));
-assert.ok(thursday.at(-1).label.includes("50 abonnements"));
+assert.equal(thursday.at(-1).label.includes("Focus objectif."), false);
+assert.equal(thursday.at(-1).label.includes("50 abonnements"), false);
+assert.equal(thursday.at(-1).goal, "Tu dois avoir 35 abonnements ou plus au total sur le compte.");
+assert.equal(thursday.find((item) => item.id === "after-fr").goal, "Tu dois avoir 35 abonnements ou plus au total sur le compte.");
+assert.equal(thursday.find((item) => item.id === "after-es").goal, "Tu dois avoir 35 abonnements ou plus au total sur le compte.");
 assert.equal(thursday.find((item) => item.id === "before-fr").label.includes("50 abonnements"), false);
 assert.equal(fridayNext.find((item) => item.id === "profile-us").minutes, 10);
 assert.ok(fridayNext.find((item) => item.id === "profile-us").label.startsWith("Compte 3"));
 assert.ok(fridayNext.find((item) => item.id === "profile-us").label.includes("Écris une bio"));
-assert.ok(fridayNext.find((item) => item.id === "warm-us").label.includes("Focus objectif."));
-assert.ok(fridayNext.find((item) => item.id === "warm-us").label.includes("60 abonnements"));
+assert.equal(fridayNext.find((item) => item.id === "warm-us").label.includes("Focus objectif."), false);
+assert.equal(fridayNext.find((item) => item.id === "warm-us").label.includes("60 abonnements"), false);
+assert.equal(fridayNext.find((item) => item.id === "warm-us").goal, "Tu dois avoir 45 abonnements ou plus au total sur le compte.");
+assert.equal(fridayNext.find((item) => item.id === "after-fr").goal, "Tu dois avoir 45 abonnements ou plus au total sur le compte.");
+assert.equal(fridayNext.find((item) => item.id === "after-es").goal, "Tu dois avoir 45 abonnements ou plus au total sur le compte.");
 assert.equal(fridayNext.find((item) => item.id === "warm-us").minutes, 10);
 assert.equal(fridayNext.find((item) => item.id === "before-fr").label.includes("60 abonnements"), false);
 assert.ok(fridayNext.findIndex((item) => item.id === "post-fr") < fridayNext.findIndex((item) => item.id === "post-es"));
 assert.ok(fridayNext.findIndex((item) => item.id === "post-es") < fridayNext.findIndex((item) => item.id === "profile-us"));
 assert.equal(fridayNext.filter((item) => item.label.includes("Appuie sur Publier")).length, 2);
 assert.equal(saturdayNext.filter((item) => item.label.includes("Appuie sur Publier")).length, 3);
-assert.ok(saturdayNext.find((item) => item.id === "before-fr").label.includes("70 abonnements"));
-assert.ok(saturdayNext.find((item) => item.id === "before-es").label.includes("70 abonnements"));
-assert.ok(saturdayNext.find((item) => item.id === "before-us").label.includes("70 abonnements"));
+assert.equal(saturdayNext.find((item) => item.id === "before-fr").label.includes("70 abonnements"), false);
+assert.equal(saturdayNext.find((item) => item.id === "before-es").label.includes("70 abonnements"), false);
+assert.equal(saturdayNext.find((item) => item.id === "before-us").label.includes("70 abonnements"), false);
+assert.equal(saturdayNext.find((item) => item.id === "after-fr").goal, "Tu dois avoir 55 abonnements ou plus au total sur le compte.");
+assert.equal(saturdayNext.find((item) => item.id === "after-es").goal, "Tu dois avoir 55 abonnements ou plus au total sur le compte.");
+assert.equal(saturdayNext.find((item) => item.id === "after-us").goal, "Tu dois avoir 55 abonnements ou plus au total sur le compte.");
 assert.equal(saturdayNext.find((item) => item.id === "post-fr").label.includes("70 abonnements"), false);
 assert.equal(saturdayNext.find((item) => item.id === "after-fr").label.includes("70 abonnements"), false);
 assert.equal(saturdayNext.find((item) => item.id === "before-fr").minutes, 8);
-assert.ok(sundayNext.find((item) => item.id === "before-fr").label.includes("80 abonnements"));
+assert.equal(sundayNext.find((item) => item.id === "before-fr").label.includes("80 abonnements"), false);
+assert.equal(sundayNext.find((item) => item.id === "after-fr").goal, "Tu dois avoir 65 abonnements ou plus au total sur le compte.");
+assert.equal(sundayNext.find((item) => item.id === "after-us").goal, "Tu dois avoir 65 abonnements ou plus au total sur le compte.");
 assert.equal(sundayNext.find((item) => item.id === "post-us").label.includes("Appuie sur Publier"), true);
 for (const plan of DAY_PLANS.filter((item) => item.date >= "2026-11-10" && item.date <= "2026-11-15")) {
   for (const id of ["fr", "es", "us"]) {
@@ -352,9 +408,10 @@ for (const plan of DAY_PLANS.filter((item) => item.date >= "2026-11-10" && item.
     assert.ok(before.label.includes("Retourne sur le Pour toi"), `${plan.date} ${id}`);
     assert.ok(after.label.includes("Tu ne postes plus."), `${plan.date} ${id}`);
     assert.ok(after.label.includes("Interagis de façon naturelle."), `${plan.date} ${id}`);
-    if (plan.date === "2026-11-14" || plan.date === "2026-11-15") {
-      assert.ok(before.label.includes("abonnements"), `${plan.date} ${id}`);
+    if (plan.date === "2026-11-10") {
+      assert.ok(before.label.includes("comporte-toi normalement"), `${plan.date} ${id}`);
     } else {
+      assert.ok(before.label.includes("commente au moins 5 vidéos"), `${plan.date} ${id}`);
       assert.equal(before.label.includes("abonnements"), false, `${plan.date} ${id}`);
     }
   }
@@ -366,7 +423,8 @@ assert.ok(checksFor(DAY_PLANS[6], "es").find((item) => item.id === "post-es").la
 assert.ok(checksFor(DAY_PLANS[6], "es").find((item) => item.id === "post-es").label.includes("Copia esta descripción."));
 assert.equal(checksFor(DAY_PLANS[6], "es").find((item) => item.id === "post-us"), undefined);
 assert.ok(checksFor(DAY_PLANS[8], "en").find((item) => item.id === "before-us").label.includes("5 influencer accounts"));
-assert.ok(checksFor(DAY_PLANS[8], "en").find((item) => item.id === "before-us").label.includes("at least 70 accounts"));
+assert.equal(checksFor(DAY_PLANS[8], "en").find((item) => item.id === "before-us").label.includes("at least 70 accounts"), false);
+assert.equal(checksFor(DAY_PLANS[8], "en").find((item) => item.id === "after-us").goal, "You need 55 or more follows in total on the account.");
 assert.ok(checksFor(DAY_PLANS[8], "en").find((item) => item.id === "after-us").label.includes("Interact in a natural way."));
 assert.ok(checksFor(DAY_PLANS[8], "en").find((item) => item.id === "post-us").label.includes("Download it here."));
 assert.ok(checksFor(DAY_PLANS[8], "en").find((item) => item.id === "post-us").label.includes("Copy this caption."));
@@ -374,10 +432,13 @@ assert.equal(
   sundayNext.map((item) => item.label.replaceAll("80", "70")).join("|"),
   saturdayNext.map((item) => item.label).join("|"),
 );
-assert.ok(checksFor(DAY_PLANS[5], "es").find((item) => item.id === "warm-us").label.includes("40 seguidos"));
-assert.ok(checksFor(DAY_PLANS[6], "en").find((item) => item.id === "warm-us").label.includes("at least 50 accounts"));
-assert.ok(checksFor(DAY_PLANS[8], "en").find((item) => item.id === "before-us").label.includes("at least 70 accounts"));
-assert.ok(checksFor(DAY_PLANS[9], "es").find((item) => item.id === "before-es").label.includes("80 seguidos"));
+assert.equal(checksFor(DAY_PLANS[5], "es").find((item) => item.id === "warm-us").label.includes("40 seguidos"), false);
+assert.equal(checksFor(DAY_PLANS[5], "es").find((item) => item.id === "warm-us").goal, "Tienes que tener 35 seguidos o más en total en la cuenta.");
+assert.equal(checksFor(DAY_PLANS[6], "en").find((item) => item.id === "warm-us").label.includes("at least 50 accounts"), false);
+assert.equal(checksFor(DAY_PLANS[6], "en").find((item) => item.id === "warm-us").goal, "You need 35 or more follows in total on the account.");
+assert.equal(checksFor(DAY_PLANS[9], "es").find((item) => item.id === "before-es").label.includes("80 seguidos"), false);
+assert.equal(checksFor(DAY_PLANS[9], "es").find((item) => item.id === "after-es").goal, "Tienes que tener 65 seguidos o más en total en la cuenta.");
+assert.equal(checksFor(DAY_PLANS[3]).some((item) => item.goal), false);
 assert.equal(checksFor(DAY_PLANS[3]).some((item) => item.label.includes("Focus objectif.")), false);
 assert.equal(timedMinutes(thursday) + timedMinutes(fridayNext) + timedMinutes(saturdayNext) + timedMinutes(sundayNext), 240);
 for (const plan of DAY_PLANS.filter((item) => item.date >= "2026-11-09")) {

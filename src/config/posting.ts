@@ -55,7 +55,15 @@ export type DayPlan = {
   publishers: string[];
 };
 
-export type CheckItem = { id: string; label: string; parent?: string; minutes?: number; note?: string; copyText?: string };
+export type CheckItem = {
+  id: string;
+  label: string;
+  parent?: string;
+  minutes?: number;
+  note?: string;
+  copyText?: string;
+  goal?: string;
+};
 
 export type DayState = {
   checks: Record<string, boolean>;
@@ -145,16 +153,15 @@ const WEEK_STEPS: Record<string, WeekStep[]> = {
 const publishersOn = (date: string) =>
   (WEEK_STEPS[date] ?? []).filter((step) => step.kind === "post").map((step) => ACCOUNTS[step.account].id);
 
-/** Follow target for the focus block. Tuesday stays at 30. */
-const focusFollows = (date: string) =>
-  ({
-    "2026-11-10": 30,
-    "2026-11-11": 40,
-    "2026-11-12": 50,
-    "2026-11-13": 60,
-    "2026-11-14": 70,
-    "2026-11-15": 80,
-  })[date];
+/** End-of-session totals, in account order. Tuesday uses the long callout. */
+const SESSION_TOTALS: Record<string, readonly [number, number, number]> = {
+  "2026-11-10": [20, 25, 30],
+  "2026-11-11": [25, 30, 35],
+  "2026-11-12": [35, 35, 35],
+  "2026-11-13": [45, 45, 45],
+  "2026-11-14": [55, 55, 55],
+  "2026-11-15": [65, 65, 65],
+};
 
 const post = (date: string, index: number): DayPlan => ({
   date,
@@ -249,8 +256,7 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
   const steps = WEEK_STEPS[plan.date];
   if (steps) {
     const engage = plan.date === "2026-11-09" ? say.engageMore : undefined;
-    const follows = focusFollows(plan.date);
-    return [...steps]
+    const checks = [...steps]
       .sort((a, b) => a.account - b.account)
       .flatMap((step) => {
       const account = name(step.account);
@@ -276,8 +282,8 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
             `warm-${id}`,
             plan.date === "2026-11-10"
               ? say.tuesdayStay(account)
-              : typeof follows === "number" && plan.date >= "2026-11-11" && plan.date <= "2026-11-13"
-                ? say.focusNoPost(account, follows)
+              : plan.date >= "2026-11-11" && plan.date <= "2026-11-13"
+                ? say.tuesdayFocus(account)
                 : say.warm(account, say.thenWarm),
             PROFILE_WARM_MINUTES,
             undefined,
@@ -287,14 +293,14 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
       }
       if (step.kind === "post") {
         const precise = plan.date >= "2026-11-10" && plan.date <= "2026-11-15";
-        const weekendGoal =
-          (plan.date === "2026-11-14" || plan.date === "2026-11-15") && typeof follows === "number"
-            ? say.focusGoal(follows)
-            : undefined;
         return [
           task(
             `before-${id}`,
-            precise ? say.tuesdayWarmBefore(account, weekendGoal) : say.postWarmBefore(account, weekendGoal),
+            plan.date === "2026-11-10"
+              ? say.tuesdayWarmBefore(account, undefined, say.tuesdayForYou)
+              : precise
+                ? say.tuesdayWarmBefore(account)
+                : say.postWarmBefore(account),
             POST_WARM_BEFORE_MINUTES,
           ),
           task(
@@ -313,10 +319,24 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
           ),
         ];
       }
-      if (typeof follows === "number" && plan.date >= "2026-11-10") {
-        return [task(`warm-${id}`, say.focusNoPost(account, follows), ACCOUNT_BLOCK_MINUTES)];
+      if (plan.date >= "2026-11-10" && plan.date <= "2026-11-15") {
+        return [task(`warm-${id}`, say.tuesdayFocus(account), ACCOUNT_BLOCK_MINUTES)];
       }
       return [task(`warm-${id}`, say.warm(account, say.noPostToday), ACCOUNT_BLOCK_MINUTES, undefined, engage)];
+    });
+    const totals = SESSION_TOTALS[plan.date];
+    if (!totals) return checks;
+    const last = new Map<string, number>();
+    checks.forEach((check, index) => {
+      const owner = check.id.endsWith("-fr") ? "fr" : check.id.endsWith("-es") ? "es" : check.id.endsWith("-us") ? "us" : "";
+      if (owner) last.set(owner, index);
+    });
+    return checks.map((check, index) => {
+      const owner = check.id.endsWith("-fr") ? "fr" : check.id.endsWith("-es") ? "es" : check.id.endsWith("-us") ? "us" : "";
+      if (owner !== "fr" && owner !== "es" && owner !== "us") return check;
+      if (last.get(owner) !== index) return check;
+      const count = totals[owner === "fr" ? 0 : owner === "es" ? 1 : 2];
+      return { ...check, goal: plan.date === "2026-11-10" ? say.followTotalLong(count) : say.followTotal(count) };
     });
   }
   if (plan.kind === "saturday") {
@@ -441,11 +461,15 @@ type Phrases = {
   post: (account: string) => string;
   postWarmBefore: (account: string, goal?: string) => string;
   postWarmAfter: (account: string) => string;
-  tuesdayWarmBefore: (account: string, goal?: string) => string;
+  tuesdayWarmBefore: (account: string, goal?: string, forYou?: string) => string;
+  tuesdayForYou: string;
   tuesdayPost: (account: string) => string;
   tuesdayWarmAfter: (account: string) => string;
   tuesdayClose: (account: string) => string;
   tuesdayStay: (account: string) => string;
+  tuesdayFocus: (account: string) => string;
+  followTotal: (count: number) => string;
+  followTotalLong: (count: number) => string;
   focusGoal: (count: number) => string;
   focusNoPost: (account: string, count: number) => string;
   profile: (account: string) => string;
@@ -521,14 +545,16 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Fais défiler, regarde ce qui t'intéresse",
         "• Tu ne postes plus"
       ),
-    tuesdayWarmBefore: (account, goal) =>
+    tuesdayWarmBefore: (account, goal, forYou) =>
       block(
         account,
         "Échauffement précis.",
         goal,
         "• Va sur 5 comptes d'influenceurs de ton pays que tu connais. Abonne-toi, regarde leurs vidéos, et réponds à des commentaires déjà là.",
-        "• Retourne sur le Pour toi. Défile, abonne-toi et commente au moins 5 vidéos."
+        forYou ?? "• Retourne sur le Pour toi. Défile, abonne-toi et commente au moins 5 vidéos."
       ),
+    tuesdayForYou:
+      "• Retourne sur le Pour toi. Défile, comporte-toi normalement et interagis avec les vidéos (likes, commentaires, abonnements) quand ça t'intéresse et que c'est du contenu de ton pays.",
     tuesdayPost: (account) =>
       block(
         account,
@@ -555,8 +581,7 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Fais défiler, regarde ce qui t'intéresse.",
         "• Tu ne postes plus.",
         "• Interagis de façon naturelle.",
-        "• Abonne-toi à des comptes de ton pays quand le contenu te plaît.",
-        "• À la fin, ouvre le profil. Tu dois avoir 20 abonnements ou plus, et le montrer."
+        "• Abonne-toi à des comptes de ton pays quand le contenu te plaît."
       ),
     tuesdayStay: (account) =>
       block(
@@ -565,9 +590,20 @@ const phrases: Record<PostingLang, Phrases> = {
         "Passe un bon moment.",
         "• Défile, regarde ce qui t'intéresse.",
         "• Un like, seulement quand ça te plaît vraiment.",
-        "• À la fin, au moins 30 abonnements. Abonne-toi à des créateurs de ton pays quand une vidéo te plaît, puis montre le profil.",
+        "• Abonne-toi à des créateurs de ton pays quand une vidéo te plaît, puis montre le profil.",
         "• Tu ne postes rien."
       ),
+    tuesdayFocus: (account) =>
+      block(
+        account,
+        "• Défile comme si c'était ton TikTok. Passe un bon moment. Commente, et réponds à des commentaires déjà là.",
+        "• Va sur des influenceurs que tu connais, pas trop connus, pour que TikTok voie que tu es du pays.",
+        "• Tu n'aimes pas tout.",
+        "• Un like seulement quand ça te plaît vraiment."
+      ),
+    followTotal: (count) => `Tu dois avoir ${count} abonnements ou plus au total sur le compte.`,
+    followTotalLong: (count) =>
+      `Tu dois avoir ${count} abonnements ou plus au total sur le compte. À la fin de la session de ce compte, montre-moi le profil pour valider qu'il y a bien ${count} abonnements ou plus.`,
     focusGoal: (count) =>
       `Objectif : au moins ${count} abonnements à la fin, et montrer à TikTok que tu es une vraie personne.`,
     focusNoPost: (account, count) =>
@@ -655,14 +691,16 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Desliza, mira lo que te interesa",
         "• Ya no publicas"
       ),
-    tuesdayWarmBefore: (account, goal) =>
+    tuesdayWarmBefore: (account, goal, forYou) =>
       block(
         account,
         "Calentamiento preciso.",
         goal,
         "• Entra en 5 cuentas de influencers de tu país que conoces. Síguelas, mira sus vídeos y responde a comentarios que ya están ahí.",
-        "• Vuelve al Para ti. Desliza, suscríbete y comenta al menos 5 vídeos."
+        forYou ?? "• Vuelve al Para ti. Desliza, suscríbete y comenta al menos 5 vídeos."
       ),
+    tuesdayForYou:
+      "• Vuelve al Para ti. Desliza, compórtate con normalidad e interactúa con los vídeos (likes, comentarios, seguimientos) cuando te interese y sea contenido de tu país.",
     tuesdayPost: (account) =>
       block(
         account,
@@ -689,8 +727,7 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Desliza, mira lo que te interesa.",
         "• Ya no publicas.",
         "• Interactúa con naturalidad.",
-        "• Sigue cuentas de tu país cuando el contenido te guste.",
-        "• Al final, abre el perfil. Tienes que tener 20 seguidos o más, y mostrarlo."
+        "• Sigue cuentas de tu país cuando el contenido te guste."
       ),
     tuesdayStay: (account) =>
       block(
@@ -699,9 +736,20 @@ const phrases: Record<PostingLang, Phrases> = {
         "Pasa un buen rato.",
         "• Desliza, mira lo que te interesa.",
         "• Un like, solo cuando de verdad te guste.",
-        "• Al final, al menos 30 seguidos. Sigue a creadores de tu país cuando un vídeo te guste, y luego muestra el perfil.",
+        "• Sigue a creadores de tu país cuando un vídeo te guste, y luego muestra el perfil.",
         "• No publicas nada."
       ),
+    tuesdayFocus: (account) =>
+      block(
+        account,
+        "• Desliza como si fuera tu TikTok. Pasa un buen rato. Comenta y responde a comentarios que ya están ahí.",
+        "• Entra en influencers que conoces, no muy conocidos, para que TikTok vea que eres del país.",
+        "• No le des like a todo.",
+        "• Un like solo cuando de verdad te guste."
+      ),
+    followTotal: (count) => `Tienes que tener ${count} seguidos o más en total en la cuenta.`,
+    followTotalLong: (count) =>
+      `Tienes que tener ${count} seguidos o más en total en la cuenta. Al final de la sesión de esta cuenta, muéstrame el perfil para comprobar que hay ${count} seguidos o más.`,
     focusGoal: (count) => `Objetivo: al menos ${count} seguidos al final, y mostrarle a TikTok que eres una persona real.`,
     focusNoPost: (account, count) =>
       block(
@@ -788,14 +836,16 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Scroll, watch what you like",
         "• You do not post anymore"
       ),
-    tuesdayWarmBefore: (account, goal) =>
+    tuesdayWarmBefore: (account, goal, forYou) =>
       block(
         account,
         "Precise warm-up.",
         goal,
         "• Go to 5 influencer accounts from your country that you know. Follow them, watch their videos, and reply to comments that are already there.",
-        "• Go back to For You. Scroll, follow, and comment on at least 5 videos."
+        forYou ?? "• Go back to For You. Scroll, follow, and comment on at least 5 videos."
       ),
+    tuesdayForYou:
+      "• Go back to For You. Scroll, act normally, and interact with the videos (likes, comments, follows) when it interests you and it is content from your country.",
     tuesdayPost: (account) =>
       block(
         account,
@@ -822,8 +872,7 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Scroll, and watch what interests you.",
         "• You do not post anymore.",
         "• Interact in a natural way.",
-        "• Follow accounts from your country when the content appeals to you.",
-        "• At the end, open the profile. You need 20 or more accounts you follow, and you show it."
+        "• Follow accounts from your country when the content appeals to you."
       ),
     tuesdayStay: (account) =>
       block(
@@ -832,9 +881,20 @@ const phrases: Record<PostingLang, Phrases> = {
         "Have a good time.",
         "• Scroll, and watch what interests you.",
         "• A like only when you really like it.",
-        "• By the end, at least 30 accounts you follow. Follow creators from your country when a video appeals to you, then show the profile.",
+        "• Follow creators from your country when a video appeals to you, then show the profile.",
         "• You do not post anything."
       ),
+    tuesdayFocus: (account) =>
+      block(
+        account,
+        "• Scroll as if it were your TikTok. Have a good time. Comment, and reply to comments that are already there.",
+        "• Go to influencers you know, not too well known, so TikTok sees that you are from the country.",
+        "• You do not like everything.",
+        "• A like only when you really like it."
+      ),
+    followTotal: (count) => `You need ${count} or more follows in total on the account.`,
+    followTotalLong: (count) =>
+      `You need ${count} or more follows in total on the account. At the end of this account's session, show me the profile to confirm there are ${count} or more follows.`,
     focusGoal: (count) =>
       `Goal: at least ${count} accounts you follow by the end, and show TikTok that you are a real person.`,
     focusNoPost: (account, count) =>
