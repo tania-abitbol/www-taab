@@ -259,7 +259,7 @@ const ProofFeedback = ({
   );
 };
 
-const SUNDAY_VIDEO = "2026-11-08";
+const MONDAY_VIDEO = "2026-11-09";
 
 export const PostingDashboard = ({
   role,
@@ -555,26 +555,26 @@ export const PostingDashboard = ({
 
         {retrySunday && (
           <section className="rounded-3xl bg-white p-5 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
-            <h2 className="font-title text-2xl tracking-tight">Sunday, November 8</h2>
+            <h2 className="font-title text-2xl tracking-tight">Monday, November 9</h2>
             <p className="mt-2 max-w-prose font-body text-sm leading-relaxed text-gray-700">
-              Sunday's video is unreadable. Please send it again here.
+              Monday's video didn't stay. Please send it again here.
             </p>
             <input
               type="file"
               accept="video/*"
-              aria-label="Sunday's video"
+              aria-label="Monday's video"
               className="mt-4 block w-full font-body text-sm"
               onChange={(event) => {
                 const chosen = event.target.files?.[0];
                 event.target.value = "";
-                void onProof(SUNDAY_VIDEO, chosen);
+                void onProof(MONDAY_VIDEO, chosen);
               }}
             />
             <ProofFeedback
-              active={proofNote?.date === SUNDAY_VIDEO}
-              percent={proofNote?.date === SUNDAY_VIDEO ? proofNote.percent : 0}
-              text={proofNote?.date === SUNDAY_VIDEO ? proofNote.text : ""}
-              error={proofError?.date === SUNDAY_VIDEO ? proofError.text : null}
+              active={proofNote?.date === MONDAY_VIDEO}
+              percent={proofNote?.date === MONDAY_VIDEO ? proofNote.percent : 0}
+              text={proofNote?.date === MONDAY_VIDEO ? proofNote.text : ""}
+              error={proofError?.date === MONDAY_VIDEO ? proofError.text : null}
             />
           </section>
         )}
