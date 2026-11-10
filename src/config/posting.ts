@@ -274,9 +274,11 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
           ),
           task(
             `warm-${id}`,
-            typeof follows === "number" && plan.date >= "2026-11-11" && plan.date <= "2026-11-13"
-              ? say.focusNoPost(account, follows)
-              : say.warm(account, say.thenWarm),
+            plan.date === "2026-11-10"
+              ? say.tuesdayStay(account)
+              : typeof follows === "number" && plan.date >= "2026-11-11" && plan.date <= "2026-11-13"
+                ? say.focusNoPost(account, follows)
+                : say.warm(account, say.thenWarm),
             PROFILE_WARM_MINUTES,
             undefined,
             engage,
@@ -300,7 +302,15 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
             plan.date >= "2026-11-10" && plan.date <= "2026-11-15" ? say.tuesdayPost(account) : say.post(account),
             POST_PUBLISH_MINUTES,
           ),
-          task(`after-${id}`, precise ? say.tuesdayWarmAfter(account) : say.postWarmAfter(account), POST_WARM_AFTER_MINUTES),
+          task(
+            `after-${id}`,
+            plan.date === "2026-11-10"
+              ? say.tuesdayClose(account)
+              : precise
+                ? say.tuesdayWarmAfter(account)
+                : say.postWarmAfter(account),
+            POST_WARM_AFTER_MINUTES,
+          ),
         ];
       }
       if (typeof follows === "number" && plan.date >= "2026-11-10") {
@@ -434,6 +444,8 @@ type Phrases = {
   tuesdayWarmBefore: (account: string, goal?: string) => string;
   tuesdayPost: (account: string) => string;
   tuesdayWarmAfter: (account: string) => string;
+  tuesdayClose: (account: string) => string;
+  tuesdayStay: (account: string) => string;
   focusGoal: (count: number) => string;
   focusNoPost: (account: string, count: number) => string;
   profile: (account: string) => string;
@@ -535,6 +547,26 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Fais défiler, regarde ce qui t'intéresse.",
         "• Tu ne postes plus.",
         "• Interagis de façon naturelle."
+      ),
+    tuesdayClose: (account) =>
+      block(
+        account,
+        "• Retourne sur le Pour toi.",
+        "• Fais défiler, regarde ce qui t'intéresse.",
+        "• Tu ne postes plus.",
+        "• Interagis de façon naturelle.",
+        "• Abonne-toi à des comptes de ton pays quand le contenu te plaît.",
+        "• À la fin, ouvre le profil. Tu dois avoir 20 abonnements ou plus, et le montrer."
+      ),
+    tuesdayStay: (account) =>
+      block(
+        account,
+        "Reste dessus, comme si c'était ton TikTok.",
+        "Passe un bon moment.",
+        "• Défile, regarde ce qui t'intéresse.",
+        "• Un like, seulement quand ça te plaît vraiment.",
+        "• À la fin, au moins 30 abonnements. Abonne-toi à des créateurs de ton pays quand une vidéo te plaît, puis montre le profil.",
+        "• Tu ne postes rien."
       ),
     focusGoal: (count) =>
       `Objectif : au moins ${count} abonnements à la fin, et montrer à TikTok que tu es une vraie personne.`,
@@ -650,6 +682,26 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Ya no publicas.",
         "• Interactúa con naturalidad."
       ),
+    tuesdayClose: (account) =>
+      block(
+        account,
+        "• Vuelve al Para ti.",
+        "• Desliza, mira lo que te interesa.",
+        "• Ya no publicas.",
+        "• Interactúa con naturalidad.",
+        "• Sigue cuentas de tu país cuando el contenido te guste.",
+        "• Al final, abre el perfil. Tienes que tener 20 seguidos o más, y mostrarlo."
+      ),
+    tuesdayStay: (account) =>
+      block(
+        account,
+        "Quédate, como si fuera tu TikTok.",
+        "Pasa un buen rato.",
+        "• Desliza, mira lo que te interesa.",
+        "• Un like, solo cuando de verdad te guste.",
+        "• Al final, al menos 30 seguidos. Sigue a creadores de tu país cuando un vídeo te guste, y luego muestra el perfil.",
+        "• No publicas nada."
+      ),
     focusGoal: (count) => `Objetivo: al menos ${count} seguidos al final, y mostrarle a TikTok que eres una persona real.`,
     focusNoPost: (account, count) =>
       block(
@@ -762,6 +814,26 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Scroll, watch what interests you.",
         "• You do not post anymore.",
         "• Interact in a natural way."
+      ),
+    tuesdayClose: (account) =>
+      block(
+        account,
+        "• Go back to For You.",
+        "• Scroll, and watch what interests you.",
+        "• You do not post anymore.",
+        "• Interact in a natural way.",
+        "• Follow accounts from your country when the content appeals to you.",
+        "• At the end, open the profile. You need 20 or more accounts you follow, and you show it."
+      ),
+    tuesdayStay: (account) =>
+      block(
+        account,
+        "Stay on it, as if it were your TikTok.",
+        "Have a good time.",
+        "• Scroll, and watch what interests you.",
+        "• A like only when you really like it.",
+        "• By the end, at least 30 accounts you follow. Follow creators from your country when a video appeals to you, then show the profile.",
+        "• You do not post anything."
       ),
     focusGoal: (count) =>
       `Goal: at least ${count} accounts you follow by the end, and show TikTok that you are a real person.`,
