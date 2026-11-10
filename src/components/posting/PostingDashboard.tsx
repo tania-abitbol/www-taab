@@ -31,8 +31,9 @@ import {
   slotsFor,
   taskIsHers,
 } from "~/config/posting";
+import { SLIDE_MAX_BYTES, type SlideBoard, type SlideImage } from "~/config/slideBoard";
 import { leavePosting } from "~/app/dashboard/creator/actions";
-import {   addManagedProfile, commitProof, deleteManagedProfile, deleteValidatedDay, prepareProofUpload, saveManagedProfile, saveMyDay } from "~/app/posting/actions";
+import { addManagedProfile, commitProof, deleteManagedProfile, deleteValidatedDay, dropSharedSlide, loadSharedSlides, prepareProofUpload, publishSlideCaption, publishSlides, saveManagedProfile, saveMyDay } from "~/app/posting/actions";
 import { PROOF_PART_BYTES, proofPartCount, type DayWork, type ProfileWork, type ProofRecord } from "~/server/postingProofs";
 import { deleteBlob, loadBlob, readDesk, saveBlob, writeDesk } from "~/components/posting/storage";
 
@@ -276,6 +277,33 @@ const TaskFace = ({
   </>
 );
 
+const slideFileId = () => {
+  const raw = globalThis.crypto?.randomUUID?.().replace(/-/g, "") ?? `${Date.now().toString(16)}0000000000000000`;
+  return raw.slice(0, 16);
+};
+
+const uploadSlideFile = async (date: string, storageId: string, file: Blob, name: string, type: string) => {
+  if (file.size < 1 || file.size > SLIDE_MAX_BYTES) throw new Error("size");
+  const id = slideFileId();
+  const response = await fetch("/posting/slides", {
+    method: "POST",
+    headers: {
+      "content-type": "application/octet-stream",
+      "x-slide-date": date,
+      "x-slide-storage": storageId,
+      "x-slide-name": encodeURIComponent(name),
+      "x-slide-type": type || "image/jpeg",
+      "x-slide-size": String(file.size),
+      "x-slide-id": id,
+    },
+    body: file,
+  });
+  if (!response.ok) throw new Error(response.status === 413 ? "size" : "upload");
+  const saved = (await response.json()) as Partial<SlideImage>;
+  if (!saved.id || !saved.name || !saved.type) throw new Error("upload");
+  return { id: saved.id, name: saved.name, type: saved.type };
+};
+
 const proofKey = (personId: string, date: string) => `proof:${personId}:${date}`;
 const SLIDES_FROM = "2026-11-10";
 const SLIDES_UNTIL = "2026-11-15";
@@ -426,11 +454,13 @@ export const PostingDashboard = ({
   profiles,
   work = {},
   removedDays = [],
+  slides,
 }: {
   role: string;
   profiles: ManagedProfile[];
   work?: Record<string, ProfileWork>;
   removedDays?: string[];
+  slides: SlideBoard;
 }) => {
   const remoteProofs: ProofRecord[] = Object.entries(work).flatMap(([profileId, profile]) =>
     Object.entries(profile.days)
@@ -451,6 +481,14 @@ export const PostingDashboard = ({
   const [hiddenDays, setHiddenDays] = useState(removedDays);
   const [deletingDate, setDeletingDate] = useState<string | null>(null);
   const [dayError, setDayError] = useState<string | null>(null);
+  const [board, setBoard] = useState(slides);
+  const boardStamp = useRef(0);
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const captionTimers = useRef<Record<string, number>>({});
+  const rememberBoard = (next: SlideBoard) => {
+    boardStamp.current += 1;
+    setBoard(next);
+  };
   const isTania = role === "tania";
   const lang: PostingLang = isTania ? "fr" : langFromName(profiles.find((item) => item.id === role)?.name ?? "");
   const ui = postingUi(lang);
@@ -532,11 +570,46 @@ export const PostingDashboard = ({
             if (blob) remember(proofKey(person.id, plan.date), blob);
           }
         }
+        let shared = slides;
+        if (role === "tania") {
+          shared = await loadSharedSlides();
+          if (!cancelled) rememberBoard(shared);
+        }
         for (const [date, files] of Object.entries(loaded.taniaFiles)) {
           for (const [accountId, names] of Object.entries(files)) {
+            const blobs: Blob[] = [];
             for (let index = 0; index < names.length; index += 1) {
               const blob = (await loadBlob(slideKey(date, accountId, index))) ?? (index === 0 ? await loadBlob(legacySlideKey(date, accountId)) : null);
-              if (blob) remember(slideKey(date, accountId, index), blob);
+              if (blob) {
+                blobs[index] = blob;
+                remember(slideKey(date, accountId, index), blob);
+              }
+            }
+            if (role !== "tania" || cancelled) continue;
+            if (date < "2026-11-10" || date > "2026-11-15" || !/^p[a-z0-9-]{1,40}__(fr|es|us)$/.test(accountId)) continue;
+            try {
+              const caption = loaded.captions?.[date]?.[accountId];
+              if (caption && shared.captions[date]?.[accountId] === undefined) {
+                const savedCaption = await publishSlideCaption(date, accountId, caption);
+                if (savedCaption.ok && !cancelled) {
+                  shared = savedCaption.board;
+                  rememberBoard(shared);
+                }
+              }
+              if (shared.files[date]?.[accountId]?.length || names.some((_, index) => !blobs[index])) continue;
+              const images: SlideImage[] = [];
+              for (let index = 0; index < names.length; index += 1) {
+                const blob = blobs[index];
+                if (!blob) continue;
+                images.push(await uploadSlideFile(date, accountId, blob, names[index] || "image", blob.type || "image/jpeg"));
+              }
+              if (images.length !== names.length || cancelled) continue;
+              const published = await publishSlides(date, accountId, images);
+              if (!published.ok || cancelled) continue;
+              shared = published.board;
+              rememberBoard(shared);
+            } catch {
+              if (!cancelled) setFileError("Les images déjà dans ce navigateur n'ont pas été envoyées au site.");
             }
           }
         }
@@ -547,6 +620,27 @@ export const PostingDashboard = ({
     return () => {
       cancelled = true;
       created.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, []);
+
+  useEffect(() => {
+    const pull = async () => {
+      if (document.visibilityState === "hidden") return;
+      const stamp = boardStamp.current;
+      const next = await loadSharedSlides();
+      if (stamp !== boardStamp.current) return;
+      setBoard(next);
+    };
+    const timer = window.setInterval(() => void pull(), 8000);
+    const onShow = () => {
+      if (document.visibilityState === "visible") void pull();
+    };
+    window.addEventListener("focus", onShow);
+    document.addEventListener("visibilitychange", onShow);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", onShow);
+      document.removeEventListener("visibilitychange", onShow);
     };
   }, []);
 
@@ -678,27 +772,47 @@ export const PostingDashboard = ({
     if (files.length === 0) return;
     setFileError("");
     try {
-      const nextUrls: Record<string, string> = {};
-      for (let index = 0; index < files.length; index += 1) {
-        await saveBlob(slideKey(date, accountId, index), files[index]);
-        nextUrls[slideKey(date, accountId, index)] = URL.createObjectURL(files[index]);
-      }
-      setUrls((current) => ({ ...current, ...nextUrls }));
+      const images: SlideImage[] = [];
+      for (const file of files) images.push(await uploadSlideFile(date, accountId, file, file.name, file.type || "image/jpeg"));
+      const result = await publishSlides(date, accountId, images);
+      if (!result.ok) throw new Error("upload");
+      rememberBoard(result.board);
       update((current) => ({
         ...current,
         taniaFiles: {
           ...current.taniaFiles,
-          [date]: { ...current.taniaFiles[date], [accountId]: files.map((file) => file.name) },
+          [date]: { ...current.taniaFiles[date], [accountId]: images.map((image) => image.name) },
         },
       }));
       const input = document.getElementById(`upload-${date}-${accountId}`);
       if (input instanceof HTMLInputElement) input.value = "";
-    } catch {
-      setFileError("Le fichier n'a pas été gardé dans ce navigateur.");
+    } catch (error) {
+      setFileError(error instanceof Error && error.message === "size" ? "Cette image dépasse 5 Mo." : "Les images n'ont pas été enregistrées sur le site. Réessaie.");
     }
   };
 
   const removeSlide = async (date: string, storageId: string, index: number) => {
+    const shared = board.files[date]?.[storageId] ?? [];
+    if (shared.length > 0) {
+      if (!shared[index]) return;
+      setFileError("");
+      const result = await dropSharedSlide(date, storageId, index);
+      if (!result.ok) {
+        setFileError("L'image n'a pas été retirée.");
+        return;
+      }
+      rememberBoard(result.board);
+      update((current) => {
+        const dateFiles = { ...(current.taniaFiles[date] ?? {}) };
+        const kept = result.board.files[date]?.[storageId]?.map((image) => image.name) ?? [];
+        if (kept.length === 0) delete dateFiles[storageId];
+        else dateFiles[storageId] = kept;
+        return { ...current, taniaFiles: { ...current.taniaFiles, [date]: dateFiles } };
+      });
+      const input = document.getElementById(`upload-${date}-${storageId}`);
+      if (input instanceof HTMLInputElement) input.value = "";
+      return;
+    }
     const names = desk.taniaFiles[date]?.[storageId] ?? [];
     if (!names[index]) return;
     setFileError("");
@@ -737,16 +851,53 @@ export const PostingDashboard = ({
   };
 
   const saveCaption = (date: string, profileId: string, value: string) => {
+    const text = value.slice(0, 500);
+    const key = `${date}:${profileId}`;
+    setDrafts((current) => ({ ...current, [key]: text }));
     update((current) => ({
       ...current,
-        captions: {
+      captions: {
         ...(current.captions ?? {}),
-        [date]: { ...(current.captions?.[date] ?? {}), [profileId]: value.slice(0, 500) },
+        [date]: { ...(current.captions?.[date] ?? {}), [profileId]: text },
       },
     }));
+    window.clearTimeout(captionTimers.current[key]);
+    captionTimers.current[key] = window.setTimeout(() => {
+      void publishSlideCaption(date, profileId, text).then((result) => {
+        if (!result.ok) {
+          setFileError("La description n'a pas été enregistrée sur le site.");
+          return;
+        }
+        rememberBoard(result.board);
+        setDrafts((current) => {
+          if (current[key] !== text) return current;
+          const next = { ...current };
+          delete next[key];
+          return next;
+        });
+      });
+    }, 400);
+  };
+
+  const captionOf = (date: string, storageId: string) => {
+    const key = `${date}:${storageId}`;
+    if (Object.prototype.hasOwnProperty.call(drafts, key)) return drafts[key] ?? "";
+    const shared = board.captions[date];
+    if (shared && Object.prototype.hasOwnProperty.call(shared, storageId)) return shared[storageId] ?? "";
+    return desk.captions?.[date]?.[storageId] ?? "";
   };
 
   const downloadSlides = (date: string, accountId: string, names: string[]) => {
+    const shared = board.files[date]?.[accountId] ?? [];
+    if (shared.length > 0) {
+      for (const image of shared) {
+        const link = document.createElement("a");
+        link.href = `/posting/slide/${image.id}`;
+        link.download = image.name || "image";
+        link.click();
+      }
+      return;
+    }
     names.forEach((name, index) => {
       const href = urls[slideKey(date, accountId, index)];
       if (!href) return;
@@ -916,7 +1067,8 @@ export const PostingDashboard = ({
                           <div className="mt-2 grid gap-3 sm:grid-cols-3">
                             {slideGirls(roster).map((worker) => {
                               const storageId = slideStorageId(worker.id, account.id);
-                              const names = desk.taniaFiles[plan.date]?.[storageId] ?? [];
+                              const shared = board.files[plan.date]?.[storageId] ?? [];
+                              const names = shared.length > 0 ? shared.map((image) => image.name) : desk.taniaFiles[plan.date]?.[storageId] ?? [];
                               const label = slideCardTitle(worker.name);
                               return (
                                 <div key={storageId} className="rounded-2xl bg-gray-100 p-3">
@@ -935,7 +1087,7 @@ export const PostingDashboard = ({
                                   {names.length > 0 && (
                                     <ul className="mt-3 flex flex-col gap-2">
                                       {names.map((name, imageIndex) => {
-                                        const preview = urls[slideKey(plan.date, storageId, imageIndex)];
+                                        const preview = shared[imageIndex] ? `/posting/slide/${shared[imageIndex].id}` : urls[slideKey(plan.date, storageId, imageIndex)];
                                         return (
                                           <li key={`${storageId}-${imageIndex}-${name}`} className="flex items-center gap-2">
                                             {preview ? (
@@ -958,7 +1110,7 @@ export const PostingDashboard = ({
                                   )}
                                   <textarea
                                     id={`caption-${plan.date}-${storageId}`}
-                                    value={desk.captions?.[plan.date]?.[storageId] ?? ""}
+                                    value={captionOf(plan.date, storageId)}
                                     onChange={(event) => saveCaption(plan.date, storageId, event.target.value)}
                                     rows={3}
                                     placeholder="Description du jour"
@@ -1106,7 +1258,8 @@ export const PostingDashboard = ({
                           return undefined;
                         }
                         const storageId = slideStorageId(person.id, accountId);
-                        const names = desk.taniaFiles[plan.date]?.[storageId] ?? [];
+                        const shared = board.files[plan.date]?.[storageId] ?? [];
+                        const names = shared.length > 0 ? shared.map((image) => image.name) : desk.taniaFiles[plan.date]?.[storageId] ?? [];
                         return {
                           date: `${plan.date}-${accountId}`,
                           downloadLabel: slideCopy[lang].download,
@@ -1116,7 +1269,7 @@ export const PostingDashboard = ({
                           copyLabel: slideCopy[lang].copy,
                           copiedLabel: slideCopy[lang].copied,
                           copyLine: slideCopy[lang].copyLine,
-                          caption: desk.captions?.[plan.date]?.[storageId] ?? "",
+                          caption: captionOf(plan.date, storageId),
                           emptyCaption: slideCopy[lang].noCaption,
                           waiting: ui.imagesMissing,
                         };

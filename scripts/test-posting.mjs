@@ -484,4 +484,17 @@ assert.equal(
   false
 );
 assert.equal(dayIsValidated({ p1: { validated: false, checks: {} } }), false);
+
+const { emptySlideBoard, findSlide, removeAt, replaceCard, setCaption, visibleBoard } = await import("../src/config/slideBoard.ts");
+const imageA = { id: "0123456789abcdef", name: "ghada.png", type: "image/png" };
+const imageB = { id: "fedcba9876543210", name: "peches.png", type: "image/png" };
+const shared = setCaption(replaceCard(replaceCard(emptySlideBoard(), "2026-11-10", "p1__fr", [imageA]), "2026-11-10", "p2__es", [imageB]), "2026-11-10", "p1__fr", "légende");
+assert.equal(findSlide(shared, imageA.id)?.storageId, "p1__fr");
+assert.equal(visibleBoard(shared, "p2").files["2026-11-10"]?.["p1__fr"], undefined);
+assert.equal(visibleBoard(shared, "p2").files["2026-11-10"]?.["p2__es"]?.[0].name, "peches.png");
+assert.equal(visibleBoard(shared, "tania").captions["2026-11-10"]?.["p1__fr"], "légende");
+const kept = removeAt(shared, "2026-11-10", "p1__fr", 0);
+assert.equal(kept.files["2026-11-10"]?.["p1__fr"], undefined);
+assert.equal(kept.files["2026-11-10"]?.["p2__es"]?.[0].id, imageB.id);
+assert.equal(replaceCard(emptySlideBoard(), "2026-11-06", "p1__fr", [imageA]).files["2026-11-06"], undefined);
 console.log("posting codes ok");
