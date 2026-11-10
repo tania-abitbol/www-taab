@@ -217,6 +217,9 @@ export const formatShortDay = (iso: string, lang: PostingLang = "fr") =>
     new Date(`${iso}T00:00:00Z`)
   );
 
+/** Tuesday 10 Nov and Wednesday 11 Nov only. Later days stay quiet. */
+export const showHoursVary = (date: string) => date === "2026-11-10" || date === "2026-11-11";
+
 export const madridToday = (now = new Date()) =>
   new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/Madrid",
@@ -952,6 +955,7 @@ export const postingUi = (lang: PostingLang) =>
       switchProfile: "Changer de profil",
       range: (start: string, end: string) => `Du ${start} au ${end}.`,
       slots: "Tes heures",
+      hoursVary: "N'hésite pas à varier tes heures, pour que TikTok ne pense pas que tu es un robot.",
       slotsHelp: "Choisis une seule heure par jour. L'heure en noir est la tienne. Pour changer, appuie sur une autre.",
       slotsVary: "Ne fais pas toujours la même heure. Varie, pour que l'algorithme comprenne que tu n'es pas un robot en automatique.",
       pickOne: "Aucune heure pour l'instant.",
@@ -988,6 +992,7 @@ export const postingUi = (lang: PostingLang) =>
       switchProfile: "Cambiar de perfil",
       range: (start: string, end: string) => `Del ${start} al ${end}.`,
       slots: "Tus horas",
+      hoursVary: "No dudes en variar tus horas, para que TikTok no piense que eres un robot.",
       slotsHelp: "Elige una sola hora por día. La hora en negro es la tuya. Para cambiar, pulsa otra.",
       slotsVary: "No hagas siempre la misma hora. Varía, para que el algoritmo entienda que no eres un robot en automático.",
       pickOne: "Todavía no hay hora.",
@@ -1024,6 +1029,7 @@ export const postingUi = (lang: PostingLang) =>
       switchProfile: "Switch profile",
       range: (start: string, end: string) => `From ${start} to ${end}.`,
       slots: "Your hours",
+      hoursVary: "Don't hesitate to vary your hours, so TikTok doesn't think you're a robot.",
       slotsHelp: "Pick one hour each day. The black hour is yours. To change it, tap another hour.",
       slotsVary: "Don't always pick the same hour. Switch it up, so the algorithm sees you're not a robot on autopilot.",
       pickOne: "No hour yet.",

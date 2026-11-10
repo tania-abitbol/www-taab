@@ -31,6 +31,7 @@ const {
   openPlans,
   suiviDates,
   postingUi,
+  showHoursVary,
   taskIsHers,
 } = await import("../src/config/posting.ts");
 const { createSessionValue, readSession, verifySession } = await import("../src/server/dashboardSession.ts");
@@ -553,6 +554,13 @@ assert.deepEqual(
 );
 assert.equal(tuesdayHers.filter((item) => taskIsHers(item.id, "es")).some((item) => item.id.endsWith("-fr") || item.id.endsWith("-us")), false);
 assert.equal(tuesdayHers.filter((item) => taskIsHers(item.id, "us")).some((item) => item.id.endsWith("-es")), false);
+assert.equal(showHoursVary("2026-11-10"), true);
+assert.equal(showHoursVary("2026-11-11"), true);
+assert.equal(showHoursVary("2026-11-09"), false);
+assert.equal(showHoursVary("2026-11-12"), false);
+assert.equal(postingUi("fr").hoursVary, "N'hésite pas à varier tes heures, pour que TikTok ne pense pas que tu es un robot.");
+assert.equal(postingUi("es").hoursVary, "No dudes en variar tus horas, para que TikTok no piense que eres un robot.");
+assert.equal(postingUi("en").hoursVary, "Don't hesitate to vary your hours, so TikTok doesn't think you're a robot.");
 assert.equal(postingUi("fr").slotsVary, "Ne fais pas toujours la même heure. Varie, pour que l'algorithme comprenne que tu n'es pas un robot en automatique.");
 assert.equal(postingUi("es").slotsVary, "No hagas siempre la misma hora. Varía, para que el algoritmo entienda que no eres un robot en automático.");
 assert.equal(postingUi("en").slotsVary, "Don't always pick the same hour. Switch it up, so the algorithm sees you're not a robot on autopilot.");
@@ -591,7 +599,7 @@ assert.equal(
 );
 assert.equal(dayIsValidated({ p1: { validated: false, checks: {} } }), false);
 
-const { emptySlideBoard, findSlide, removeAt, replaceCard, setCaption, visibleBoard } = await import("../src/config/slideBoard.ts");
+const { emptySlideBoard, findSlide, removeAt, replaceCard, setCaption, slideshowOf, visibleBoard } = await import("../src/config/slideBoard.ts");
 const imageA = { id: "0123456789abcdef", name: "ghada.png", type: "image/png" };
 const imageB = { id: "fedcba9876543210", name: "peches.png", type: "image/png" };
 const shared = setCaption(replaceCard(replaceCard(emptySlideBoard(), "2026-11-10", "p1__fr", [imageA]), "2026-11-10", "p2__es", [imageB]), "2026-11-10", "p1__fr", "légende");
@@ -603,4 +611,19 @@ const kept = removeAt(shared, "2026-11-10", "p1__fr", 0);
 assert.equal(kept.files["2026-11-10"]?.["p1__fr"], undefined);
 assert.equal(kept.files["2026-11-10"]?.["p2__es"]?.[0].id, imageB.id);
 assert.equal(replaceCard(emptySlideBoard(), "2026-11-06", "p1__fr", [imageA]).files["2026-11-06"], undefined);
+const imageC = { id: "abcdef0123456789", name: "suite.png", type: "image/png" };
+const twoAccounts = replaceCard(replaceCard(emptySlideBoard(), "2026-11-11", "p1__fr", [imageA, imageC]), "2026-11-11", "p1__es", [imageB]);
+assert.deepEqual(
+  slideshowOf(twoAccounts, "2026-11-11", "p1__fr").map((image) => image.id),
+  [imageA.id, imageC.id]
+);
+assert.deepEqual(
+  slideshowOf(twoAccounts, "2026-11-11", "p1__es").map((image) => image.name),
+  ["peches.png"]
+);
+assert.deepEqual(slideshowOf(twoAccounts, "2026-11-11", "p1__us"), []);
+assert.deepEqual(
+  slideshowOf(replaceCard(emptySlideBoard(), "2026-11-10", "p1__fr", [imageA]), "2026-11-10", "p1__fr").map((image) => image.id),
+  [imageA.id]
+);
 console.log("posting codes ok");

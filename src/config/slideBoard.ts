@@ -120,6 +120,12 @@ export const visibleBoard = (board: SlideBoard, role: string): SlideBoard => {
   return { files, captions };
 };
 
+/** Images of one card only: that girl, that day, that account. */
+export const slideshowOf = (board: SlideBoard, date: string, storageId: string): SlideImage[] => {
+  if (!slideDateOk(date) || !slideStorageOk(storageId)) return [];
+  return (board.files[date]?.[storageId] ?? []).map((image) => ({ id: image.id, name: image.name, type: image.type }));
+};
+
 export const findSlide = (board: SlideBoard, id: string) => {
   if (!slideImageIdOk(id)) return null;
   for (const [date, byStorage] of Object.entries(board.files)) {

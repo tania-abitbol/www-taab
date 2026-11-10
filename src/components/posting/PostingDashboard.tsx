@@ -30,10 +30,11 @@ import {
   langFromName,
   personMark,
   postingUi,
+  showHoursVary,
   slotsFor,
   taskIsHers,
 } from "~/config/posting";
-import { SLIDE_MAX_BYTES, type SlideBoard, type SlideImage } from "~/config/slideBoard";
+import { SLIDE_MAX_BYTES, slideshowOf, type SlideBoard, type SlideImage } from "~/config/slideBoard";
 import { leavePosting } from "~/app/dashboard/creator/actions";
 import { addManagedProfile, commitProof, deleteManagedProfile, deleteValidatedDay, dropSharedSlide, loadSharedSlides, prepareProofUpload, publishSlideCaption, publishSlides, saveManagedProfile, saveMyDay } from "~/app/posting/actions";
 import { PROOF_PART_BYTES, proofPartCount, type DayWork, type ProfileWork, type ProofRecord } from "~/server/postingProofs";
@@ -320,6 +321,15 @@ const uploadSlideFile = async (date: string, storageId: string, file: Blob, name
 const proofKey = (personId: string, date: string) => `proof:${personId}:${date}`;
 const SLIDES_FROM = "2026-11-10";
 const SLIDES_UNTIL = "2026-11-15";
+const saveDownload = (href: string, name: string) => {
+  const link = document.createElement("a");
+  link.href = href;
+  link.download = name || "image";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+};
+
 const slideKey = (date: string, profileId: string, index = 0) => `tania:${date}:${profileId}:${index}`;
 const legacySlideKey = (date: string, accountId: string) => `tania:${date}:${accountId}`;
 const accountForLang = (value: PostingLang) => (value === "es" ? "es" : value === "en" ? "us" : "fr");
@@ -907,24 +917,17 @@ export const PostingDashboard = ({
     return desk.captions?.[date]?.[storageId] ?? "";
   };
 
-  const downloadSlides = (date: string, accountId: string, names: string[]) => {
-    const shared = board.files[date]?.[accountId] ?? [];
+  const downloadSlides = (date: string, storageId: string) => {
+    const shared = slideshowOf(board, date, storageId);
     if (shared.length > 0) {
-      for (const image of shared) {
-        const link = document.createElement("a");
-        link.href = `/posting/slide/${image.id}`;
-        link.download = image.name || "image";
-        link.click();
-      }
+      for (const image of shared) saveDownload(`/posting/slide/${image.id}`, image.name || "image");
       return;
     }
+    const names = desk.taniaFiles[date]?.[storageId] ?? [];
     names.forEach((name, index) => {
-      const href = urls[slideKey(date, accountId, index)];
+      const href = urls[slideKey(date, storageId, index)];
       if (!href) return;
-      const link = document.createElement("a");
-      link.href = href;
-      link.download = name || `image-${index + 1}`;
-      link.click();
+      saveDownload(href, name || `image-${index + 1}`);
     });
   };
 
@@ -1216,6 +1219,11 @@ export const PostingDashboard = ({
               <h2 className="font-title text-2xl tracking-tight">{formatDay(plan.date, lang)}</h2>
               {person && (
                 <div className="mt-4">
+                  {showHoursVary(plan.date) ? (
+                    <p id={`hours-vary-${plan.date}`} className="mb-3 rounded-xl bg-[#FFF3C4] px-3 py-2 font-body text-sm leading-relaxed">
+                      {ui.hoursVary}
+                    </p>
+                  ) : null}
                   <p className="font-body text-base font-bold">{ui.slots}</p>
                   <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
                     {SLOTS.map((slot) => {
@@ -1280,14 +1288,14 @@ export const PostingDashboard = ({
                           return undefined;
                         }
                         const storageId = slideStorageId(person.id, accountId);
-                        const shared = board.files[plan.date]?.[storageId] ?? [];
+                        const shared = slideshowOf(board, plan.date, storageId);
                         const names = shared.length > 0 ? shared.map((image) => image.name) : desk.taniaFiles[plan.date]?.[storageId] ?? [];
                         return {
-                          date: `${plan.date}-${accountId}`,
+                          date: `${storageId}-${plan.date}`,
                           downloadLabel: slideCopy[lang].download,
                           downloadLine: slideCopy[lang].downloadLine,
                           namesCount: names.length,
-                          onDownload: () => downloadSlides(plan.date, storageId, names),
+                          onDownload: () => downloadSlides(plan.date, storageId),
                           copyLabel: slideCopy[lang].copy,
                           copiedLabel: slideCopy[lang].copied,
                           copyLine: slideCopy[lang].copyLine,
