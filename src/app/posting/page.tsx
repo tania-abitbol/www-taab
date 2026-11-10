@@ -38,8 +38,6 @@ export default async function PostingPage({ searchParams }: { searchParams: { re
     session.role === "tania"
       ? await loadAllWork(profiles.map((profile) => profile.id)).catch(() => ({}))
       : { [session.role]: await loadWork(session.role).catch(() => ({ days: {} })) };
-  const retrySunday =
-    session.role !== "tania" && profiles.some((profile) => profile.id === session.role && profile.code === "333330");
   const removedDays = session.role === "tania" ? await loadRemovedDays().catch(() => []) : [];
-  return <PostingDashboard role={session.role} profiles={visible} work={work} retrySunday={retrySunday} removedDays={removedDays} />;
+  return <PostingDashboard role={session.role} profiles={visible} work={work} removedDays={removedDays} />;
 }

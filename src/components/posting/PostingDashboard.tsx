@@ -3,22 +3,19 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 
 import {
+  ACCOUNTS,
   CALENDAR_END,
   CALENDAR_START,
   DAY_PLANS,
-  WORKER_VISIBLE_THROUGH,
   calendarDates,
   chooseSlot,
-  dateLocale,
   DayState,
   Desk,
   SLOTS,
   SlotId,
   checksFor,
   dayHeading,
-  dayReady,
   emptyDayState,
-  openDates,
   CheckItem,
   formatDay,
   formatMinutes,
@@ -32,6 +29,7 @@ import {
   personMark,
   postingUi,
   slotsFor,
+  taskIsHers,
 } from "~/config/posting";
 import { leavePosting } from "~/app/dashboard/creator/actions";
 import {   addManagedProfile, commitProof, deleteManagedProfile, deleteValidatedDay, prepareProofUpload, saveManagedProfile, saveMyDay } from "~/app/posting/actions";
@@ -127,20 +125,23 @@ const TaskCopy = ({ label, large, slides }: { label: string; large?: boolean; sl
           return (
             <span key={key} className="flex flex-wrap items-center gap-2">
               <span className={textClass}>{line}</span>
-              <button
-                id={`download-slides-${slides.date}`}
-                type="button"
-                disabled={slides.namesCount === 0}
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  slides.onDownload();
-                }}
-                className="inline-flex h-10 shrink-0 items-center rounded-xl bg-black px-3 font-body text-sm font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:opacity-40"
-              >
-                {slides.downloadLabel}
-              </button>
+              {slides.namesCount > 0 ? (
+                <button
+                  id={`download-slides-${slides.date}`}
+                  type="button"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    slides.onDownload();
+                  }}
+                  className="inline-flex h-10 shrink-0 items-center rounded-xl bg-black px-3 font-body text-sm font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
+                >
+                  {slides.downloadLabel}
+                </button>
+              ) : (
+                <span className="font-body text-sm font-normal leading-relaxed text-gray-700">{slides.waiting}</span>
+              )}
             </span>
           );
         }
@@ -152,7 +153,9 @@ const TaskCopy = ({ label, large, slides }: { label: string; large?: boolean; sl
                 <span className="min-w-0 flex-1 rounded-xl bg-gray-100 px-3 py-2 font-body text-sm font-normal leading-relaxed">
                   {slides.caption.trim() || slides.emptyCaption}
                 </span>
-                <CopyCaptionButton id={`copy-caption-${slides.date}`} text={slides.caption} copy={slides.copyLabel} copied={slides.copiedLabel} />
+                {slides.caption.trim() ? (
+                  <CopyCaptionButton id={`copy-caption-${slides.date}`} text={slides.caption} copy={slides.copyLabel} copied={slides.copiedLabel} />
+                ) : null}
               </span>
             </span>
           );
@@ -245,21 +248,27 @@ const TaskFace = ({ check, label, large, slides }: { check: CheckItem; label: st
 
 const proofKey = (personId: string, date: string) => `proof:${personId}:${date}`;
 const SLIDES_FROM = "2026-11-10";
-const TUESDAY = "2026-11-10";
+const SLIDES_UNTIL = "2026-11-15";
 const slideKey = (date: string, profileId: string, index = 0) => `tania:${date}:${profileId}:${index}`;
 const legacySlideKey = (date: string, accountId: string) => `tania:${date}:${accountId}`;
 const accountForLang = (value: PostingLang) => (value === "es" ? "es" : value === "en" ? "us" : "fr");
-const slidePeople = (people: { id: string; name: string }[]) =>
-  [...people].sort((a, b) => {
-    const rank = (name: string) => {
-      const key = displayName(name).toLowerCase();
-      if (key === "ghada") return 0;
-      if (key === "peches") return 1;
-      if (key === "karol") return 2;
-      return 3;
-    };
-    return rank(a.name) - rank(b.name);
-  });
+const slideStorageId = (profileId: string, accountId: string) => `${profileId}__${accountId}`;
+const girlRank = (name: string) => {
+  const key = displayName(name).toLowerCase();
+  if (key === "ghada") return 0;
+  if (key === "peches") return 1;
+  if (key === "karol") return 2;
+  return 3;
+};
+const slideGirls = (people: { id: string; name: string }[]) =>
+  [...people].filter((worker) => girlRank(worker.name) < 3).sort((a, b) => girlRank(a.name) - girlRank(b.name));
+const slideCardTitle = (name: string) => {
+  const key = displayName(name).toLowerCase();
+  if (key === "ghada") return "Ghada - FR";
+  if (key === "peches") return "Peches - ES";
+  if (key === "karol") return "Karol - EN";
+  return displayName(name);
+};
 const slideCopy = {
   fr: {
     button: "Télécharger toutes les images",
@@ -304,6 +313,7 @@ type SlideLineActions = {
   copyLine: string;
   caption: string;
   emptyCaption: string;
+  waiting: string;
 };
 
 const uploadProof = (file: File, date: string, onProgress: (percent: number) => void) =>
@@ -381,19 +391,15 @@ const ProofFeedback = ({
   );
 };
 
-const MONDAY_VIDEO = "2026-11-09";
-
 export const PostingDashboard = ({
   role,
   profiles,
   work = {},
-  retrySunday = false,
   removedDays = [],
 }: {
   role: string;
   profiles: ManagedProfile[];
   work?: Record<string, ProfileWork>;
-  retrySunday?: boolean;
   removedDays?: string[];
 }) => {
   const remoteProofs: ProofRecord[] = Object.entries(work).flatMap(([profileId, profile]) =>
@@ -534,12 +540,7 @@ export const PostingDashboard = ({
   const person = isTania ? null : roster.find((item) => item.id === role) ?? null;
   const people = isTania ? roster : [];
 
-  const slotDates = openDates(today).filter((date) => date <= WORKER_VISIBLE_THROUGH);
-  const missingDays = person ? slotDates.filter((date) => slotsFor(desk, person.id, date).length === 0) : [];
-  const missingNames = new Intl.ListFormat(dateLocale(lang), { type: "conjunction" }).format(
-    missingDays.map((date) => lower(formatDay(date, lang)))
-  );
-  const weekSaved = person ? desk.weekValidated[person.id] === true : false;
+  const ownAccount = person ? accountForLang(lang) : "";
 
   const publishDay = (date: string, desk: Desk) => {
     if (!person) return;
@@ -562,6 +563,13 @@ export const PostingDashboard = ({
           [person.id]: { ...current.slots[person.id], [date]: chooseSlot(slotsFor(current, person.id, date), slotId) },
         },
       };
+      const day = next.days[person.id]?.[date];
+      if (day?.validated && slotsFor(next, person.id, date).length === 0) {
+        next.days = {
+          ...next.days,
+          [person.id]: { ...next.days[person.id], [date]: { ...day, validated: false } },
+        };
+      }
       publishDay(date, next);
       return next;
     });
@@ -592,7 +600,9 @@ export const PostingDashboard = ({
       const existing = current.days[person.id]?.[date] ?? emptyDayState();
       const next = recipe(existing);
       const plan = DAY_PLANS.find((item) => item.date === date);
-      const validated = Boolean(plan && next.validated && dayReady(plan, next));
+      const tasks = plan ? checksFor(plan, lang).filter((check) => taskIsHers(check.id, ownAccount)) : [];
+      const checksDone = Boolean(next.proofName) && tasks.length > 0 && tasks.every((check) => next.checks[check.id] === true);
+      const validated = Boolean(plan && next.validated && checksDone && slotsFor(current, person.id, date).length > 0);
       const updated = {
         ...current,
         days: { ...current.days, [person.id]: { ...current.days[person.id], [date]: { ...next, validated } } },
@@ -731,54 +741,36 @@ export const PostingDashboard = ({
           <p className="mt-2 max-w-prose font-body text-sm leading-relaxed text-gray-700">{range}</p>
         </header>
 
-        {retrySunday && (
-          <section className="rounded-3xl bg-white p-5 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
-            <h2 className="font-title text-2xl tracking-tight">Monday, November 9</h2>
-            <p className="mt-2 max-w-prose font-body text-sm leading-relaxed text-gray-700">
-              Monday's video didn't stay. Please send it again here.
-            </p>
-            <input
-              type="file"
-              accept="video/*"
-              aria-label="Monday's video"
-              className="mt-4 block w-full font-body text-sm"
-              onChange={(event) => {
-                const chosen = event.target.files?.[0];
-                event.target.value = "";
-                void onProof(MONDAY_VIDEO, chosen);
-              }}
-            />
-            <ProofFeedback
-              active={proofNote?.date === MONDAY_VIDEO}
-              percent={proofNote?.date === MONDAY_VIDEO ? proofNote.percent : 0}
-              text={proofNote?.date === MONDAY_VIDEO ? proofNote.text : ""}
-              error={proofError?.date === MONDAY_VIDEO ? proofError.text : null}
-            />
-          </section>
-        )}
-
         {isTania && (
           <section className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
             <h2 className="font-title text-2xl tracking-tight">Créneaux</h2>
             <p className="mt-1 font-body text-xs text-gray-700">
               {people.map((item) => `${personMark(item)} ${item.name}`).join(" · ")}
             </p>
-            <div className="mt-3 grid grid-cols-[3.4rem_repeat(4,1fr)] gap-1 font-body text-[11px] leading-tight">
+            <div className="mt-4 grid grid-cols-[4.75rem_repeat(4,minmax(0,1fr))] gap-2 font-body text-base">
               <span />
               {SLOTS.map((slot) => (
-                <span key={slot.id} className="text-center font-bold">
+                <span key={slot.id} className="py-2 text-center text-sm font-bold">
                   {slot.short}
                 </span>
               ))}
               {visibleDates().map((date) => (
                 <div key={date} className="contents">
-                  <span className={`py-1 ${date === today ? "font-bold" : ""}`}>{formatShortDay(date)}</span>
+                  <span className={`flex items-center text-sm font-bold ${date === today ? "text-black" : "text-gray-700"}`}>
+                    {formatShortDay(date)}
+                  </span>
                   {SLOTS.map((slot) => {
                     const marks = people
                       .filter((item) => slotsFor(desk, item.id, date).includes(slot.id))
                       .map((item) => personMark(item));
+                    const shared = marks.length > 1;
                     return (
-                      <span key={slot.id} className="rounded-md bg-gray-100 px-0.5 py-1 text-center">
+                      <span
+                        key={slot.id}
+                        className={`flex min-h-12 items-center justify-center rounded-lg px-1 py-2 text-center text-base font-bold ${
+                          shared ? "bg-[#F8E3B0] text-black" : "bg-gray-100"
+                        }`}
+                      >
                         {marks.length > 0 ? marks.join(" ") : "·"}
                       </span>
                     );
@@ -786,6 +778,11 @@ export const PostingDashboard = ({
                 </div>
               ))}
             </div>
+            {visibleDates().some((date) =>
+              SLOTS.some(
+                (slot) => people.filter((item) => slotsFor(desk, item.id, date).includes(slot.id)).length > 1
+              )
+            ) && <p className="mt-3 font-body text-sm text-gray-700">Deux filles ont la même heure.</p>}
             <div className="mt-5 border-t border-gray-200 pt-4">
               <h3 className="font-body text-base font-bold">Profils</h3>
               <ul className="mt-3 flex flex-col gap-4">
@@ -827,78 +824,6 @@ export const PostingDashboard = ({
           </section>
         )}
 
-        {!isTania && person && (
-          <section aria-label={ui.slots} className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
-            <h2 className="font-title text-2xl tracking-tight">{ui.slots}</h2>
-            <p className="mt-2 font-body text-base leading-relaxed text-gray-700">{ui.slotsHelp}</p>
-            <p className="mt-3 rounded-xl bg-[#E7F6EC] px-3 py-2 font-body text-sm font-normal leading-relaxed text-[#146C36]">{ui.slotsVary}</p>
-            <ul className="mt-4 flex flex-col gap-4">
-              {slotDates.map((date) => {
-                const chosen = slotsFor(desk, person.id, date)[0];
-                const chosenSlot = SLOTS.find((slot) => slot.id === chosen);
-                return (
-                  <li key={date} className="border-t border-gray-200 pt-4 first:border-t-0 first:pt-0">
-                    <p className="font-body text-base font-bold">
-                      {formatDay(date, lang)}
-                      {date === today ? `, ${ui.todayWord}` : ""}
-                    </p>
-                    <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                      {SLOTS.map((slot) => {
-                        const selected = chosen === slot.id;
-                        return (
-                          <button
-                            key={slot.id}
-                            id={`slot-${date}-${slot.id}`}
-                            type="button"
-                            aria-pressed={selected}
-                            aria-label={`${formatDay(date, lang)} ${slot.label}`}
-                            onClick={() => toggleSlot(date, slot.id)}
-                            className={`flex h-12 items-center justify-center rounded-xl px-2 font-body text-base font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-black ${
-                              selected ? "bg-black text-white" : "bg-gray-100 text-black"
-                            }`}
-                          >
-                            {hourText(slot.short)}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <p className="mt-2 font-body text-sm leading-relaxed text-gray-700">
-                      {chosenSlot ? ui.picked(hourText(chosenSlot.short)) : ui.pickOne}
-                    </p>
-                  </li>
-                );
-              })}
-            </ul>
-            <div className="mt-4 border-t border-gray-200 pt-4">
-              {missingDays.length > 0 && (
-                <p className="font-body text-base leading-relaxed text-gray-700">
-                  {missingDays.length > 3 ? ui.missingCount(missingDays.length) : ui.missingHours(missingNames)}
-                </p>
-              )}
-              {missingDays.length === 0 && !weekSaved && (
-                <p className="font-body text-base leading-relaxed text-gray-700">{ui.readyHours}</p>
-              )}
-              {weekSaved ? (
-                <div id="validate-week" className={`${missingDays.length > 0 ? "mt-3" : ""} rounded-xl border border-black px-4 py-3`}>
-                  <p className="font-body text-base font-bold">{ui.weekDone}</p>
-                  <p className="mt-1 font-body text-sm leading-relaxed text-gray-700">{ui.weekEdit}</p>
-                </div>
-              ) : (
-                <button
-                  id="validate-week"
-                  type="button"
-                  onClick={() =>
-                    update((current) => ({ ...current, weekValidated: { ...current.weekValidated, [person.id]: true } }))
-                  }
-                  className="mt-3 h-12 w-full rounded-xl bg-black px-4 font-body text-base font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
-                >
-                  {ui.validateWeek}
-                </button>
-              )}
-            </div>
-          </section>
-        )}
-
         {visiblePlans(isTania)
           .filter((plan) => !(isTania && hiddenDays.includes(plan.date)))
           .map((plan) => {
@@ -908,6 +833,54 @@ export const PostingDashboard = ({
               <section key={plan.date} className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
                 <p className="font-body text-sm text-gray-700">{dayHeading(plan)}</p>
                 <h2 className="font-title text-2xl tracking-tight">{formatDay(plan.date)}</h2>
+                {plan.date >= SLIDES_FROM && plan.date <= SLIDES_UNTIL && (
+                  <div className="mt-4 flex flex-col gap-4">
+                    {ACCOUNTS.map((account, index) => {
+                      if (!plan.publishers.includes(account.id)) return null;
+                      const title = accountWord(index, "fr");
+                      return (
+                        <div key={account.id}>
+                          <p className="font-title text-xl leading-none tracking-tight" style={{ color: ACCOUNT_TONE[index].ink }}>
+                            {title}
+                          </p>
+                          <div className="mt-2 grid gap-3 sm:grid-cols-3">
+                            {slideGirls(roster).map((worker) => {
+                              const storageId = slideStorageId(worker.id, account.id);
+                              const names = desk.taniaFiles[plan.date]?.[storageId] ?? [];
+                              const label = slideCardTitle(worker.name);
+                              return (
+                                <div key={storageId} className="rounded-2xl bg-gray-100 p-3">
+                                  <label htmlFor={`upload-${plan.date}-${storageId}`} className="block font-body text-base font-bold">
+                                    {label}
+                                  </label>
+                                  <input
+                                    id={`upload-${plan.date}-${storageId}`}
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    aria-label={`${title} ${label}`}
+                                    onChange={(event) => void onSlides(plan.date, storageId, event.target.files)}
+                                    className="mt-2 block w-full font-body text-sm"
+                                  />
+                                  {names.length > 0 && <p className="mt-2 font-body text-sm">{names.length} images</p>}
+                                  <textarea
+                                    id={`caption-${plan.date}-${storageId}`}
+                                    value={desk.captions?.[plan.date]?.[storageId] ?? ""}
+                                    onChange={(event) => saveCaption(plan.date, storageId, event.target.value)}
+                                    rows={3}
+                                    placeholder="Description du jour"
+                                    aria-label={`Description de ${label}, ${title}`}
+                                    className="mt-3 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 font-body text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
+                                  />
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
                 <AccountChecks
                   checks={checks}
                   lang="fr"
@@ -938,42 +911,6 @@ export const PostingDashboard = ({
                     );
                   })}
                 </div>
-                {plan.date >= SLIDES_FROM && (
-                  <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                    {slidePeople(roster).map((worker) => {
-                      const names = desk.taniaFiles[plan.date]?.[worker.id] ?? [];
-                      const label = displayName(worker.name);
-                      return (
-                        <div key={worker.id} className="rounded-2xl bg-gray-100 p-3">
-                          <label htmlFor={`upload-${plan.date}-${worker.id}`} className="block font-body text-base font-bold">
-                            {label}
-                          </label>
-                          <input
-                            id={`upload-${plan.date}-${worker.id}`}
-                            type="file"
-                            accept="image/*"
-                            multiple
-                            aria-label={label}
-                            onChange={(event) => void onSlides(plan.date, worker.id, event.target.files)}
-                            className="mt-2 block w-full font-body text-sm"
-                          />
-                          {names.length > 0 && <p className="mt-2 font-body text-sm">{names.length} images</p>}
-                          {plan.date === TUESDAY && (
-                            <textarea
-                              id={`caption-${plan.date}-${worker.id}`}
-                              value={desk.captions?.[plan.date]?.[worker.id] ?? ""}
-                              onChange={(event) => saveCaption(plan.date, worker.id, event.target.value)}
-                              rows={3}
-                              placeholder="Description du jour"
-                              aria-label={`Description de ${label}`}
-                              className="mt-3 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 font-body text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
-                            />
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
                 <div className="mt-5">
                   <button
                     id={`delete-day-${plan.date}`}
@@ -993,11 +930,43 @@ export const PostingDashboard = ({
           }
 
           const state = person ? desk.days[person.id]?.[plan.date] ?? emptyDayState() : emptyDayState();
-          const ready = dayReady(plan, state);
+          const hour = person ? slotsFor(desk, person.id, plan.date)[0] : undefined;
+          const chosenSlot = SLOTS.find((slot) => slot.id === hour);
+          const hers = checks.filter((check) => taskIsHers(check.id, ownAccount));
+          const checksDone = Boolean(state.proofName) && hers.length > 0 && hers.every((check) => state.checks[check.id] === true);
+          const ready = checksDone && Boolean(hour);
           return (
             <section key={plan.date} className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
               <p className="font-body text-sm text-gray-700">{dayHeading(plan, lang)}</p>
               <h2 className="font-title text-2xl tracking-tight">{formatDay(plan.date, lang)}</h2>
+              {person && (
+                <div className="mt-4">
+                  <p className="font-body text-base font-bold">{ui.slots}</p>
+                  <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    {SLOTS.map((slot) => {
+                      const selected = hour === slot.id;
+                      return (
+                        <button
+                          key={slot.id}
+                          id={`slot-${plan.date}-${slot.id}`}
+                          type="button"
+                          aria-pressed={selected}
+                          aria-label={`${formatDay(plan.date, lang)} ${slot.label}`}
+                          onClick={() => toggleSlot(plan.date, slot.id)}
+                          className={`flex h-12 items-center justify-center rounded-xl px-2 font-body text-base font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-black ${
+                            selected ? "bg-black text-white" : "bg-gray-100 text-black"
+                          }`}
+                        >
+                          {hourText(slot.short)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-2 font-body text-sm leading-relaxed text-gray-700">
+                    {chosenSlot ? ui.picked(hourText(chosenSlot.short)) : ui.pickOne}
+                  </p>
+                </div>
+              )}
               <AccountChecks
                 checks={checks}
                 lang={lang}
@@ -1019,45 +988,31 @@ export const PostingDashboard = ({
                       check={check}
                       label={label}
                       large={!check.parent}
-                      slides={
-                        person && plan.date === TUESDAY && check.id === "post-fr"
-                          ? {
-                              date: plan.date,
-                              downloadLabel: slideCopy[lang].download,
-                              downloadLine: slideCopy[lang].downloadLine,
-                              namesCount: (desk.taniaFiles[plan.date]?.[person.id] ?? []).length,
-                              onDownload: () =>
-                                downloadSlides(plan.date, person.id, desk.taniaFiles[plan.date]?.[person.id] ?? []),
-                              copyLabel: slideCopy[lang].copy,
-                              copiedLabel: slideCopy[lang].copied,
-                              copyLine: slideCopy[lang].copyLine,
-                              caption: desk.captions?.[plan.date]?.[person.id] ?? "",
-                              emptyCaption: slideCopy[lang].noCaption,
-                            }
-                          : undefined
-                      }
+                      slides={(() => {
+                        const accountId = check.id.startsWith("post-") ? check.id.slice(5) : "";
+                        if (!person || !accountId || plan.date < SLIDES_FROM || plan.date > SLIDES_UNTIL || !plan.publishers.includes(accountId)) {
+                          return undefined;
+                        }
+                        const storageId = slideStorageId(person.id, accountId);
+                        const names = desk.taniaFiles[plan.date]?.[storageId] ?? [];
+                        return {
+                          date: `${plan.date}-${accountId}`,
+                          downloadLabel: slideCopy[lang].download,
+                          downloadLine: slideCopy[lang].downloadLine,
+                          namesCount: names.length,
+                          onDownload: () => downloadSlides(plan.date, storageId, names),
+                          copyLabel: slideCopy[lang].copy,
+                          copiedLabel: slideCopy[lang].copied,
+                          copyLine: slideCopy[lang].copyLine,
+                          caption: desk.captions?.[plan.date]?.[storageId] ?? "",
+                          emptyCaption: slideCopy[lang].noCaption,
+                          waiting: ui.imagesMissing,
+                        };
+                      })()}
                     />
                   </label>
                 )}
               />
-              {person && plan.date > TUESDAY && plan.publishers.includes(accountForLang(lang)) && (desk.taniaFiles[plan.date]?.[person.id]?.length ?? 0) > 0 && (
-                <div className="mt-4 rounded-2xl bg-gray-100 p-3">
-                  <p className="font-body text-sm leading-relaxed">{slideCopy[lang].note}</p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {(desk.taniaFiles[plan.date]?.[person.id] ?? []).map((name, index) => {
-                      const href = urls[slideKey(plan.date, person.id, index)];
-                      return href ? <img key={`${name}-${index}`} src={href} alt="" className="h-20 w-20 rounded-xl object-cover" /> : null;
-                    })}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => downloadSlides(plan.date, person.id, desk.taniaFiles[plan.date]?.[person.id] ?? [])}
-                    className="mt-3 h-12 w-full rounded-xl bg-black px-4 font-body text-sm font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
-                  >
-                    {slideCopy[lang].button}
-                  </button>
-                </div>
-              )}
               <div className="mt-4 rounded-2xl bg-gray-100 p-3">
                 <h3 className="font-body text-base font-bold">{ui.proof}</h3>
                 <p className="mt-1 font-body text-sm leading-relaxed text-gray-700">
@@ -1080,11 +1035,11 @@ export const PostingDashboard = ({
                   error={proofError?.date === plan.date ? proofError.text : null}
                 />
                 {person && (urls[proofKey(person.id, plan.date)] || remoteProofs.some((item) => item.profileId === person.id && item.date === plan.date)) && (
-                  <video
+                  <ProofThumb
                     src={urls[proofKey(person.id, plan.date)] || `/posting/proof/${person.id}/${plan.date}`}
-                    controls
-                    playsInline
-                    className="mt-3 w-full rounded-2xl bg-black"
+                    label={displayName(person.name)}
+                    play={ui.proofPlay}
+                    close={ui.proofClose}
                   />
                 )}
               </div>
@@ -1092,13 +1047,16 @@ export const PostingDashboard = ({
                 id={`validate-day-${plan.date}`}
                 type="button"
                 disabled={!ready || state.validated}
-                onClick={() => patchDay(plan.date, (day) => ({ ...day, validated: true }))}
+                onClick={() => {
+                  if (!hour) return;
+                  patchDay(plan.date, (day) => ({ ...day, validated: true }));
+                }}
                 className="mt-4 h-12 w-full rounded-xl bg-black px-4 font-body text-base font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:opacity-40"
               >
                 {state.validated ? ui.dayDone : ui.validateDay}
               </button>
               {!state.validated && (
-                <p className="mt-2 font-body text-sm text-gray-700">{ready ? ui.ready : ui.missing}</p>
+                <p className="mt-2 font-body text-sm text-gray-700">{!hour ? ui.pickOne : checksDone ? ui.ready : ui.missing}</p>
               )}
             </section>
           );
@@ -1111,22 +1069,22 @@ export const PostingDashboard = ({
   );
 };
 
-const ProofThumb = ({ src, label }: { src: string; label: string }) => {
+const ProofThumb = ({ src, label, play = "Lire", close = "Fermer" }: { src: string; label: string; play?: string; close?: string }) => {
   const [open, setOpen] = useState(false);
   return (
     <>
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label={`Lire la vidéo de ${label}`}
-        className="relative mt-2 block h-auto min-h-[120px] w-[180px] max-w-full overflow-hidden rounded-2xl bg-black text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
+        aria-label={`${play} ${label}`}
+        className="relative mt-2 block h-[120px] w-[180px] max-w-full overflow-hidden rounded-2xl bg-black text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
       >
-        <video src={src} preload="metadata" muted playsInline className="pointer-events-none block h-auto w-full" />
-        <span className="pointer-events-none absolute bottom-2 left-2 rounded-full bg-white px-2 py-1 font-body text-xs font-bold">Lire</span>
+        <video src={src} preload="metadata" muted playsInline className="pointer-events-none block h-full w-full object-cover" />
+        <span className="pointer-events-none absolute bottom-2 left-2 rounded-full bg-white px-2 py-1 font-body text-xs font-bold">{play}</span>
       </button>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" role="dialog" aria-modal="true" aria-label={`Vidéo de ${label}`}>
-          <button type="button" className="absolute inset-0 cursor-default" aria-label="Fermer" onClick={() => setOpen(false)} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" role="dialog" aria-modal="true" aria-label={label}>
+          <button type="button" className="absolute inset-0 cursor-default" aria-label={close} onClick={() => setOpen(false)} />
           <div className="relative z-10 w-full max-w-sm">
             <video src={src} controls autoPlay playsInline className="max-h-[80vh] w-full rounded-2xl bg-black" />
             <button
@@ -1134,7 +1092,7 @@ const ProofThumb = ({ src, label }: { src: string; label: string }) => {
               onClick={() => setOpen(false)}
               className="mt-3 h-12 w-full rounded-xl bg-white font-body text-base font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
             >
-              Fermer
+              {close}
             </button>
           </div>
         </div>

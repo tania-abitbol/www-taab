@@ -112,7 +112,7 @@ const WEEK_STEPS: Record<string, WeekStep[]> = {
   ],
   "2026-11-10": [
     { account: 0, kind: "post" },
-    { account: 1, kind: "warm" },
+    { account: 1, kind: "profile" },
     { account: 2, kind: "warm" },
   ],
   "2026-11-11": [
@@ -257,7 +257,12 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
       if (step.kind === "profile") {
         return [
           task(`profile-${id}`, say.profile(account), PROFILE_SETUP_MINUTES),
-          task(`photo-${id}`, plan.date === "2026-11-09" ? say.photoMonday : say.photoRule, undefined, `profile-${id}`),
+          task(
+            `photo-${id}`,
+            plan.date === "2026-11-09" || plan.date === "2026-11-10" ? say.photoMonday : say.photoRule,
+            undefined,
+            `profile-${id}`,
+          ),
           task(`bio-${id}`, say.bioRule, undefined, `profile-${id}`),
           task(
             `warm-${id}`,
@@ -271,7 +276,7 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
         ];
       }
       if (step.kind === "post") {
-        const precise = plan.date === "2026-11-10" && id === "fr";
+        const precise = plan.date >= "2026-11-10" && plan.date <= "2026-11-15";
         const weekendGoal =
           (plan.date === "2026-11-14" || plan.date === "2026-11-15") && typeof follows === "number"
             ? say.focusGoal(follows)
@@ -279,10 +284,14 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
         return [
           task(
             `before-${id}`,
-            precise ? say.tuesdayWarmBefore(account) : say.postWarmBefore(account, weekendGoal),
+            precise ? say.tuesdayWarmBefore(account, weekendGoal) : say.postWarmBefore(account, weekendGoal),
             POST_WARM_BEFORE_MINUTES,
           ),
-          task(`post-${id}`, precise ? say.tuesdayPost(account) : say.post(account), POST_PUBLISH_MINUTES),
+          task(
+            `post-${id}`,
+            plan.date >= "2026-11-10" && plan.date <= "2026-11-15" ? say.tuesdayPost(account) : say.post(account),
+            POST_PUBLISH_MINUTES,
+          ),
           task(`after-${id}`, precise ? say.tuesdayWarmAfter(account) : say.postWarmAfter(account), POST_WARM_AFTER_MINUTES),
         ];
       }
@@ -302,6 +311,15 @@ export const dayReady = (plan: DayPlan, state: DayState) => {
   if (!state.proofName) return false;
   const checks = checksFor(plan);
   return checks.length > 0 && checks.every((check) => state.checks[check.id] === true);
+};
+
+/** Account suffix on a task id. Shared tasks have none. */
+export const checkAccountId = (id: string) => (id.endsWith("-fr") ? "fr" : id.endsWith("-es") ? "es" : id.endsWith("-us") ? "us" : "");
+
+/** A girl validates her own account, plus any task that is not tied to an account. */
+export const taskIsHers = (id: string, accountId: string) => {
+  const owner = checkAccountId(id);
+  return !owner || owner === accountId;
 };
 
 /** A shared day can be removed once every profile that worked it has validated. */
@@ -376,7 +394,7 @@ type Phrases = {
   post: (account: string) => string;
   postWarmBefore: (account: string, goal?: string) => string;
   postWarmAfter: (account: string) => string;
-  tuesdayWarmBefore: (account: string) => string;
+  tuesdayWarmBefore: (account: string, goal?: string) => string;
   tuesdayPost: (account: string) => string;
   tuesdayWarmAfter: (account: string) => string;
   focusGoal: (count: number) => string;
@@ -452,10 +470,11 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Fais défiler, regarde ce qui t'intéresse",
         "• Tu ne postes plus"
       ),
-    tuesdayWarmBefore: (account) =>
+    tuesdayWarmBefore: (account, goal) =>
       block(
         account,
         "Échauffement précis.",
+        goal,
         "• Va sur 5 comptes d'influenceurs de ton pays que tu connais. Abonne-toi, regarde leurs vidéos, et réponds à des commentaires déjà là.",
         "• Retourne sur le Pour toi. Défile, abonne-toi et commente au moins 5 vidéos."
       ),
@@ -563,10 +582,11 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Desliza, mira lo que te interesa",
         "• Ya no publicas"
       ),
-    tuesdayWarmBefore: (account) =>
+    tuesdayWarmBefore: (account, goal) =>
       block(
         account,
         "Calentamiento preciso.",
+        goal,
         "• Entra en 5 cuentas de influencers de tu país que conoces. Síguelas, mira sus vídeos y responde a comentarios que ya están ahí.",
         "• Vuelve al Para ti. Desliza, suscríbete y comenta al menos 5 vídeos."
       ),
@@ -673,10 +693,11 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Scroll, watch what you like",
         "• You do not post anymore"
       ),
-    tuesdayWarmBefore: (account) =>
+    tuesdayWarmBefore: (account, goal) =>
       block(
         account,
         "Precise warm-up.",
+        goal,
         "• Go to 5 influencer accounts from your country that you know. Follow them, watch their videos, and reply to comments that are already there.",
         "• Go back to For You. Scroll, follow, and comment on at least 5 videos."
       ),
@@ -747,6 +768,8 @@ export const postingUi = (lang: PostingLang) =>
       weekEdit: "Tu peux encore changer une heure. Appuie sur une autre.",
       todayWord: "aujourd'hui",
       proof: "Preuve du jour",
+      proofPlay: "Lire",
+      proofClose: "Fermer",
       proofBody: "Enregistrement filmé de la session. Tu as juste à enregistrer ton écran pendant toute ton heure de travail.",
       proofScroll: "Enregistrement des 30 minutes où tu fais défiler. Tu ne filmes pas la création des comptes : il peut y avoir des mots de passe.",
       validateDay: "Valider la journée",
@@ -758,6 +781,7 @@ export const postingUi = (lang: PostingLang) =>
       proofSending: (percent: number) => `Envoi… ${percent} %`,
       proofFail: "La vidéo n'est pas partie. Laisse la page ouverte et réessaie.",
       proofTooBig: "Cette vidéo dépasse 10 Go.",
+      imagesMissing: "Les images ne sont pas encore là.",
       catchupTitle: "Vidéos à envoyer",
       catchupBody: "Vendredi et samedi sont passés. Envoie la vidéo de chaque jour. Une heure, jusqu'à 10 Go. Laisse la page ouverte.",
       catchupFriday: "Vidéo du vendredi 6 novembre",
@@ -780,6 +804,8 @@ export const postingUi = (lang: PostingLang) =>
       weekEdit: "Todavía puedes cambiar una hora. Pulsa otra.",
       todayWord: "hoy",
       proof: "Prueba del día",
+      proofPlay: "Ver",
+      proofClose: "Cerrar",
       proofBody: "Grabación de la sesión. Solo tienes que grabar tu pantalla durante toda tu hora de trabajo.",
       proofScroll: "Grabación de los 30 minutos en los que deslizas. No grabes la creación de las cuentas: puede haber contraseñas.",
       validateDay: "Validar el día",
@@ -791,6 +817,7 @@ export const postingUi = (lang: PostingLang) =>
       proofSending: (percent: number) => `Enviando… ${percent} %`,
       proofFail: "El vídeo no se ha enviado. Deja la página abierta y vuelve a intentarlo.",
       proofTooBig: "Este vídeo pasa de 10 GB.",
+      imagesMissing: "Las imágenes todavía no están.",
       catchupTitle: "Vídeos por enviar",
       catchupBody: "El viernes y el sábado ya pasaron. Envía el vídeo de cada día. Una hora, hasta 10 GB. Deja la página abierta.",
       catchupFriday: "Vídeo del viernes 6 de noviembre",
@@ -813,6 +840,8 @@ export const postingUi = (lang: PostingLang) =>
       weekEdit: "You can still change an hour. Tap another one.",
       todayWord: "today",
       proof: "Proof of the day",
+      proofPlay: "Play",
+      proofClose: "Close",
       proofBody: "A recording of the session. Just screen-record your whole hour of work.",
       proofScroll: "A recording of the 30 minutes when you scroll. Do not record while you create the accounts: there may be passwords.",
       validateDay: "Validate the day",
@@ -824,6 +853,7 @@ export const postingUi = (lang: PostingLang) =>
       proofSending: (percent: number) => `Sending… ${percent}%`,
       proofFail: "The video did not send. Keep this page open and try again.",
       proofTooBig: "This video is over 10 GB.",
+      imagesMissing: "The images are not here yet.",
       catchupTitle: "Videos to send",
       catchupBody: "Friday and Saturday have passed. Send the video for each day. One hour, up to 10 GB. Keep this page open.",
       catchupFriday: "Friday, November 6 video",
