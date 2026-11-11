@@ -24,6 +24,8 @@ const {
   formatMinutes,
   langFromName,
   calendarDate,
+  missedProofDate,
+  shiftIsoDate,
   timeZoneForGirl,
   workerVisiblePlans,
   WORKER_VISIBLE_THROUGH,
@@ -538,6 +540,19 @@ const tuesdayInNewYork = new Date("2026-11-10T05:30:00Z");
 assert.equal(calendarDate("America/New_York", tuesdayInNewYork), "2026-11-10");
 assert.equal(datesFor("Karol - US", tuesdayInNewYork).includes("2026-11-09"), false);
 assert.equal(datesFor("Karol - US", tuesdayInNewYork)[0], "2026-11-10");
+assert.equal(shiftIsoDate("2026-11-11", -1), "2026-11-10");
+const wednesdayAfternoon = new Date("2026-11-11T18:00:00Z");
+assert.equal(missedProofDate("Karol - US", wednesdayAfternoon), "2026-11-10");
+assert.equal(missedProofDate("Ghada - FR", wednesdayAfternoon), "2026-11-10");
+assert.equal(missedProofDate("Peches - ES", wednesdayAfternoon), "2026-11-10");
+assert.equal(missedProofDate("Karol - US", stillMondayInNewYork), "2026-11-08");
+assert.equal(missedProofDate("Karol - US", tuesdayInNewYork), "2026-11-09");
+assert.equal(missedProofDate("Ghada - FR", new Date("2026-11-06T12:00:00Z")), null);
+assert.ok(postingUi("en").lateProofTitle("Tuesday, November 10").includes("Yesterday"));
+assert.ok(postingUi("en").lateProofBody.includes("no longer on the page"));
+assert.ok(postingUi("fr").lateProofTitle("mardi 10 novembre").includes("hier"));
+assert.ok(postingUi("es").lateProofTitle("martes").includes("ayer"));
+assert.ok(postingUi("en").downloadPreparing.includes("Preparing"));
 assert.equal(DAY_PLANS.some((plan) => plan.date === "2026-11-09"), true);
 assert.equal(DAY_PLANS.some((plan) => plan.date === "2026-11-06"), true);
 assert.equal(langFromName("Profil 1"), "fr");

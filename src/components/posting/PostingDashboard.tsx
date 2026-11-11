@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 
 import {
   ACCOUNTS,
@@ -31,10 +32,12 @@ import {
   personMark,
   postingUi,
   showHoursVary,
+  missedProofDate,
   slotsFor,
   taskIsHers,
 } from "~/config/posting";
 import { SLIDE_MAX_BYTES, slideshowOf, type SlideBoard, type SlideImage } from "~/config/slideBoard";
+import { zipStoredFiles } from "~/config/slideZip";
 import { leavePosting } from "~/app/dashboard/creator/actions";
 import { addManagedProfile, commitProof, deleteManagedProfile, deleteValidatedDay, dropSharedSlide, loadSharedSlides, prepareProofUpload, publishSlideCaption, publishSlides, saveManagedProfile, saveMyDay } from "~/app/posting/actions";
 import { PROOF_PART_BYTES, proofPartCount, type DayWork, type ProfileWork, type ProofRecord } from "~/server/postingProofs";
@@ -143,15 +146,17 @@ const TaskCopy = ({
                 <button
                   id={`download-slides-${slides.date}`}
                   type="button"
+                  disabled={slides.busy}
+                  aria-busy={slides.busy || undefined}
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={(event) => {
                     event.preventDefault();
                     event.stopPropagation();
                     slides.onDownload();
                   }}
-                  className="inline-flex h-10 shrink-0 items-center rounded-xl bg-black px-3 font-body text-sm font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
+                  className="inline-flex h-10 shrink-0 items-center rounded-xl bg-black px-3 font-body text-sm font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:opacity-40"
                 >
-                  {slides.downloadLabel}
+                  {slides.busy ? slides.busyLabel : slides.downloadLabel}
                 </button>
               ) : (
                 <span className="font-body text-sm font-normal leading-relaxed text-gray-700">{slides.waiting}</span>
@@ -389,6 +394,8 @@ type SlideLineActions = {
   downloadLine: string;
   namesCount: number;
   onDownload: () => void;
+  busy?: boolean;
+  busyLabel?: string;
   copyLabel: string;
   copiedLabel: string;
   copyLine: string;
@@ -505,6 +512,8 @@ export const PostingDashboard = ({
   const [deletingDate, setDeletingDate] = useState<string | null>(null);
   const [dayError, setDayError] = useState<string | null>(null);
   const [board, setBoard] = useState(slides);
+  const [zipping, setZipping] = useState<string | null>(null);
+  const zippingRef = useRef<string | null>(null);
   const boardStamp = useRef(0);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const captionTimers = useRef<Record<string, number>>({});
@@ -693,6 +702,9 @@ export const PostingDashboard = ({
 
   const person = isTania ? null : roster.find((item) => item.id === role) ?? null;
   const people = isTania ? roster : [];
+  const lateDate = person ? missedProofDate(girlName, clock) : null;
+  const lateProofName = lateDate && person ? desk.days[person.id]?.[lateDate]?.proofName ?? null : null;
+  const showLateProof = Boolean(person && lateDate && !lateProofName);
 
   const ownAccount = person ? accountForLang(lang) : "";
 
@@ -917,18 +929,44 @@ export const PostingDashboard = ({
     return desk.captions?.[date]?.[storageId] ?? "";
   };
 
-  const downloadSlides = (date: string, storageId: string) => {
+  const downloadSlides = async (date: string, storageId: string) => {
+    const key = `${storageId}-${date}`;
+    if (zippingRef.current) return;
     const shared = slideshowOf(board, date, storageId);
-    if (shared.length > 0) {
-      for (const image of shared) saveDownload(`/posting/slide/${image.id}`, image.name || "image");
-      return;
+    const localNames = shared.length > 0 ? [] : desk.taniaFiles[date]?.[storageId] ?? [];
+    if (shared.length === 0 && localNames.length === 0) return;
+    zippingRef.current = key;
+    setZipping(key);
+    setFileError("");
+    try {
+      const files: { name: string; bytes: Uint8Array }[] = [];
+      if (shared.length > 0) {
+        for (const image of shared) {
+          const response = await fetch(`/posting/slide/${image.id}`, { cache: "no-store" });
+          if (!response.ok) throw new Error("download");
+          files.push({ name: image.name || "image", bytes: new Uint8Array(await response.arrayBuffer()) });
+        }
+      } else {
+        for (let index = 0; index < localNames.length; index += 1) {
+          const href = urls[slideKey(date, storageId, index)];
+          if (!href) throw new Error("download");
+          const response = await fetch(href);
+          if (!response.ok) throw new Error("download");
+          files.push({ name: localNames[index] || `image-${index + 1}`, bytes: new Uint8Array(await response.arrayBuffer()) });
+        }
+      }
+      if (files.length !== (shared.length || localNames.length)) throw new Error("download");
+      const zip = zipStoredFiles(files);
+      const url = URL.createObjectURL(new Blob([zip], { type: "application/zip" }));
+      const account = storageId.split("__")[1] || "images";
+      saveDownload(url, `slideshow-${account}-${date}.zip`);
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch {
+      setFileError(ui.downloadFail);
+    } finally {
+      zippingRef.current = null;
+      setZipping(null);
     }
-    const names = desk.taniaFiles[date]?.[storageId] ?? [];
-    names.forEach((name, index) => {
-      const href = urls[slideKey(date, storageId, index)];
-      if (!href) return;
-      saveDownload(href, name || `image-${index + 1}`);
-    });
   };
 
   const addPerson = async (event: FormEvent) => {
@@ -1065,6 +1103,30 @@ export const PostingDashboard = ({
               </form>
               {profileError && <p className="mt-2 font-body text-sm text-[#C8102E]">{profileError}</p>}
             </div>
+          </section>
+        )}
+
+        {showLateProof && lateDate && (
+          <section id="late-proof" className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
+            <h2 className="font-title text-2xl tracking-tight">{ui.lateProofTitle(formatDay(lateDate, lang))}</h2>
+            <p className="mt-2 font-body text-sm leading-relaxed text-gray-700">{ui.lateProofBody}</p>
+            <input
+              id={`late-proof-${lateDate}`}
+              type="file"
+              accept="video/*"
+              aria-label={ui.lateProofTitle(formatDay(lateDate, lang))}
+              onChange={(event) => void onProof(lateDate, event.target.files?.[0])}
+              className="mt-3 font-body text-sm"
+            />
+            {(proofNote?.date === lateDate && proofNote.name) && (
+              <p className="mt-2 font-body text-sm">{proofNote.name}</p>
+            )}
+            <ProofFeedback
+              active={proofNote?.date === lateDate}
+              percent={proofNote?.date === lateDate ? proofNote.percent : 0}
+              text={proofNote?.date === lateDate ? proofNote.text : ""}
+              error={proofError?.date === lateDate ? proofError.text : null}
+            />
           </section>
         )}
 
@@ -1290,12 +1352,15 @@ export const PostingDashboard = ({
                         const storageId = slideStorageId(person.id, accountId);
                         const shared = slideshowOf(board, plan.date, storageId);
                         const names = shared.length > 0 ? shared.map((image) => image.name) : desk.taniaFiles[plan.date]?.[storageId] ?? [];
+                        const zipKey = `${storageId}-${plan.date}`;
                         return {
-                          date: `${storageId}-${plan.date}`,
+                          date: zipKey,
                           downloadLabel: slideCopy[lang].download,
                           downloadLine: slideCopy[lang].downloadLine,
                           namesCount: names.length,
-                          onDownload: () => downloadSlides(plan.date, storageId),
+                          busy: zipping === zipKey,
+                          busyLabel: ui.downloadPreparing,
+                          onDownload: () => void downloadSlides(plan.date, storageId),
                           copyLabel: slideCopy[lang].copy,
                           copiedLabel: slideCopy[lang].copied,
                           copyLine: slideCopy[lang].copyLine,
@@ -1365,26 +1430,40 @@ export const PostingDashboard = ({
 };
 
 const ProofThumb = ({ src, label, play = "Lire", close = "Fermer" }: { src: string; label: string; play?: string; close?: string }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [open, setOpen] = useState(false);
+  const start = () => {
+    flushSync(() => setOpen(true));
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = false;
+    void video.play().catch(() => {
+      video.muted = true;
+      void video.play().catch(() => undefined);
+    });
+  };
+  const stop = () => {
+    videoRef.current?.pause();
+    setOpen(false);
+  };
   return (
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={start}
         aria-label={`${play} ${label}`}
         className="relative mt-2 block h-[120px] w-[180px] max-w-full overflow-hidden rounded-2xl bg-black text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
       >
-        <video src={src} preload="metadata" muted playsInline className="pointer-events-none block h-full w-full object-cover" />
         <span className="pointer-events-none absolute bottom-2 left-2 rounded-full bg-white px-2 py-1 font-body text-xs font-bold">{play}</span>
       </button>
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" role="dialog" aria-modal="true" aria-label={label}>
-          <button type="button" className="absolute inset-0 cursor-default" aria-label={close} onClick={() => setOpen(false)} />
+          <button type="button" className="absolute inset-0 z-0 cursor-default" aria-label={close} onClick={stop} />
           <div className="relative z-10 w-full max-w-sm">
-            <video src={src} controls autoPlay playsInline className="max-h-[80vh] w-full rounded-2xl bg-black" />
+            <video ref={videoRef} src={src} controls playsInline className="max-h-[80vh] w-full rounded-2xl bg-black" />
             <button
               type="button"
-              onClick={() => setOpen(false)}
+              onClick={stop}
               className="mt-3 h-12 w-full rounded-xl bg-white font-body text-base font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
             >
               {close}

@@ -432,6 +432,20 @@ export const workerVisiblePlans = (name: string, now = new Date()) => {
   return DAY_PLANS.filter((plan) => plan.date >= today && plan.date <= WORKER_VISIBLE_THROUGH);
 };
 
+export const shiftIsoDate = (iso: string, days: number) => {
+  if (!isIsoDate(iso) || !Number.isInteger(days)) return "";
+  const [year, month, day] = iso.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10);
+};
+
+/** The planned day that just closed on her clock, once it has left her screen. */
+export const missedProofDate = (name: string, now = new Date()) => {
+  const previous = shiftIsoDate(calendarDate(timeZoneForGirl(name), now), -1);
+  if (!planFor(previous)) return null;
+  if (workerVisiblePlans(name, now).some((plan) => plan.date === previous)) return null;
+  return previous;
+};
+
 /** Locale sits at the end of the profile name: "Ghada - FR". */
 export type PostingLang = "fr" | "es" | "en";
 
@@ -982,6 +996,10 @@ export const postingUi = (lang: PostingLang) =>
       proofFail: "La vidéo n'est pas partie. Laisse la page ouverte et réessaie.",
       proofTooBig: "Cette vidéo dépasse 10 Go.",
       imagesMissing: "Les images ne sont pas encore là.",
+      downloadPreparing: "Préparation…",
+      downloadFail: "Les images n'ont pas pu être téléchargées. Réessaie.",
+      lateProofTitle: (day: string) => `Vidéo d'hier, ${day}`,
+      lateProofBody: "Ce jour n'est plus affiché. Envoie la vidéo ici. Une heure, jusqu'à 10 Go. Laisse la page ouverte.",
       catchupTitle: "Vidéos à envoyer",
       catchupBody: "Vendredi et samedi sont passés. Envoie la vidéo de chaque jour. Une heure, jusqu'à 10 Go. Laisse la page ouverte.",
       catchupFriday: "Vidéo du vendredi 6 novembre",
@@ -1019,6 +1037,10 @@ export const postingUi = (lang: PostingLang) =>
       proofFail: "El vídeo no se ha enviado. Deja la página abierta y vuelve a intentarlo.",
       proofTooBig: "Este vídeo pasa de 10 GB.",
       imagesMissing: "Las imágenes todavía no están.",
+      downloadPreparing: "Preparando…",
+      downloadFail: "No se han podido descargar las imágenes. Vuelve a intentarlo.",
+      lateProofTitle: (day: string) => `Vídeo de ayer, ${day}`,
+      lateProofBody: "Ese día ya no sale en la página. Envía el vídeo aquí. Una hora, hasta 10 GB. Deja la página abierta.",
       catchupTitle: "Vídeos por enviar",
       catchupBody: "El viernes y el sábado ya pasaron. Envía el vídeo de cada día. Una hora, hasta 10 GB. Deja la página abierta.",
       catchupFriday: "Vídeo del viernes 6 de noviembre",
@@ -1056,6 +1078,10 @@ export const postingUi = (lang: PostingLang) =>
       proofFail: "The video did not send. Keep this page open and try again.",
       proofTooBig: "This video is over 10 GB.",
       imagesMissing: "The images are not here yet.",
+      downloadPreparing: "Preparing…",
+      downloadFail: "The images could not be downloaded. Try again.",
+      lateProofTitle: (day: string) => `Yesterday's video, ${day}`,
+      lateProofBody: "That day is no longer on the page. Upload the video here. One hour, up to 10 GB. Keep this page open.",
       catchupTitle: "Videos to send",
       catchupBody: "Friday and Saturday have passed. Send the video for each day. One hour, up to 10 GB. Keep this page open.",
       catchupFriday: "Friday, November 6 video",
