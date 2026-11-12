@@ -182,6 +182,7 @@ const proxyProof = async (request: Request, profileId: string, date: string, coo
   if ("suffix" in asked) {
     const probe = await proofUpstream(profileId, date, cookie, 0, 0);
     if (!probe) return new NextResponse("Introuvable", { status: 404 });
+    if (asked.suffix === undefined) return new NextResponse(null, { status: 416, headers: { "content-range": "bytes */*" } });
     const length = Math.min(asked.suffix, probe.total, INDEX_CAP);
     const start = Math.max(0, probe.total - length);
     const span = await readProofSpan(profileId, date, cookie, start, probe.total - 1);
@@ -189,17 +190,20 @@ const proxyProof = async (request: Request, profileId: string, date: string, coo
     return proofBody(span.bytes, start, probe.total, span.type, true);
   }
 
-  const firstEnd = asked.open ? asked.start + UPSTREAM_WINDOW - 1 : Math.min(asked.end, asked.start + INDEX_CAP - 1);
+  const closedEnd = asked.end;
+  if (!asked.open && closedEnd === null) return new NextResponse(null, { status: 416, headers: { "content-range": "bytes */*" } });
+  const limit = closedEnd ?? asked.start;
+  const firstEnd = asked.open ? asked.start + UPSTREAM_WINDOW - 1 : Math.min(limit, asked.start + INDEX_CAP - 1);
   const first = await proofUpstream(profileId, date, cookie, asked.start, firstEnd);
   if (!first) return new NextResponse("Introuvable", { status: 404 });
   if (asked.start >= first.total) {
     return new NextResponse(null, { status: 416, headers: { "content-range": `bytes */${first.total}` } });
   }
 
-  let end = asked.open ? Math.min(first.total - 1, asked.start + UPSTREAM_WINDOW - 1) : Math.min(asked.end, first.total - 1, asked.start + INDEX_CAP - 1);
+  let end = asked.open ? Math.min(first.total - 1, asked.start + UPSTREAM_WINDOW - 1) : Math.min(limit, first.total - 1, asked.start + INDEX_CAP - 1);
   if (asked.start === 0) {
     const moov = moovLastByte(first.bytes);
-    if (moov && (asked.open || asked.end >= moov.end)) end = asked.open ? moov.end : Math.min(asked.end, first.total - 1, Math.max(moov.end, end));
+    if (moov && (asked.open || limit >= moov.end)) end = asked.open ? moov.end : Math.min(limit, first.total - 1, Math.max(moov.end, end));
   }
   end = Math.min(end, first.total - 1);
 
