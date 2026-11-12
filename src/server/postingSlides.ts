@@ -12,6 +12,7 @@ import {
   setCaption,
   slideImageIdOk,
 } from "~/config/slideBoard";
+import { callProductionAction, mirrorPosting, readLivePosting, readProductionSlide } from "~/server/postingLive";
 
 const STORE = "posting-work";
 const BOARD_KEY = "slides";
@@ -61,6 +62,11 @@ const sign = async (key: string, method: "GET" | "PUT") => {
 };
 
 const readBoard = async (): Promise<SlideBoard> => {
+  if (mirrorPosting()) {
+    const live = await readLivePosting();
+    if (!live) throw new Error("live-posting");
+    return live.slides;
+  }
   if (remote()) {
     const url = await sign(BOARD_KEY, "GET");
     if (!url) return emptySlideBoard();
@@ -112,6 +118,7 @@ export const loadSlideBoard = () => readBoard();
 
 export const saveSlideImage = async (id: string, bytes: Uint8Array) => {
   if (!slideImageIdOk(id) || bytes.byteLength < 1 || bytes.byteLength > SLIDE_MAX_BYTES) throw new Error("slide-size");
+  if (mirrorPosting()) throw new Error("slide-write");
   if (!remote()) {
     await mkdir(dir(), { recursive: true });
     await writeFile(path.join(dir(), `img-${id}`), bytes);
@@ -130,6 +137,7 @@ export const saveSlideImage = async (id: string, bytes: Uint8Array) => {
 
 export const readSlideBytes = async (id: string) => {
   if (!slideImageIdOk(id)) return null;
+  if (mirrorPosting()) return readProductionSlide(id);
   if (!remote()) {
     try {
       return new Uint8Array(await readFile(path.join(dir(), `img-${id}`)));
@@ -148,6 +156,11 @@ export const replaceSlideCard = (date: string, storageId: string, images: SlideI
   enqueue(async () => {
     const clean = replaceCard(emptySlideBoard(), date, storageId, images).files[date]?.[storageId] ?? [];
     if (clean.length !== images.length) throw new Error("slide-images");
+    if (mirrorPosting()) {
+      const result = await callProductionAction("publishSlides", [date, storageId, clean]);
+      if (!result.ok || !result.board) throw new Error("slide-write");
+      return cleanSlideBoard(result.board);
+    }
     const next = replaceCard(await readBoard(), date, storageId, clean);
     await writeBoard(next);
     return next;
@@ -155,9 +168,16 @@ export const replaceSlideCard = (date: string, storageId: string, images: SlideI
 
 export const captionSlideCard = (date: string, storageId: string, caption: string) =>
   enqueue(async () => {
+    const text = caption.slice(0, 500);
+    if (mirrorPosting()) {
+      const result = await callProductionAction("publishSlideCaption", [date, storageId, text]);
+      const board = result.board ? cleanSlideBoard(result.board) : null;
+      if (!result.ok || board?.captions[date]?.[storageId] !== text) throw new Error("slide-caption");
+      return board;
+    }
     const current = await readBoard();
-    const next = setCaption(current, date, storageId, caption);
-    if (next.captions[date]?.[storageId] !== caption.slice(0, 500)) throw new Error("slide-caption");
+    const next = setCaption(current, date, storageId, text);
+    if (next.captions[date]?.[storageId] !== text) throw new Error("slide-caption");
     await writeBoard(next);
     return next;
   });
@@ -165,6 +185,11 @@ export const captionSlideCard = (date: string, storageId: string, caption: strin
 /** Drops the image from the shared list. The stored bytes stay. */
 export const hideSlideAt = (date: string, storageId: string, index: number) =>
   enqueue(async () => {
+    if (mirrorPosting()) {
+      const result = await callProductionAction("dropSharedSlide", [date, storageId, index]);
+      if (!result.ok || !result.board) throw new Error("slide-index");
+      return cleanSlideBoard(result.board);
+    }
     const current = await readBoard();
     if (!current.files[date]?.[storageId]?.[index]) throw new Error("slide-index");
     const next = removeAt(current, date, storageId, index);

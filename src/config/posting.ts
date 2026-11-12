@@ -63,6 +63,8 @@ export type CheckItem = {
   note?: string;
   copyText?: string;
   goal?: string;
+  /** Shown above the tasks. Not a box the girl ticks. */
+  banner?: boolean;
 };
 
 export type DayState = {
@@ -152,6 +154,8 @@ const WEEK_STEPS: Record<string, WeekStep[]> = {
 
 const publishersOn = (date: string) =>
   (WEEK_STEPS[date] ?? []).filter((step) => step.kind === "post").map((step) => ACCOUNTS[step.account].id);
+
+const previousIso = (iso: string) => new Date(Date.parse(`${iso}T00:00:00Z`) - 86_400_000).toISOString().slice(0, 10);
 
 /** End-of-session totals, in account order. Tuesday uses the long callout. */
 const SESSION_TOTALS: Record<string, readonly [number, number, number]> = {
@@ -258,8 +262,12 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
   }
   const steps = WEEK_STEPS[plan.date];
   if (steps) {
+    const hard = plan.date >= "2026-11-12" && plan.date <= "2026-11-15";
+    const total = (accountIndex: number) => SESSION_TOTALS[plan.date]?.[accountIndex] ?? 0;
     const engage = plan.date === "2026-11-09" ? say.engageMore : undefined;
-    const checks = [...steps]
+    const checks = [
+      ...(hard ? [{ ...task("rules", say.hardRules), banner: true }] : []),
+      ...[...steps]
       .sort((a, b) => a.account - b.account)
       .flatMap((step) => {
       const account = name(step.account);
@@ -285,9 +293,11 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
             `warm-${id}`,
             plan.date === "2026-11-10"
               ? say.tuesdayStay(account)
-              : plan.date >= "2026-11-11" && plan.date <= "2026-11-13"
-                ? say.tuesdayFocus(account)
-                : say.warm(account, say.thenWarm),
+              : hard
+                ? say.hardProfileWarm(account, total(step.account), publishersOn(previousIso(plan.date)).includes(id))
+                : plan.date >= "2026-11-11" && plan.date <= "2026-11-13"
+                  ? say.tuesdayFocus(account)
+                  : say.warm(account, say.thenWarm),
             PROFILE_WARM_MINUTES,
             undefined,
             engage,
@@ -295,6 +305,15 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
         ];
       }
       if (step.kind === "post") {
+        if (hard) {
+          const count = total(step.account);
+          const reply = publishersOn(previousIso(plan.date)).includes(id);
+          return [
+            task(`before-${id}`, say.hardBefore(account), POST_WARM_BEFORE_MINUTES),
+            task(`post-${id}`, say.hardPost(account), POST_PUBLISH_MINUTES),
+            task(`after-${id}`, say.hardAfter(account, count, reply), POST_WARM_AFTER_MINUTES),
+          ];
+        }
         const precise = plan.date >= "2026-11-10" && plan.date <= "2026-11-15";
         return [
           task(
@@ -322,11 +341,15 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
           ),
         ];
       }
+      if (hard) {
+        return [task(`warm-${id}`, say.hardWarm(account, total(step.account), publishersOn(previousIso(plan.date)).includes(id)), ACCOUNT_BLOCK_MINUTES)];
+      }
       if (plan.date >= "2026-11-10" && plan.date <= "2026-11-15") {
         return [task(`warm-${id}`, say.tuesdayFocus(account), ACCOUNT_BLOCK_MINUTES)];
       }
       return [task(`warm-${id}`, say.warm(account, say.noPostToday), ACCOUNT_BLOCK_MINUTES, undefined, engage)];
-    });
+    }),
+    ];
     const totals = SESSION_TOTALS[plan.date];
     if (!totals) return checks;
     const last = new Map<string, number>();
@@ -350,7 +373,7 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
 
 export const dayReady = (plan: DayPlan, state: DayState) => {
   if (!state.proofName) return false;
-  const checks = checksFor(plan);
+  const checks = checksFor(plan).filter((check) => !check.banner);
   return checks.length > 0 && checks.every((check) => state.checks[check.id] === true);
 };
 
@@ -499,6 +522,12 @@ type Phrases = {
   thenWarm: string;
   noPostToday: string;
   engageMore: string;
+  hardRules: string;
+  hardBefore: (account: string) => string;
+  hardPost: (account: string) => string;
+  hardAfter: (account: string, count: number, reply: boolean) => string;
+  hardWarm: (account: string, count: number, reply: boolean) => string;
+  hardProfileWarm: (account: string, count: number, reply: boolean) => string;
 };
 
 const block = (...parts: Array<string | undefined>) => parts.filter((part) => part && part.trim()).join("\n");
@@ -624,6 +653,58 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Va sur des influenceurs que tu connais, pas trop connus, pour que TikTok voie que tu es du pays.",
         "• Tu n'aimes pas tout.",
         "• Un like seulement quand ça te plaît vraiment."
+      ),
+    hardRules: block(
+      "Règles",
+      "• Une seule vidéo, sans coupure, du début à la fin.",
+      "• Coche une tâche seulement si on la voit dans la vidéo."
+    ),
+    hardBefore: (account) =>
+      block(
+        account,
+        "Échauffement avant.",
+        "• Montre ton profil : le nombre d'abonnements de départ doit être lisible.",
+        "• Pour toi : regarde chaque vidéo 5 à 10 secondes. Ne fais pas défiler toutes les 2 secondes.",
+        "• Abonne-toi et commente, dans la langue de ton pays, pour que TikTok fasse confiance au compte et lui donne beaucoup de vues plus tard."
+      ),
+    hardPost: (account) =>
+      block(
+        account,
+        "Publication.",
+        "• Prépare le diaporama et la description avant d'enregistrer.",
+        "• Tu le télécharges ici.",
+        "• Musique TikTok tendance, puis colle la description.",
+        "• Copie cette description.",
+        "• Appuie sur Publier. Si ça rate, recommence tout de suite, avant de changer de compte.",
+        "• Montre la vidéo dans la grille."
+      ),
+    hardAfter: (account, count, reply) =>
+      block(
+        account,
+        "Après la publication.",
+        reply ? "• Réponds aux commentaires sous le post d'hier." : undefined,
+        `• Fin obligatoire : montre ton profil 3 secondes. On doit voir ${count} abonnements ou plus.`
+      ),
+    hardWarm: (account, count, reply) =>
+      block(
+        account,
+        "Échauffement, minuteur de 20 minutes. Tu ne publies pas.",
+        "• Montre ton profil au début.",
+        "• Reste 20 vraies minutes sur ce compte.",
+        "• Pour toi : regarde chaque vidéo 5 à 10 secondes.",
+        "• Abonne-toi et commente pour que TikTok fasse confiance à ce compte et lui donne beaucoup de vues plus tard.",
+        reply ? "• Réponds aux commentaires sous le post d'hier." : undefined,
+        `• Fin obligatoire : montre ton profil avec ${count} abonnements ou plus.`
+      ),
+    hardProfileWarm: (account, count, reply) =>
+      block(
+        account,
+        "Échauffement du nouveau compte. Tu ne publies pas.",
+        "• Montre ton profil.",
+        "• Pour toi : regarde chaque vidéo 5 à 10 secondes.",
+        "• Abonne-toi et commente pour que TikTok fasse confiance à ce compte et lui donne beaucoup de vues plus tard.",
+        reply ? "• Réponds aux commentaires sous le post d'hier." : undefined,
+        `• Fin obligatoire : montre ton profil avec ${count} abonnements ou plus.`
       ),
     followTotal: (count) => `Tu dois avoir ${count} abonnements ou plus au total sur le compte.`,
     followTotalLong: (count) =>
@@ -777,6 +858,58 @@ const phrases: Record<PostingLang, Phrases> = {
         "• No le des like a todo.",
         "• Un like solo cuando de verdad te guste."
       ),
+    hardRules: block(
+      "Reglas",
+      "• Un solo vídeo, sin cortes, de principio a fin.",
+      "• Marca una tarea solo si se ve en el vídeo."
+    ),
+    hardBefore: (account) =>
+      block(
+        account,
+        "Calentamiento antes.",
+        "• Muestra tu perfil: el número de seguidos del inicio tiene que leerse bien.",
+        "• Ve a Para ti y mira cada vídeo de 5 a 10 segundos. No deslices cada 2 segundos.",
+        "• Sigue cuentas y comenta, en el idioma de tu país, para que TikTok confíe en la cuenta y le dé muchas vistas después."
+      ),
+    hardPost: (account) =>
+      block(
+        account,
+        "Publicación.",
+        "• Prepara el carrusel y la descripción antes de grabar.",
+        "• Lo descargas aquí.",
+        "• Música de TikTok que esté de moda, y pega la descripción.",
+        "• Copia esta descripción.",
+        "• Pulsa Publicar. Si falla, inténtalo otra vez enseguida, antes de cambiar de cuenta.",
+        "• Muestra el vídeo en la cuadrícula."
+      ),
+    hardAfter: (account, count, reply) =>
+      block(
+        account,
+        "Después de publicar.",
+        reply ? "• Responde a los comentarios de la publicación de ayer." : undefined,
+        `• Cierre obligatorio: muestra tu perfil 3 segundos. Se tienen que ver ${count} seguidos o más.`
+      ),
+    hardWarm: (account, count, reply) =>
+      block(
+        account,
+        "Calentamiento, temporizador de 20 minutos. Hoy no publicas.",
+        "• Muestra tu perfil al empezar.",
+        "• Quédate 20 minutos de verdad en esta cuenta.",
+        "• Ve a Para ti y mira cada vídeo de 5 a 10 segundos.",
+        "• Sigue cuentas y comenta para que TikTok confíe en esta cuenta y le dé muchas vistas después.",
+        reply ? "• Responde a los comentarios de la publicación de ayer." : undefined,
+        `• Cierre obligatorio: muestra tu perfil con ${count} seguidos o más.`
+      ),
+    hardProfileWarm: (account, count, reply) =>
+      block(
+        account,
+        "Calentamiento de la cuenta nueva. Hoy no publicas.",
+        "• Muestra tu perfil.",
+        "• Ve a Para ti y mira cada vídeo de 5 a 10 segundos.",
+        "• Sigue cuentas y comenta para que TikTok confíe en esta cuenta y le dé muchas vistas después.",
+        reply ? "• Responde a los comentarios de la publicación de ayer." : undefined,
+        `• Cierre obligatorio: muestra tu perfil con ${count} seguidos o más.`
+      ),
     followTotal: (count) => `Tienes que tener ${count} seguidos o más en total en la cuenta.`,
     followTotalLong: (count) =>
       `Tienes que tener ${count} seguidos o más en total en la cuenta. Al final de la sesión de esta cuenta, muéstrame el perfil para comprobar que hay ${count} seguidos o más.`,
@@ -927,6 +1060,58 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Go to influencers you know, not too well known, so TikTok sees that you are from the country.",
         "• You do not like everything.",
         "• A like only when you really like it."
+      ),
+    hardRules: block(
+      "Rules",
+      "• One video, no cuts, from start to finish.",
+      "• Tick a task only if it shows in the video."
+    ),
+    hardBefore: (account) =>
+      block(
+        account,
+        "Warm-up before.",
+        "• Show your profile: the starting follow count has to be easy to read.",
+        "• Go to For You and watch each video for 5 to 10 seconds. Do not swipe every 2 seconds.",
+        "• Follow accounts and comment, in your country's language, so TikTok trusts the account and gives it lots of views later."
+      ),
+    hardPost: (account) =>
+      block(
+        account,
+        "Post.",
+        "• Get the slideshow and the caption ready before you record.",
+        "• Download it here.",
+        "• Trending TikTok sound, then paste the caption.",
+        "• Copy this caption.",
+        "• Tap Post. If it fails, try again right away, before you switch accounts.",
+        "• Show the video in the grid."
+      ),
+    hardAfter: (account, count, reply) =>
+      block(
+        account,
+        "After posting.",
+        reply ? "• Reply to comments on yesterday's post." : undefined,
+        `• Required ending: show your profile for 3 seconds. We have to see ${count} follows or more.`
+      ),
+    hardWarm: (account, count, reply) =>
+      block(
+        account,
+        "Warm-up, 20-minute timer. You do not post.",
+        "• Show your profile at the start.",
+        "• Stay on this account for a real 20 minutes.",
+        "• Go to For You and watch each video for 5 to 10 seconds.",
+        "• Follow accounts and comment so TikTok trusts this account and gives it lots of views later.",
+        reply ? "• Reply to comments on yesterday's post." : undefined,
+        `• Required ending: show your profile with ${count} follows or more.`
+      ),
+    hardProfileWarm: (account, count, reply) =>
+      block(
+        account,
+        "Warm-up for the new account. You do not post.",
+        "• Show your profile.",
+        "• Go to For You and watch each video for 5 to 10 seconds.",
+        "• Follow accounts and comment so TikTok trusts this account and gives it lots of views later.",
+        reply ? "• Reply to comments on yesterday's post." : undefined,
+        `• Required ending: show your profile with ${count} follows or more.`
       ),
     followTotal: (count) => `You need ${count} or more follows in total on the account.`,
     followTotalLong: (count) =>

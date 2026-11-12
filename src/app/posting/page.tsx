@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { DashboardGate } from "~/components/dashboard/DashboardGate";
 import { DASHBOARD_COOKIE, readSession } from "~/server/dashboardSession";
 import { emptySlideBoard, visibleBoard } from "~/config/slideBoard";
+import { liveRemovedDays, mirrorPosting } from "~/server/postingLive";
 import { loadAllWork, loadRemovedDays, loadWork } from "~/server/postingProofStore";
 import { loadSlideBoard } from "~/server/postingSlides";
 import { listProfiles } from "~/server/postingProfileStore";
@@ -40,7 +41,8 @@ export default async function PostingPage({ searchParams }: { searchParams: { re
     session.role === "tania"
       ? await loadAllWork(profiles.map((profile) => profile.id)).catch(() => ({}))
       : { [session.role]: await loadWork(session.role).catch(() => ({ days: {} })) };
-  const removedDays = session.role === "tania" ? await loadRemovedDays().catch(() => []) : [];
+  const removedDays =
+    session.role === "tania" ? (mirrorPosting() ? await liveRemovedDays() : null) ?? (await loadRemovedDays().catch(() => [])) : [];
   const slides = visibleBoard(await loadSlideBoard().catch(() => emptySlideBoard()), session.role);
   return <PostingDashboard role={session.role} profiles={visible} work={work} removedDays={removedDays} slides={slides} />;
 }

@@ -246,11 +246,19 @@ const AccountChecks = ({
             </p>
           ) : null}
           <ul className={title ? "mt-3 flex flex-col gap-5" : "flex flex-col gap-5"}>
-            {group.items.map((check) => (
-              <li key={check.id} className={check.parent ? "ml-8" : ""}>
-                {item(check, actionLabel(check.label, title))}
-              </li>
-            ))}
+            {group.items.map((check) =>
+              check.banner ? (
+                <li key={check.id}>
+                  <div className="rounded-2xl border-2 border-black bg-[#FFF3C4] px-3 py-3">
+                    <TaskCopy label={check.label} large />
+                  </div>
+                </li>
+              ) : (
+                <li key={check.id} className={check.parent ? "ml-8" : ""}>
+                  {item(check, actionLabel(check.label, title))}
+                </li>
+              )
+            )}
           </ul>
           {tone && group.items.some((check) => check.goal) ? (
             <p
@@ -766,7 +774,7 @@ export const PostingDashboard = ({
       const existing = current.days[person.id]?.[date] ?? emptyDayState();
       const next = recipe(existing);
       const plan = DAY_PLANS.find((item) => item.date === date);
-      const tasks = plan ? checksFor(plan, lang).filter((check) => taskIsHers(check.id, ownAccount)) : [];
+      const tasks = plan ? checksFor(plan, lang).filter((check) => taskIsHers(check.id, ownAccount) && !check.banner) : [];
       const checksDone = Boolean(next.proofName) && tasks.length > 0 && tasks.every((check) => next.checks[check.id] === true);
       const validated = Boolean(plan && next.validated && checksDone && slotsFor(current, person.id, date).length > 0);
       const updated = {
@@ -1272,7 +1280,7 @@ export const PostingDashboard = ({
           const state = person ? desk.days[person.id]?.[plan.date] ?? emptyDayState() : emptyDayState();
           const hour = person ? slotsFor(desk, person.id, plan.date)[0] : undefined;
           const chosenSlot = SLOTS.find((slot) => slot.id === hour);
-          const hers = checks.filter((check) => taskIsHers(check.id, ownAccount));
+          const hers = checks.filter((check) => taskIsHers(check.id, ownAccount) && !check.banner);
           const checksDone = Boolean(state.proofName) && hers.length > 0 && hers.every((check) => state.checks[check.id] === true);
           const ready = checksDone && Boolean(hour);
           return (
