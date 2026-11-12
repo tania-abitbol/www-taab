@@ -1446,6 +1446,7 @@ const ProofThumb = ({ src, label, play = "Lire", close = "Fermer" }: { src: stri
     videoRef.current?.pause();
     setOpen(false);
   };
+  const mediaSrc = src.startsWith("blob:") || src.startsWith("data:") ? src : `${src}${src.includes("?") ? "&" : "?"}v=2`;
   return (
     <>
       <button
@@ -1460,7 +1461,7 @@ const ProofThumb = ({ src, label, play = "Lire", close = "Fermer" }: { src: stri
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" role="dialog" aria-modal="true" aria-label={label}>
           <button type="button" className="absolute inset-0 z-0 cursor-default" aria-label={close} onClick={stop} />
           <div className="relative z-10 w-full max-w-sm">
-            <video ref={videoRef} src={src} controls playsInline className="max-h-[80vh] w-full rounded-2xl bg-black" />
+            <video ref={videoRef} src={mediaSrc} controls playsInline preload="auto" className="max-h-[80vh] w-full rounded-2xl bg-black" />
             <button
               type="button"
               onClick={stop}

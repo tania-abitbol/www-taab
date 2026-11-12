@@ -6,6 +6,7 @@ import { readLivePosting } from "~/server/postingLive";
 import { proofAllowed } from "~/server/postingProofs";
 import { localProofStat, readLocalProofRange } from "~/server/postingLocalProof";
 import { loadProofFile, readProofRange, signProofRead } from "~/server/postingProofStore";
+import { fastStartFor, identityFastStart, readFastStartRange, type RangeReader } from "~/server/proofFastStart";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,6 +27,29 @@ const sliceBounds = (header: string | null, size: number) => {
   return { start, end, partial: true };
 };
 
+const serveProof = async (request: Request, cacheKey: string, size: number, type: string, read: RangeReader) => {
+  const header = request.headers.get("range");
+  const bounds = sliceBounds(header, size);
+  if (!bounds) return new NextResponse(null, { status: 416, headers: { "content-range": `bytes */${size}` } });
+  const layout = await fastStartFor(cacheKey, size, type, read).catch(() => identityFastStart(size));
+  try {
+    const bytes = await readFastStartRange(layout, bounds.start, bounds.end, read);
+    const headers: Record<string, string> = {
+      "content-type": type,
+      "content-length": String(bytes.byteLength),
+      "accept-ranges": "bytes",
+      "cache-control": "private, no-store",
+    };
+    if (header || bounds.partial) {
+      headers["content-range"] = `bytes ${bounds.start}-${bounds.start + bytes.byteLength - 1}/${size}`;
+      return new NextResponse(bytes, { status: 206, headers });
+    }
+    return new NextResponse(bytes, { status: 200, headers });
+  } catch {
+    return new NextResponse("Introuvable", { status: 404 });
+  }
+};
+
 export async function GET(request: Request, { params }: { params: { profileId: string; date: string } }) {
   const session = readSession(cookies().get(DASHBOARD_COOKIE)?.value);
   if (!session) return new NextResponse("Non autorisé", { status: 401 });
@@ -34,44 +58,14 @@ export async function GET(request: Request, { params }: { params: { profileId: s
 
   const local = await localProofStat(params.profileId, params.date);
   if (local) {
-    const bounds = sliceBounds(request.headers.get("range"), local.size);
-    if (!bounds) return new NextResponse(null, { status: 416, headers: { "content-range": `bytes */${local.size}` } });
-    const bytes = await readLocalProofRange(params.profileId, params.date, bounds.start, bounds.end);
-    const status = bounds.partial || request.headers.get("range") ? 206 : 200;
-    return new NextResponse(new Uint8Array(bytes), {
-      status,
-      headers: {
-        "content-type": local.type,
-        "content-length": String(bytes.byteLength),
-        "content-range": `bytes ${bounds.start}-${bounds.end}/${local.size}`,
-        "accept-ranges": "bytes",
-        "cache-control": "private, no-store",
-      },
-    });
+    const read: RangeReader = (start, end) => readLocalProofRange(params.profileId, params.date, start, end);
+    return serveProof(request, `local:${params.profileId}:${params.date}:${local.size}`, local.size, local.type, read);
   }
 
   const file = await loadProofFile(params.profileId, params.date).catch(() => null);
   if (file) {
-    const bounds = sliceBounds(request.headers.get("range"), file.size);
-    if (!bounds) {
-      return new NextResponse(null, { status: 416, headers: { "content-range": `bytes */${file.size}` } });
-    }
-    try {
-      const bytes = await readProofRange(params.profileId, params.date, file, bounds.start, bounds.end);
-      const headers: Record<string, string> = {
-        "content-type": file.type,
-        "content-length": String(bytes.length),
-        "accept-ranges": "bytes",
-        "cache-control": "private, no-store",
-      };
-      if (request.headers.get("range") || bounds.partial) {
-        headers["content-range"] = `bytes ${bounds.start}-${bounds.start + bytes.length - 1}/${file.size}`;
-        return new NextResponse(new Uint8Array(bytes), { status: 206, headers });
-      }
-      return new NextResponse(new Uint8Array(bytes), { status: 200, headers });
-    } catch {
-      return new NextResponse("Introuvable", { status: 404 });
-    }
+    const read: RangeReader = (start, end) => readProofRange(params.profileId, params.date, file, start, end);
+    return serveProof(request, `blob:${params.profileId}:${params.date}:${file.generation}:${file.size}`, file.size, file.type, read);
   }
 
   const url = await signProofRead(params.profileId, params.date);
