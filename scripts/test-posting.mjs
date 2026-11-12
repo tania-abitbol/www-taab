@@ -431,7 +431,7 @@ assert.equal(checksFor(DAY_PLANS[6], "es").find((item) => item.id === "before-es
 assert.ok(checksFor(DAY_PLANS[6], "es").find((item) => item.id === "after-es").label.includes("Cierre obligatorio"));
 assert.equal(checksFor(DAY_PLANS[6]).find((item) => item.id === "warm-us").label.includes("5 comptes d'influenceurs"), false);
 assert.ok(checksFor(DAY_PLANS[6], "es").find((item) => item.id === "post-es").label.includes("Lo descargas aquí."));
-assert.ok(checksFor(DAY_PLANS[6], "es").find((item) => item.id === "post-es").label.includes("Copia esta descripción."));
+assert.ok(checksFor(DAY_PLANS[6], "es").find((item) => item.id === "post-es").label.includes("Copia esta descripción, luego pégala."));
 assert.equal(checksFor(DAY_PLANS[6], "es").find((item) => item.id === "post-us"), undefined);
 assert.ok(checksFor(DAY_PLANS[8], "en").find((item) => item.id === "before-us").label.includes("Go to For You"));
 assert.equal(checksFor(DAY_PLANS[8], "en").find((item) => item.id === "before-us").label.includes("5 influencer accounts"), false);
@@ -439,7 +439,7 @@ assert.equal(checksFor(DAY_PLANS[8], "en").find((item) => item.id === "before-us
 assert.equal(checksFor(DAY_PLANS[8], "en").find((item) => item.id === "after-us").goal, "You need 55 or more follows in total on the account.");
 assert.ok(checksFor(DAY_PLANS[8], "en").find((item) => item.id === "after-us").label.includes("Required ending"));
 assert.ok(checksFor(DAY_PLANS[8], "en").find((item) => item.id === "post-us").label.includes("Download it here."));
-assert.ok(checksFor(DAY_PLANS[8], "en").find((item) => item.id === "post-us").label.includes("Copy this caption."));
+assert.ok(checksFor(DAY_PLANS[8], "en").find((item) => item.id === "post-us").label.includes("Copy this caption, then paste it."));
 assert.equal(saturdayNext.find((item) => item.id === "after-us").label.includes("post d'hier"), false);
 assert.ok(sundayNext.find((item) => item.id === "after-us").label.includes("post d'hier"));
 for (const plan of DAY_PLANS.filter((item) => item.date >= "2026-11-12" && item.date <= "2026-11-15")) {
@@ -448,6 +448,7 @@ for (const plan of DAY_PLANS.filter((item) => item.date >= "2026-11-12" && item.
   assert.equal(fr[0].banner, true, plan.date);
   assert.ok(fr[0].label.includes("sans coupure"), plan.date);
   assert.ok(fr[0].label.includes("Coche une tâche seulement si on la voit dans la vidéo."), plan.date);
+  assert.ok(fr[0].label.includes("préviens-moi tout de suite"), plan.date);
   assert.equal(fr[0].label.includes("payée"), false, plan.date);
   assert.equal(checksFor(plan, "es")[0].label.includes("no se paga"), false, plan.date);
   assert.equal(checksFor(plan, "en")[0].label.includes("not paid"), false, plan.date);
@@ -461,7 +462,8 @@ for (const plan of DAY_PLANS.filter((item) => item.date >= "2026-11-12" && item.
       continue;
     }
     assert.ok(post.label.includes("Tu le télécharges ici."), `${plan.date} ${id}`);
-    assert.ok(post.label.includes("Copie cette description."), `${plan.date} ${id}`);
+    assert.ok(post.label.includes("Copie cette description, puis colle-la."), `${plan.date} ${id}`);
+    assert.equal((post.label.match(/Copie cette description/g) || []).length, 1, `${plan.date} ${id}`);
     assert.ok(post.label.includes("Appuie sur Publier"), `${plan.date} ${id}`);
     assert.ok(post.label.includes("dans la grille"), `${plan.date} ${id}`);
     assert.equal(post.minutes, 5, `${plan.date} ${id}`);
@@ -470,9 +472,12 @@ for (const plan of DAY_PLANS.filter((item) => item.date >= "2026-11-12" && item.
     assert.equal(before.minutes, 8, `${plan.date} ${id}`);
     assert.equal(after.minutes, 7, `${plan.date} ${id}`);
     assert.ok(before.label.includes("nombre d'abonnements de départ"), `${plan.date} ${id}`);
-    assert.ok(before.label.includes("TikTok fasse confiance"), `${plan.date} ${id}`);
-    assert.equal(before.label.includes("3 commentaires"), false, `${plan.date} ${id}`);
+    assert.ok(before.label.includes("3 commentaires"), `${plan.date} ${id}`);
+    assert.ok(before.label.includes("2 réponses"), `${plan.date} ${id}`);
+    assert.ok(before.label.includes("jamais à la chaîne"), `${plan.date} ${id}`);
     assert.equal(before.label.includes("5 créateurs"), false, `${plan.date} ${id}`);
+    assert.ok(after.label.includes("7 minutes sur Pour toi"), `${plan.date} ${id}`);
+    assert.ok(after.label.includes("changer de compte"), `${plan.date} ${id}`);
     assert.ok(after.label.includes("Fin obligatoire"), `${plan.date} ${id}`);
     assert.ok(after.label.includes(String(count)), `${plan.date} ${id}`);
     assert.equal(after.label.includes("post d'hier"), plan.date !== "2026-11-14" || id !== "us", `${plan.date} ${id}`);
@@ -485,6 +490,7 @@ assert.equal(thursday.find((item) => item.id === "warm-us").label.includes("bio"
 assert.equal(thursday.find((item) => item.id === "warm-us").label.includes("Publier"), false);
 assert.equal(thursday.find((item) => item.id === "warm-us").label.includes("post d'hier"), false);
 assert.equal(thursday.find((item) => item.id === "warm-us").label.includes("15 minutes"), false);
+assert.ok(thursday.find((item) => item.id === "warm-us").label.includes("3 commentaires"));
 assert.ok(fridayNext.find((item) => item.id === "warm-us").label.includes("nouveau compte"));
 assert.equal(fridayNext.find((item) => item.id === "warm-us").label.includes("post d'hier"), false);
 assert.ok(thursday.find((item) => item.id === "warm-us").label.includes("20 vraies minutes"));

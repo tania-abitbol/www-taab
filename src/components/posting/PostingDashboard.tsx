@@ -164,7 +164,8 @@ const TaskCopy = ({
             </span>
           );
         }
-        if (slides && plain === slides.copyLine) {
+        const captionStart = slides?.copyLine.replace(/\.$/, "") ?? "";
+        if (slides && captionStart && (plain === slides.copyLine || plain.startsWith(captionStart))) {
           return (
             <span key={key} className="flex flex-wrap items-center gap-2">
               <span className={textClass}>{line}</span>

@@ -657,7 +657,8 @@ const phrases: Record<PostingLang, Phrases> = {
     hardRules: block(
       "Règles",
       "• Une seule vidéo, sans coupure, du début à la fin.",
-      "• Coche une tâche seulement si on la voit dans la vidéo."
+      "• Coche une tâche seulement si on la voit dans la vidéo.",
+      "• Si un bug bloque, comme une photo qui ne se télécharge pas, préviens-moi tout de suite au lieu de cocher."
     ),
     hardBefore: (account) =>
       block(
@@ -665,7 +666,8 @@ const phrases: Record<PostingLang, Phrases> = {
         "Échauffement avant.",
         "• Montre ton profil : le nombre d'abonnements de départ doit être lisible.",
         "• Pour toi : regarde chaque vidéo 5 à 10 secondes. Ne fais pas défiler toutes les 2 secondes.",
-        "• Abonne-toi et commente, dans la langue de ton pays, pour que TikTok fasse confiance au compte et lui donne beaucoup de vues plus tard."
+        "• Like seulement ce qui te plaît vraiment, de créateurs de ton pays, pas les plus connus tout le temps, jamais à la chaîne.",
+        "• Au moins 3 commentaires, 2 réponses à des commentaires, et plusieurs abonnements."
       ),
     hardPost: (account) =>
       block(
@@ -673,8 +675,8 @@ const phrases: Record<PostingLang, Phrases> = {
         "Publication.",
         "• Prépare le diaporama et la description avant d'enregistrer.",
         "• Tu le télécharges ici.",
-        "• Musique TikTok tendance, puis colle la description.",
-        "• Copie cette description.",
+        "• Musique TikTok tendance.",
+        "• Copie cette description, puis colle-la.",
         "• Appuie sur Publier. Si ça rate, recommence tout de suite, avant de changer de compte.",
         "• Montre la vidéo dans la grille."
       ),
@@ -682,8 +684,11 @@ const phrases: Record<PostingLang, Phrases> = {
       block(
         account,
         "Après la publication.",
+        "• Reste 7 minutes sur Pour toi : regarde, commente et abonne-toi.",
+        "• Au moins 3 commentaires, 2 réponses à des commentaires, et plusieurs abonnements.",
+        "• Like seulement ce qui te plaît vraiment, de créateurs de ton pays, pas les plus connus tout le temps, jamais à la chaîne.",
         reply ? "• Réponds aux commentaires sous le post d'hier." : undefined,
-        `• Fin obligatoire : montre ton profil 3 secondes. On doit voir ${count} abonnements ou plus.`
+        `• Fin obligatoire : montre ton profil avec ${count} abonnements ou plus, bien lisibles. Ne le montre pas en coup de vent pour changer de compte.`
       ),
     hardWarm: (account, count, reply) =>
       block(
@@ -692,9 +697,10 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Montre ton profil au début.",
         "• Reste 20 vraies minutes sur ce compte.",
         "• Pour toi : regarde chaque vidéo 5 à 10 secondes.",
-        "• Abonne-toi et commente pour que TikTok fasse confiance à ce compte et lui donne beaucoup de vues plus tard.",
+        "• Like seulement ce qui te plaît vraiment, de créateurs de ton pays, pas les plus connus tout le temps, jamais à la chaîne.",
+        "• Au moins 3 commentaires, 2 réponses à des commentaires, et plusieurs abonnements.",
         reply ? "• Réponds aux commentaires sous le post d'hier." : undefined,
-        `• Fin obligatoire : montre ton profil avec ${count} abonnements ou plus.`
+        `• Fin obligatoire : montre ton profil avec ${count} abonnements ou plus, bien lisibles. Ne le montre pas en coup de vent pour changer de compte.`
       ),
     hardProfileWarm: (account, count, reply) =>
       block(
@@ -702,9 +708,10 @@ const phrases: Record<PostingLang, Phrases> = {
         "Échauffement du nouveau compte. Tu ne publies pas.",
         "• Montre ton profil.",
         "• Pour toi : regarde chaque vidéo 5 à 10 secondes.",
-        "• Abonne-toi et commente pour que TikTok fasse confiance à ce compte et lui donne beaucoup de vues plus tard.",
+        "• Like seulement ce qui te plaît vraiment, de créateurs de ton pays, pas les plus connus tout le temps, jamais à la chaîne.",
+        "• Au moins 3 commentaires, 2 réponses à des commentaires, et plusieurs abonnements.",
         reply ? "• Réponds aux commentaires sous le post d'hier." : undefined,
-        `• Fin obligatoire : montre ton profil avec ${count} abonnements ou plus.`
+        `• Fin obligatoire : montre ton profil avec ${count} abonnements ou plus, bien lisibles. Ne le montre pas en coup de vent pour changer de compte.`
       ),
     followTotal: (count) => `Tu dois avoir ${count} abonnements ou plus au total sur le compte.`,
     followTotalLong: (count) =>
@@ -861,7 +868,8 @@ const phrases: Record<PostingLang, Phrases> = {
     hardRules: block(
       "Reglas",
       "• Un solo vídeo, sin cortes, de principio a fin.",
-      "• Marca una tarea solo si se ve en el vídeo."
+      "• Marca una tarea solo si se ve en el vídeo.",
+      "• Si un fallo te bloquea, como una foto que no se descarga, avísame enseguida en vez de marcar la tarea."
     ),
     hardBefore: (account) =>
       block(
@@ -869,7 +877,8 @@ const phrases: Record<PostingLang, Phrases> = {
         "Calentamiento antes.",
         "• Muestra tu perfil: el número de seguidos del inicio tiene que leerse bien.",
         "• Ve a Para ti y mira cada vídeo de 5 a 10 segundos. No deslices cada 2 segundos.",
-        "• Sigue cuentas y comenta, en el idioma de tu país, para que TikTok confíe en la cuenta y le dé muchas vistas después."
+        "• Like solo lo que de verdad te guste, de creadores de tu país, no siempre los más conocidos, nunca varios seguidos.",
+        "• Al menos 3 comentarios, 2 respuestas a comentarios, y varios seguidos."
       ),
     hardPost: (account) =>
       block(
@@ -877,8 +886,8 @@ const phrases: Record<PostingLang, Phrases> = {
         "Publicación.",
         "• Prepara el carrusel y la descripción antes de grabar.",
         "• Lo descargas aquí.",
-        "• Música de TikTok que esté de moda, y pega la descripción.",
-        "• Copia esta descripción.",
+        "• Música de TikTok que esté de moda.",
+        "• Copia esta descripción, luego pégala.",
         "• Pulsa Publicar. Si falla, inténtalo otra vez enseguida, antes de cambiar de cuenta.",
         "• Muestra el vídeo en la cuadrícula."
       ),
@@ -886,8 +895,11 @@ const phrases: Record<PostingLang, Phrases> = {
       block(
         account,
         "Después de publicar.",
+        "• Quédate 7 minutos en Para ti: mira, comenta y sigue cuentas.",
+        "• Al menos 3 comentarios, 2 respuestas a comentarios, y varios seguidos.",
+        "• Like solo lo que de verdad te guste, de creadores de tu país, no siempre los más conocidos, nunca varios seguidos.",
         reply ? "• Responde a los comentarios de la publicación de ayer." : undefined,
-        `• Cierre obligatorio: muestra tu perfil 3 segundos. Se tienen que ver ${count} seguidos o más.`
+        `• Cierre obligatorio: muestra tu perfil con ${count} seguidos o más, bien legibles. No lo enseñes un segundo para pasar a la siguiente cuenta.`
       ),
     hardWarm: (account, count, reply) =>
       block(
@@ -896,9 +908,10 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Muestra tu perfil al empezar.",
         "• Quédate 20 minutos de verdad en esta cuenta.",
         "• Ve a Para ti y mira cada vídeo de 5 a 10 segundos.",
-        "• Sigue cuentas y comenta para que TikTok confíe en esta cuenta y le dé muchas vistas después.",
+        "• Like solo lo que de verdad te guste, de creadores de tu país, no siempre los más conocidos, nunca varios seguidos.",
+        "• Al menos 3 comentarios, 2 respuestas a comentarios, y varios seguidos.",
         reply ? "• Responde a los comentarios de la publicación de ayer." : undefined,
-        `• Cierre obligatorio: muestra tu perfil con ${count} seguidos o más.`
+        `• Cierre obligatorio: muestra tu perfil con ${count} seguidos o más, bien legibles. No lo enseñes un segundo para pasar a la siguiente cuenta.`
       ),
     hardProfileWarm: (account, count, reply) =>
       block(
@@ -906,9 +919,10 @@ const phrases: Record<PostingLang, Phrases> = {
         "Calentamiento de la cuenta nueva. Hoy no publicas.",
         "• Muestra tu perfil.",
         "• Ve a Para ti y mira cada vídeo de 5 a 10 segundos.",
-        "• Sigue cuentas y comenta para que TikTok confíe en esta cuenta y le dé muchas vistas después.",
+        "• Like solo lo que de verdad te guste, de creadores de tu país, no siempre los más conocidos, nunca varios seguidos.",
+        "• Al menos 3 comentarios, 2 respuestas a comentarios, y varios seguidos.",
         reply ? "• Responde a los comentarios de la publicación de ayer." : undefined,
-        `• Cierre obligatorio: muestra tu perfil con ${count} seguidos o más.`
+        `• Cierre obligatorio: muestra tu perfil con ${count} seguidos o más, bien legibles. No lo enseñes un segundo para pasar a la siguiente cuenta.`
       ),
     followTotal: (count) => `Tienes que tener ${count} seguidos o más en total en la cuenta.`,
     followTotalLong: (count) =>
@@ -1064,7 +1078,8 @@ const phrases: Record<PostingLang, Phrases> = {
     hardRules: block(
       "Rules",
       "• One video, no cuts, from start to finish.",
-      "• Tick a task only if it shows in the video."
+      "• Tick a task only if it shows in the video.",
+      "• If a bug blocks you, like a photo that will not download, tell me right away instead of ticking the task."
     ),
     hardBefore: (account) =>
       block(
@@ -1072,7 +1087,8 @@ const phrases: Record<PostingLang, Phrases> = {
         "Warm-up before.",
         "• Show your profile: the starting follow count has to be easy to read.",
         "• Go to For You and watch each video for 5 to 10 seconds. Do not swipe every 2 seconds.",
-        "• Follow accounts and comment, in your country's language, so TikTok trusts the account and gives it lots of views later."
+        "• Like only what you really like, from creators in your country, not the most famous ones all the time, never back to back.",
+        "• At least 3 comments, 2 replies to comments, and several follows."
       ),
     hardPost: (account) =>
       block(
@@ -1080,8 +1096,8 @@ const phrases: Record<PostingLang, Phrases> = {
         "Post.",
         "• Get the slideshow and the caption ready before you record.",
         "• Download it here.",
-        "• Trending TikTok sound, then paste the caption.",
-        "• Copy this caption.",
+        "• A trending TikTok sound.",
+        "• Copy this caption, then paste it.",
         "• Tap Post. If it fails, try again right away, before you switch accounts.",
         "• Show the video in the grid."
       ),
@@ -1089,8 +1105,11 @@ const phrases: Record<PostingLang, Phrases> = {
       block(
         account,
         "After posting.",
+        "• Stay on For You for 7 minutes: watch, comment, and follow.",
+        "• At least 3 comments, 2 replies to comments, and several follows.",
+        "• Like only what you really like, from creators in your country, not the most famous ones all the time, never back to back.",
         reply ? "• Reply to comments on yesterday's post." : undefined,
-        `• Required ending: show your profile for 3 seconds. We have to see ${count} follows or more.`
+        `• Required ending: show your profile with ${count} follows or more, easy to read. Do not flash the profile and switch accounts.`
       ),
     hardWarm: (account, count, reply) =>
       block(
@@ -1099,9 +1118,10 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Show your profile at the start.",
         "• Stay on this account for a real 20 minutes.",
         "• Go to For You and watch each video for 5 to 10 seconds.",
-        "• Follow accounts and comment so TikTok trusts this account and gives it lots of views later.",
+        "• Like only what you really like, from creators in your country, not the most famous ones all the time, never back to back.",
+        "• At least 3 comments, 2 replies to comments, and several follows.",
         reply ? "• Reply to comments on yesterday's post." : undefined,
-        `• Required ending: show your profile with ${count} follows or more.`
+        `• Required ending: show your profile with ${count} follows or more, easy to read. Do not flash the profile and switch accounts.`
       ),
     hardProfileWarm: (account, count, reply) =>
       block(
@@ -1109,9 +1129,10 @@ const phrases: Record<PostingLang, Phrases> = {
         "Warm-up for the new account. You do not post.",
         "• Show your profile.",
         "• Go to For You and watch each video for 5 to 10 seconds.",
-        "• Follow accounts and comment so TikTok trusts this account and gives it lots of views later.",
+        "• Like only what you really like, from creators in your country, not the most famous ones all the time, never back to back.",
+        "• At least 3 comments, 2 replies to comments, and several follows.",
         reply ? "• Reply to comments on yesterday's post." : undefined,
-        `• Required ending: show your profile with ${count} follows or more.`
+        `• Required ending: show your profile with ${count} follows or more, easy to read. Do not flash the profile and switch accounts.`
       ),
     followTotal: (count) => `You need ${count} or more follows in total on the account.`,
     followTotalLong: (count) =>
