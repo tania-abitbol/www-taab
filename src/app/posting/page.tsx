@@ -6,6 +6,7 @@ import { DASHBOARD_COOKIE, readSession } from "~/server/dashboardSession";
 import { emptySlideBoard, visibleBoard } from "~/config/slideBoard";
 import { liveRemovedDays, mirrorPosting } from "~/server/postingLive";
 import { loadAllWork, loadRemovedDays, loadWork } from "~/server/postingProofStore";
+import { loadBilanFile } from "~/server/postingBilan";
 import { loadSlideBoard } from "~/server/postingSlides";
 import { listProfiles } from "~/server/postingProfileStore";
 import { redirect } from "next/navigation";
@@ -44,5 +45,7 @@ export default async function PostingPage({ searchParams }: { searchParams: { re
   const removedDays =
     session.role === "tania" ? (mirrorPosting() ? await liveRemovedDays() : null) ?? (await loadRemovedDays().catch(() => [])) : [];
   const slides = visibleBoard(await loadSlideBoard().catch(() => emptySlideBoard()), session.role);
-  return <PostingDashboard role={session.role} profiles={visible} work={work} removedDays={removedDays} slides={slides} />;
+  const storedBilan = await loadBilanFile().catch(() => null);
+  const bilan = storedBilan ? { name: storedBilan.name, generation: storedBilan.generation } : null;
+  return <PostingDashboard role={session.role} profiles={visible} work={work} removedDays={removedDays} slides={slides} bilan={bilan} />;
 }

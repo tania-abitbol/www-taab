@@ -190,6 +190,8 @@ export const DAY_PLANS: DayPlan[] = [
 
 /** Day tasks are written through this date. */
 export const PLANNED_THROUGH = "2026-11-15";
+/** Sunday 15 Nov only. The week-end review lives on this day. */
+export const BILAN_DATE = "2026-11-15";
 
 export const planFor = (date: string) => DAY_PLANS.find((plan) => plan.date === date) ?? null;
 
@@ -308,10 +310,15 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
         if (hard) {
           const count = total(step.account);
           const reply = publishersOn(previousIso(plan.date)).includes(id);
+          const closing = plan.date === BILAN_DATE;
           return [
-            task(`before-${id}`, say.hardBefore(account), POST_WARM_BEFORE_MINUTES),
+            task(`before-${id}`, closing ? say.sundayBefore(account) : say.hardBefore(account), POST_WARM_BEFORE_MINUTES),
             task(`post-${id}`, say.hardPost(account), POST_PUBLISH_MINUTES),
-            task(`after-${id}`, say.hardAfter(account, count, reply), POST_WARM_AFTER_MINUTES),
+            task(
+              `after-${id}`,
+              closing ? say.sundayAfter(account, reply) : say.hardAfter(account, count, reply),
+              POST_WARM_AFTER_MINUTES,
+            ),
           ];
         }
         const precise = plan.date >= "2026-11-10" && plan.date <= "2026-11-15";
@@ -357,13 +364,15 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
       const owner = check.id.endsWith("-fr") ? "fr" : check.id.endsWith("-es") ? "es" : check.id.endsWith("-us") ? "us" : "";
       if (owner) last.set(owner, index);
     });
-    return checks.map((check, index) => {
+    const withGoals = checks.map((check, index) => {
       const owner = check.id.endsWith("-fr") ? "fr" : check.id.endsWith("-es") ? "es" : check.id.endsWith("-us") ? "us" : "";
       if (owner !== "fr" && owner !== "es" && owner !== "us") return check;
       if (last.get(owner) !== index) return check;
       const count = totals[owner === "fr" ? 0 : owner === "es" ? 1 : 2];
       return { ...check, goal: plan.date === "2026-11-10" ? say.followTotalLong(count) : say.followTotal(count) };
     });
+    if (plan.date !== BILAN_DATE) return withGoals;
+    return [...withGoals, task("bilan", say.bilan)];
   }
   if (plan.kind === "saturday") {
     return ACCOUNTS.map((account, index) => task(`min-${account.id}`, say.warm(name(index)), SATURDAY_ACCOUNT_MINUTES));
@@ -528,6 +537,9 @@ type Phrases = {
   hardAfter: (account: string, count: number, reply: boolean) => string;
   hardWarm: (account: string, count: number, reply: boolean) => string;
   hardProfileWarm: (account: string, count: number, reply: boolean) => string;
+  sundayBefore: (account: string) => string;
+  sundayAfter: (account: string, reply: boolean) => string;
+  bilan: string;
 };
 
 const block = (...parts: Array<string | undefined>) => parts.filter((part) => part && part.trim()).join("\n");
@@ -657,8 +669,7 @@ const phrases: Record<PostingLang, Phrases> = {
     hardRules: block(
       "Règles",
       "• Une seule vidéo, sans coupure, du début à la fin.",
-      "• Coche une tâche seulement si on la voit dans la vidéo.",
-      "• Si un bug bloque, comme une photo qui ne se télécharge pas, préviens-moi tout de suite au lieu de cocher."
+      "• Coche une tâche seulement si on la voit dans la vidéo."
     ),
     hardBefore: (account) =>
       block(
@@ -713,6 +724,31 @@ const phrases: Record<PostingLang, Phrases> = {
         reply ? "• Réponds aux commentaires sous le post d'hier." : undefined,
         `• Fin obligatoire : montre ton profil avec ${count} abonnements ou plus, bien lisibles. Ne le montre pas en coup de vent pour changer de compte.`
       ),
+    sundayBefore: (account) =>
+      block(
+        account,
+        "Échauffement avant.",
+        "• Pour toi : regarde chaque vidéo 5 à 10 secondes. Ne fais pas défiler toutes les 2 secondes.",
+        "• Like seulement ce qui te plaît vraiment, de créateurs de ton pays, pas les plus connus tout le temps, jamais à la chaîne.",
+        "• Au moins 3 commentaires, 2 réponses à des commentaires, et plusieurs abonnements."
+      ),
+    sundayAfter: (account, reply) =>
+      block(
+        account,
+        "Après la publication.",
+        "• Reste 7 minutes sur Pour toi : regarde, commente et abonne-toi.",
+        "• Au moins 3 commentaires, 2 réponses à des commentaires, et plusieurs abonnements.",
+        "• Like seulement ce qui te plaît vraiment, de créateurs de ton pays, pas les plus connus tout le temps, jamais à la chaîne.",
+        reply ? "• Réponds aux commentaires sous le post d'hier." : undefined
+      ),
+    bilan: block(
+      "Bilan fin de semaine",
+      "Dans les 5 dernières minutes de la vidéo de preuves.",
+      "• Passe sur chacun des comptes.",
+      "• Montre les résultats de vues et le nombre d'abonnements.",
+      "• Sur chaque compte, ouvre les analytics de la vidéo qui a le plus de vues.",
+      "• Montre la répartition homme / femme et les pays ciblés."
+    ),
     followTotal: (count) => `Tu dois avoir ${count} abonnements ou plus au total sur le compte.`,
     followTotalLong: (count) =>
       `Tu dois avoir ${count} abonnements ou plus au total sur le compte. À la fin de la session de ce compte, montre-moi le profil pour valider qu'il y a bien ${count} abonnements ou plus.`,
@@ -868,8 +904,7 @@ const phrases: Record<PostingLang, Phrases> = {
     hardRules: block(
       "Reglas",
       "• Un solo vídeo, sin cortes, de principio a fin.",
-      "• Marca una tarea solo si se ve en el vídeo.",
-      "• Si un fallo te bloquea, como una foto que no se descarga, avísame enseguida en vez de marcar la tarea."
+      "• Marca una tarea solo si se ve en el vídeo."
     ),
     hardBefore: (account) =>
       block(
@@ -924,6 +959,31 @@ const phrases: Record<PostingLang, Phrases> = {
         reply ? "• Responde a los comentarios de la publicación de ayer." : undefined,
         `• Cierre obligatorio: muestra tu perfil con ${count} seguidos o más, bien legibles. No lo enseñes un segundo para pasar a la siguiente cuenta.`
       ),
+    sundayBefore: (account) =>
+      block(
+        account,
+        "Calentamiento antes.",
+        "• Ve a Para ti y mira cada vídeo de 5 a 10 segundos. No deslices cada 2 segundos.",
+        "• Like solo lo que de verdad te guste, de creadores de tu país, no siempre los más conocidos, nunca varios seguidos.",
+        "• Al menos 3 comentarios, 2 respuestas a comentarios, y varios seguidos."
+      ),
+    sundayAfter: (account, reply) =>
+      block(
+        account,
+        "Después de publicar.",
+        "• Quédate 7 minutos en Para ti: mira, comenta y sigue cuentas.",
+        "• Al menos 3 comentarios, 2 respuestas a comentarios, y varios seguidos.",
+        "• Like solo lo que de verdad te guste, de creadores de tu país, no siempre los más conocidos, nunca varios seguidos.",
+        reply ? "• Responde a los comentarios de la publicación de ayer." : undefined
+      ),
+    bilan: block(
+      "Balance de fin de semana",
+      "En los últimos 5 minutos del vídeo de prueba.",
+      "• Pasa por cada cuenta.",
+      "• Muestra los resultados de vistas y el número de seguidos.",
+      "• En cada cuenta, abre las analíticas del vídeo con más vistas.",
+      "• Muestra el reparto hombre / mujer y los países objetivo."
+    ),
     followTotal: (count) => `Tienes que tener ${count} seguidos o más en total en la cuenta.`,
     followTotalLong: (count) =>
       `Tienes que tener ${count} seguidos o más en total en la cuenta. Al final de la sesión de esta cuenta, muéstrame el perfil para comprobar que hay ${count} seguidos o más.`,
@@ -1078,8 +1138,7 @@ const phrases: Record<PostingLang, Phrases> = {
     hardRules: block(
       "Rules",
       "• One video, no cuts, from start to finish.",
-      "• Tick a task only if it shows in the video.",
-      "• If a bug blocks you, like a photo that will not download, tell me right away instead of ticking the task."
+      "• Tick a task only if it shows in the video."
     ),
     hardBefore: (account) =>
       block(
@@ -1134,6 +1193,31 @@ const phrases: Record<PostingLang, Phrases> = {
         reply ? "• Reply to comments on yesterday's post." : undefined,
         `• Required ending: show your profile with ${count} follows or more, easy to read. Do not flash the profile and switch accounts.`
       ),
+    sundayBefore: (account) =>
+      block(
+        account,
+        "Warm-up before.",
+        "• Go to For You and watch each video for 5 to 10 seconds. Do not swipe every 2 seconds.",
+        "• Like only what you really like, from creators in your country, not the most famous ones all the time, never back to back.",
+        "• At least 3 comments, 2 replies to comments, and several follows."
+      ),
+    sundayAfter: (account, reply) =>
+      block(
+        account,
+        "After posting.",
+        "• Stay on For You for 7 minutes: watch, comment, and follow.",
+        "• At least 3 comments, 2 replies to comments, and several follows.",
+        "• Like only what you really like, from creators in your country, not the most famous ones all the time, never back to back.",
+        reply ? "• Reply to comments on yesterday's post." : undefined
+      ),
+    bilan: block(
+      "End-of-week review",
+      "In the last 5 minutes of the proof video.",
+      "• Go through each account.",
+      "• Show the view results and the follow count.",
+      "• On each account, open the analytics of the video with the most views.",
+      "• Show the male / female split and the targeted countries."
+    ),
     followTotal: (count) => `You need ${count} or more follows in total on the account.`,
     followTotalLong: (count) =>
       `You need ${count} or more follows in total on the account. At the end of this account's session, show me the profile to confirm there are ${count} or more follows.`,

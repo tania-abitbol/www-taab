@@ -448,7 +448,10 @@ for (const plan of DAY_PLANS.filter((item) => item.date >= "2026-11-12" && item.
   assert.equal(fr[0].banner, true, plan.date);
   assert.ok(fr[0].label.includes("sans coupure"), plan.date);
   assert.ok(fr[0].label.includes("Coche une tâche seulement si on la voit dans la vidéo."), plan.date);
-  assert.ok(fr[0].label.includes("préviens-moi tout de suite"), plan.date);
+  assert.equal(fr[0].label.includes("préviens-moi tout de suite"), false, plan.date);
+  assert.equal(fr[0].label.includes("photo qui ne se télécharge pas"), false, plan.date);
+  assert.equal(checksFor(plan, "es")[0].label.includes("avísame enseguida"), false, plan.date);
+  assert.equal(checksFor(plan, "en")[0].label.includes("tell me right away"), false, plan.date);
   assert.equal(fr[0].label.includes("payée"), false, plan.date);
   assert.equal(checksFor(plan, "es")[0].label.includes("no se paga"), false, plan.date);
   assert.equal(checksFor(plan, "en")[0].label.includes("not paid"), false, plan.date);
@@ -471,15 +474,24 @@ for (const plan of DAY_PLANS.filter((item) => item.date >= "2026-11-12" && item.
     const after = fr.find((item) => item.id === `after-${id}`);
     assert.equal(before.minutes, 8, `${plan.date} ${id}`);
     assert.equal(after.minutes, 7, `${plan.date} ${id}`);
-    assert.ok(before.label.includes("nombre d'abonnements de départ"), `${plan.date} ${id}`);
     assert.ok(before.label.includes("3 commentaires"), `${plan.date} ${id}`);
     assert.ok(before.label.includes("2 réponses"), `${plan.date} ${id}`);
     assert.ok(before.label.includes("jamais à la chaîne"), `${plan.date} ${id}`);
     assert.equal(before.label.includes("5 créateurs"), false, `${plan.date} ${id}`);
     assert.ok(after.label.includes("7 minutes sur Pour toi"), `${plan.date} ${id}`);
-    assert.ok(after.label.includes("changer de compte"), `${plan.date} ${id}`);
-    assert.ok(after.label.includes("Fin obligatoire"), `${plan.date} ${id}`);
-    assert.ok(after.label.includes(String(count)), `${plan.date} ${id}`);
+    if (plan.date === "2026-11-15") {
+      assert.equal(before.label.includes("Montre ton profil"), false, `${plan.date} ${id}`);
+      assert.equal(before.label.includes("nombre d'abonnements de départ"), false, `${plan.date} ${id}`);
+      assert.equal(after.label.includes("montre ton profil"), false, `${plan.date} ${id}`);
+      assert.equal(after.label.includes("Fin obligatoire"), false, `${plan.date} ${id}`);
+      assert.equal(after.label.includes("changer de compte"), false, `${plan.date} ${id}`);
+    } else {
+      assert.ok(before.label.includes("nombre d'abonnements de départ"), `${plan.date} ${id}`);
+      assert.ok(before.label.includes("Montre ton profil"), `${plan.date} ${id}`);
+      assert.ok(after.label.includes("changer de compte"), `${plan.date} ${id}`);
+      assert.ok(after.label.includes("Fin obligatoire"), `${plan.date} ${id}`);
+      assert.ok(after.label.includes(String(count)), `${plan.date} ${id}`);
+    }
     assert.equal(after.label.includes("post d'hier"), plan.date !== "2026-11-14" || id !== "us", `${plan.date} ${id}`);
     assert.equal(after.label.includes("Interagis de façon naturelle."), false, `${plan.date} ${id}`);
     assert.equal(after.label.includes("15 minutes"), false, `${plan.date} ${id}`);
@@ -509,7 +521,34 @@ assert.equal(checksFor(DAY_PLANS[5], "es").find((item) => item.id === "warm-us")
 assert.equal(checksFor(DAY_PLANS[5], "es").find((item) => item.id === "warm-us").goal, "Tienes que tener 35 seguidos o más en total en la cuenta.");
 assert.equal(checksFor(DAY_PLANS[6], "en").find((item) => item.id === "warm-us").label.includes("at least 50 accounts"), false);
 assert.equal(checksFor(DAY_PLANS[6], "en").find((item) => item.id === "warm-us").goal, "You need 35 or more follows in total on the account.");
+assert.equal(checksFor(DAY_PLANS[9], "es").find((item) => item.id === "before-es").label.includes("Muestra tu perfil"), false);
+assert.equal(checksFor(DAY_PLANS[9], "en").find((item) => item.id === "before-us").label.includes("Show your profile"), false);
+assert.equal(checksFor(DAY_PLANS[9], "es").find((item) => item.id === "after-es").label.includes("Cierre obligatorio"), false);
+assert.equal(checksFor(DAY_PLANS[9], "en").find((item) => item.id === "after-us").label.includes("Required ending"), false);
+const bilan = sundayNext.find((item) => item.id === "bilan");
+assert.equal(bilan.minutes, undefined);
+assert.equal(bilan.banner, undefined);
+assert.ok(bilan.label.startsWith("Bilan fin de semaine"));
+assert.ok(bilan.label.includes("5 dernières minutes de la vidéo de preuves"));
+assert.ok(bilan.label.includes("résultats de vues"));
+assert.ok(bilan.label.includes("nombre d'abonnements"));
+assert.ok(bilan.label.includes("répartition homme / femme"));
+assert.ok(bilan.label.includes("pays ciblés"));
+assert.equal(bilan.label.includes("http"), false);
+assert.ok(checksFor(DAY_PLANS[9], "es").find((item) => item.id === "bilan").label.includes("reparto hombre / mujer"));
+assert.ok(checksFor(DAY_PLANS[9], "en").find((item) => item.id === "bilan").label.includes("male / female split"));
 assert.equal(checksFor(DAY_PLANS[9], "es").find((item) => item.id === "before-es").label.includes("80 seguidos"), false);
+for (const plan of DAY_PLANS) {
+  const present = checksFor(plan).some((item) => item.id === "bilan");
+  assert.equal(present, plan.date === "2026-11-15", plan.date);
+  for (const lang of ["fr", "es", "en"]) {
+    const text = checksFor(plan, lang).map((item) => item.label).join("\n");
+    assert.equal(text.includes("préviens-moi tout de suite"), false, `${plan.date} ${lang}`);
+    assert.equal(text.includes("photo qui ne se télécharge pas"), false, `${plan.date} ${lang}`);
+    assert.equal(text.includes("avísame enseguida"), false, `${plan.date} ${lang}`);
+    assert.equal(text.includes("tell me right away"), false, `${plan.date} ${lang}`);
+  }
+}
 assert.equal(checksFor(DAY_PLANS[9], "es").find((item) => item.id === "after-es").goal, "Tienes que tener 65 seguidos o más en total en la cuenta.");
 assert.equal(checksFor(DAY_PLANS[3]).some((item) => item.goal), false);
 assert.equal(checksFor(DAY_PLANS[3]).some((item) => item.label.includes("Focus objectif.")), false);

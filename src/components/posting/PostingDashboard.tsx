@@ -35,7 +35,9 @@ import {
   missedProofDate,
   slotsFor,
   taskIsHers,
+  BILAN_DATE,
 } from "~/config/posting";
+import { BILAN_MAX_BYTES } from "~/config/bilanVideo";
 import { SLIDE_MAX_BYTES, slideshowOf, type SlideBoard, type SlideImage } from "~/config/slideBoard";
 import { zipStoredFiles } from "~/config/slideZip";
 import { leavePosting } from "~/app/dashboard/creator/actions";
@@ -63,6 +65,7 @@ const taskEmoji = (id: string) => {
   if (id.startsWith("bio-")) return "✍️";
   if (id.startsWith("profile-")) return "👤";
   if (id.startsWith("post-")) return "🚀";
+  if (id === "bilan") return "📊";
   return "🔥";
 };
 
@@ -225,11 +228,13 @@ const AccountChecks = ({
   lang,
   date,
   item,
+  clip,
 }: {
   checks: CheckItem[];
   lang: PostingLang;
   date: string;
   item: (check: CheckItem, label: string) => JSX.Element;
+  clip?: JSX.Element | null;
 }) => (
   <div className="mt-4 flex flex-col gap-4">
     {accountGroups(checks).map((group) => {
@@ -252,6 +257,13 @@ const AccountChecks = ({
                 <li key={check.id}>
                   <div className="rounded-2xl border-2 border-black bg-[#FFF3C4] px-3 py-3">
                     <TaskCopy label={check.label} large />
+                  </div>
+                </li>
+              ) : check.id === "bilan" ? (
+                <li key={check.id}>
+                  <div className="rounded-2xl border-2 border-black bg-[#FFF3C4] px-3 py-3">
+                    {item(check, actionLabel(check.label, title))}
+                    {clip}
                   </div>
                 </li>
               ) : (
@@ -454,6 +466,58 @@ const uploadProof = (file: File, date: string, onProgress: (percent: number) => 
     send(0);
   });
 
+const uploadBilan = (file: File, onProgress: (percent: number) => void) =>
+  new Promise<string>((resolve, reject) => {
+    const parts = Math.max(1, proofPartCount(file.size));
+    const generation = (globalThis.crypto?.randomUUID?.() ?? `${Date.now().toString(36)}abcdefghijkl`)
+      .replace(/-/g, "")
+      .slice(0, 12);
+    const send = (index: number) => {
+      const start = index * PROOF_PART_BYTES;
+      const blob = file.slice(start, Math.min(file.size, start + PROOF_PART_BYTES));
+      const request = new XMLHttpRequest();
+      request.open("POST", "/posting/bilan");
+      request.setRequestHeader("content-type", "application/octet-stream");
+      request.setRequestHeader("x-bilan-generation", generation);
+      request.setRequestHeader("x-bilan-part", String(index));
+      request.setRequestHeader("x-bilan-parts", String(parts));
+      request.setRequestHeader("x-bilan-size", String(file.size));
+      request.setRequestHeader("x-bilan-name", encodeURIComponent(file.name));
+      request.setRequestHeader("x-bilan-type", /^video\/[a-z0-9.+-]+$/i.test(file.type) ? file.type : "video/mp4");
+      request.upload.onprogress = (event) => {
+        if (event.lengthComputable) onProgress(Math.min(99, Math.round(((start + event.loaded) / file.size) * 100)));
+      };
+      request.onload = () => {
+        if (request.status < 200 || request.status >= 300) {
+          reject(new Error(String(request.status)));
+          return;
+        }
+        if (index + 1 >= parts) {
+          onProgress(100);
+          resolve(generation);
+          return;
+        }
+        send(index + 1);
+      };
+      request.onerror = () => reject(new Error("upload"));
+      request.send(blob);
+    };
+    onProgress(0);
+    send(0);
+  });
+
+const BilanPlayer = ({ file }: { file: { name: string; generation: string } }) => (
+  <video
+    key={file.generation}
+    src={`/posting/bilan?v=${file.generation}`}
+    controls
+    playsInline
+    preload="metadata"
+    aria-label={file.name}
+    className="mt-3 w-full rounded-xl bg-black"
+  />
+);
+
 const ProofFeedback = ({
   active,
   percent,
@@ -494,12 +558,14 @@ export const PostingDashboard = ({
   work = {},
   removedDays = [],
   slides,
+  bilan = null,
 }: {
   role: string;
   profiles: ManagedProfile[];
   work?: Record<string, ProfileWork>;
   removedDays?: string[];
   slides: SlideBoard;
+  bilan?: { name: string; generation: string } | null;
 }) => {
   const remoteProofs: ProofRecord[] = Object.entries(work).flatMap(([profileId, profile]) =>
     Object.entries(profile.days)
@@ -521,6 +587,10 @@ export const PostingDashboard = ({
   const [deletingDate, setDeletingDate] = useState<string | null>(null);
   const [dayError, setDayError] = useState<string | null>(null);
   const [board, setBoard] = useState(slides);
+  const [guide, setGuide] = useState(bilan);
+  const [guideNote, setGuideNote] = useState<{ percent: number; text: string } | null>(null);
+  const [guideError, setGuideError] = useState<string | null>(null);
+  const guideSending = useRef(false);
   const [zipping, setZipping] = useState<string | null>(null);
   const zippingRef = useRef<string | null>(null);
   const boardStamp = useRef(0);
@@ -674,6 +744,19 @@ export const PostingDashboard = ({
   useEffect(() => {
     const pull = async () => {
       if (document.visibilityState === "hidden") return;
+      const response = await fetch("/posting/bilan?meta=1");
+      if (!response.ok) return;
+      const body = (await response.json()) as { name?: string; generation?: string };
+      if (!body.name || !body.generation) return;
+      setGuide({ name: body.name, generation: body.generation });
+    };
+    document.addEventListener("visibilitychange", pull);
+    return () => document.removeEventListener("visibilitychange", pull);
+  }, []);
+
+  useEffect(() => {
+    const pull = async () => {
+      if (document.visibilityState === "hidden") return;
       const stamp = boardStamp.current;
       const next = await loadSharedSlides();
       if (stamp !== boardStamp.current) return;
@@ -815,6 +898,29 @@ export const PostingDashboard = ({
       fail(error instanceof Error && error.message === "413" ? ui.proofTooBig : ui.proofFail);
     } finally {
       sending.current.delete(date);
+    }
+  };
+
+  const onBilan = async (file: File | undefined) => {
+    if (!file || !isTania || guideSending.current) return;
+    if (file.size > BILAN_MAX_BYTES) {
+      setGuideError("Cette vidéo dépasse 1 Go.");
+      return;
+    }
+    guideSending.current = true;
+    setGuideError(null);
+    setGuideNote({ percent: 0, text: ui.proofSending(0) });
+    try {
+      const generation = await uploadBilan(file, (percent) => setGuideNote({ percent, text: ui.proofSending(percent) }));
+      setGuide({ name: file.name, generation });
+      setGuideNote(null);
+      const input = document.getElementById("bilan-upload");
+      if (input instanceof HTMLInputElement) input.value = "";
+    } catch (error) {
+      setGuideNote(null);
+      setGuideError(error instanceof Error && error.message === "413" ? "Cette vidéo dépasse 1 Go." : "La vidéo n'a pas été enregistrée. Réessaie.");
+    } finally {
+      guideSending.current = false;
     }
   };
 
@@ -1148,6 +1254,25 @@ export const PostingDashboard = ({
               <section key={plan.date} className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
                 <p className="font-body text-sm text-gray-700">{dayHeading(plan)}</p>
                 <h2 className="font-title text-2xl tracking-tight">{formatDay(plan.date)}</h2>
+                {plan.date === BILAN_DATE && (
+                  <div className="mt-4 rounded-2xl border-2 border-black bg-[#FFF3C4] px-3 py-3">
+                    <h3 className="font-title text-2xl leading-none tracking-tight">Bilan fin de semaine</h3>
+                    <p className="mt-2 font-body text-sm leading-relaxed">
+                      Dépose la vidéo de tuto. Elle s&apos;affiche dans l&apos;encart du dimanche, chez les filles.
+                    </p>
+                    <input
+                      id="bilan-upload"
+                      type="file"
+                      accept="video/*"
+                      aria-label="Vidéo de tuto du bilan fin de semaine"
+                      onChange={(event) => void onBilan(event.target.files?.[0])}
+                      className="mt-3 block w-full font-body text-sm"
+                    />
+                    {guide ? <p className="mt-2 font-body text-sm">{guide.name}</p> : null}
+                    <ProofFeedback active={Boolean(guideNote)} percent={guideNote?.percent ?? 0} text={guideNote?.text ?? ""} error={guideError} />
+                    {guide ? <BilanPlayer file={guide} /> : null}
+                  </div>
+                )}
                 {plan.date >= SLIDES_FROM && plan.date <= SLIDES_UNTIL && (
                   <div className="mt-4 flex flex-col gap-4">
                     {ACCOUNTS.map((account, index) => {
@@ -1325,6 +1450,7 @@ export const PostingDashboard = ({
                 checks={checks}
                 lang={lang}
                 date={plan.date}
+                clip={plan.date === BILAN_DATE && guide ? <BilanPlayer file={guide} /> : null}
                 item={(check, label) => (
                   <label
                     htmlFor={`check-${plan.date}-${check.id}`}
