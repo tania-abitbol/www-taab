@@ -312,7 +312,11 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
           const reply = publishersOn(previousIso(plan.date)).includes(id);
           const closing = plan.date === BILAN_DATE;
           return [
-            task(`before-${id}`, closing ? say.sundayBefore(account) : say.hardBefore(account), POST_WARM_BEFORE_MINUTES),
+            task(
+              `before-${id}`,
+              closing ? say.sundayBefore(account) : say.hardBefore(account),
+              closing ? (id === "us" ? 7 : 6) : POST_WARM_BEFORE_MINUTES,
+            ),
             task(`post-${id}`, say.hardPost(account), POST_PUBLISH_MINUTES),
             task(
               `after-${id}`,
@@ -372,7 +376,7 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
       return { ...check, goal: plan.date === "2026-11-10" ? say.followTotalLong(count) : say.followTotal(count) };
     });
     if (plan.date !== BILAN_DATE) return withGoals;
-    return [...withGoals, task("bilan", say.bilan)];
+    return [...withGoals, task("bilan", say.bilan, 5)];
   }
   if (plan.kind === "saturday") {
     return ACCOUNTS.map((account, index) => task(`min-${account.id}`, say.warm(name(index)), SATURDAY_ACCOUNT_MINUTES));

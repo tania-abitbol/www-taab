@@ -472,7 +472,7 @@ for (const plan of DAY_PLANS.filter((item) => item.date >= "2026-11-12" && item.
     assert.equal(post.minutes, 5, `${plan.date} ${id}`);
     const before = fr.find((item) => item.id === `before-${id}`);
     const after = fr.find((item) => item.id === `after-${id}`);
-    assert.equal(before.minutes, 8, `${plan.date} ${id}`);
+    assert.equal(before.minutes, plan.date === "2026-11-15" ? (id === "us" ? 7 : 6) : 8, `${plan.date} ${id}`);
     assert.equal(after.minutes, 7, `${plan.date} ${id}`);
     assert.ok(before.label.includes("3 commentaires"), `${plan.date} ${id}`);
     assert.ok(before.label.includes("2 réponses"), `${plan.date} ${id}`);
@@ -526,7 +526,11 @@ assert.equal(checksFor(DAY_PLANS[9], "en").find((item) => item.id === "before-us
 assert.equal(checksFor(DAY_PLANS[9], "es").find((item) => item.id === "after-es").label.includes("Cierre obligatorio"), false);
 assert.equal(checksFor(DAY_PLANS[9], "en").find((item) => item.id === "after-us").label.includes("Required ending"), false);
 const bilan = sundayNext.find((item) => item.id === "bilan");
-assert.equal(bilan.minutes, undefined);
+assert.equal(bilan.minutes, 5);
+assert.equal(sundayNext.find((item) => item.id === "before-fr").minutes, 6);
+assert.equal(sundayNext.find((item) => item.id === "before-es").minutes, 6);
+assert.equal(sundayNext.find((item) => item.id === "before-us").minutes, 7);
+assert.equal(timedMinutes(sundayNext.filter((item) => item.id !== "bilan")), 55);
 assert.equal(bilan.banner, undefined);
 assert.ok(bilan.label.startsWith("Bilan fin de semaine"));
 assert.ok(bilan.label.includes("5 dernières minutes de la vidéo de preuves"));
