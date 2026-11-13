@@ -514,7 +514,7 @@ const BilanPlayer = ({ file }: { file: { name: string; generation: string } }) =
     playsInline
     preload="metadata"
     aria-label={file.name}
-    className="mt-3 w-full rounded-xl bg-black"
+    className="mt-3 block h-auto max-h-60 w-auto max-w-[200px] rounded-xl bg-black object-contain"
   />
 );
 
