@@ -5,8 +5,8 @@ import { flushSync } from "react-dom";
 
 import {
   ACCOUNTS,
+  ACTIVE_WEEK_START,
   CALENDAR_END,
-  CALENDAR_START,
   DAY_PLANS,
   WORKER_VISIBLE_THROUGH,
   calendarDates,
@@ -613,14 +613,15 @@ export const PostingDashboard = ({
   const ui = postingUi(lang);
   const lower = (value: string) => value.charAt(0).toLowerCase() + value.slice(1);
   const workerPlans = isTania ? [] : workerVisiblePlans(girlName, clock);
-  const rangeStart = isTania ? CALENDAR_START : workerPlans[0]?.date ?? WORKER_VISIBLE_THROUGH;
+  const rangeStart = isTania ? ACTIVE_WEEK_START : workerPlans[0]?.date ?? ACTIVE_WEEK_START;
   const rangeEnd = isTania ? CALENDAR_END : WORKER_VISIBLE_THROUGH;
   const range =
     lang === "en"
       ? ui.range(formatDay(rangeStart, lang), formatDay(rangeEnd, lang))
       : ui.range(lower(formatDay(rangeStart, lang)), lower(formatDay(rangeEnd, lang)));
-  const visibleDates = () => calendarDates();
-  const visiblePlans = (forTania: boolean) => (forTania ? DAY_PLANS : workerPlans);
+  const visibleDates = () => calendarDates().filter((date) => date >= ACTIVE_WEEK_START);
+  const visiblePlans = (forTania: boolean) =>
+    forTania ? DAY_PLANS.filter((plan) => plan.date >= ACTIVE_WEEK_START) : workerPlans;
 
   useEffect(() => {
     const loaded = readDesk();

@@ -18,8 +18,9 @@ const PAGE = `<!DOCTYPE html>
 </body>
 </html>`;
 
-/** Temporary hold. Remove this file to serve the site again. Nothing else was deleted. */
+/** Production stays on this page. Local `next dev` keeps serving the site. */
 export function middleware() {
+  if (process.env.NODE_ENV !== "production") return NextResponse.next();
   return new NextResponse(PAGE, {
     status: 503,
     headers: {

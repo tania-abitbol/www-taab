@@ -1,9 +1,11 @@
-/** Posting desk, 5–15 Nov 2026. Three profiles plus Tania. Proof is the recording, never a link. */
+/** Posting desk. The week of 16–22 Nov starts empty. Proof is the recording, never a link. */
 
 export const CALENDAR_START = "2026-11-05";
-export const CALENDAR_END = "2026-11-15";
-/** Workers see the current list, through Sunday 15 Nov. Past days stay off their screen. */
-export const WORKER_VISIBLE_THROUGH = "2026-11-15";
+export const CALENDAR_END = "2026-11-22";
+/** Monday 16 Nov. Days before this stay off the desk. Their tasks remain in the file. */
+export const ACTIVE_WEEK_START = "2026-11-16";
+/** Workers see the current list, through Sunday 22 Nov. Past days stay off their screen. */
+export const WORKER_VISIBLE_THROUGH = "2026-11-22";
 export const FRIDAY_CREATE_MINUTES = 30;
 export const FRIDAY_WARM_MINUTES = 10;
 export const SATURDAY_ACCOUNT_MINUTES = 20;
@@ -186,6 +188,13 @@ export const DAY_PLANS: DayPlan[] = [
   post("2026-11-13", 8),
   post("2026-11-14", 9),
   post("2026-11-15", 10),
+  post("2026-11-16", 11),
+  post("2026-11-17", 12),
+  post("2026-11-18", 13),
+  post("2026-11-19", 14),
+  post("2026-11-20", 15),
+  post("2026-11-21", 16),
+  post("2026-11-22", 17),
 ];
 
 /** Day tasks are written through this date. */

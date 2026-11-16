@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 
 import { DashboardGate } from "~/components/dashboard/DashboardGate";
 import { DASHBOARD_COOKIE, readSession } from "~/server/dashboardSession";
+import { ACTIVE_WEEK_START } from "~/config/posting";
 import { emptySlideBoard, visibleBoard } from "~/config/slideBoard";
 import { liveRemovedDays, mirrorPosting } from "~/server/postingLive";
 import { loadAllWork, loadRemovedDays, loadWork } from "~/server/postingProofStore";
@@ -38,10 +39,18 @@ export default async function PostingPage({ searchParams }: { searchParams: { re
     session.role === "tania"
       ? profiles
       : profiles.filter((profile) => profile.id === session.role).map(({ id, name }) => ({ id, name }));
-  const work =
+  const storedWork =
     session.role === "tania"
       ? await loadAllWork(profiles.map((profile) => profile.id)).catch(() => ({}))
       : { [session.role]: await loadWork(session.role).catch(() => ({ days: {} })) };
+  const work = Object.fromEntries(
+    Object.entries(storedWork).map(([id, profile]) => [
+      id,
+      {
+        days: Object.fromEntries(Object.entries(profile?.days ?? {}).filter(([date]) => date >= ACTIVE_WEEK_START)),
+      },
+    ]),
+  );
   const removedDays =
     session.role === "tania" ? (mirrorPosting() ? await liveRemovedDays() : null) ?? (await loadRemovedDays().catch(() => [])) : [];
   const slides = visibleBoard(await loadSlideBoard().catch(() => emptySlideBoard()), session.role);

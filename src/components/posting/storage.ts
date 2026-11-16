@@ -2,8 +2,8 @@ import { DayState, Desk, PROFILES, SlotId, emptyDayState, emptyDesk, isIsoDate, 
 
 const DB_NAME = "taab-posting";
 const STORE = "blobs";
-const PREVIOUS_KEYS = ["taab:posting:v1", "taab:posting:v2", "taab:posting:v3"];
-export const POSTING_STORAGE_KEY = "taab:posting:v4";
+const PREVIOUS_KEYS = ["taab:posting:v1", "taab:posting:v2", "taab:posting:v3", "taab:posting:v4"];
+export const POSTING_STORAGE_KEY = "taab:posting:v5";
 
 const dropPreviousDesk = () => {
   let hadPrevious = false;
