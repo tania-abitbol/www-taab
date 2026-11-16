@@ -25,6 +25,7 @@ const {
   langFromName,
   calendarDate,
   missedProofDate,
+  sundayCatchupFor,
   shiftIsoDate,
   timeZoneForGirl,
   workerVisiblePlans,
@@ -652,6 +653,10 @@ assert.equal(missedProofDate("Peches - ES", wednesdayAfternoon), "2026-11-10");
 assert.equal(missedProofDate("Karol - US", stillMondayInNewYork), "2026-11-08");
 assert.equal(missedProofDate("Karol - US", tuesdayInNewYork), "2026-11-09");
 assert.equal(missedProofDate("Ghada - FR", new Date("2026-11-06T12:00:00Z")), null);
+assert.equal(sundayCatchupFor("Karol - US"), "2026-11-15");
+assert.equal(sundayCatchupFor("Karol - EN"), "2026-11-15");
+assert.equal(sundayCatchupFor("Ghada - FR"), null);
+assert.equal(sundayCatchupFor("Peches - ES"), null);
 assert.ok(postingUi("en").lateProofTitle("Tuesday, November 10").includes("Yesterday"));
 assert.ok(postingUi("en").lateProofBody.includes("no longer on the page"));
 assert.ok(postingUi("fr").lateProofTitle("mardi 10 novembre").includes("hier"));

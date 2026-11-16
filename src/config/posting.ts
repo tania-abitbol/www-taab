@@ -497,6 +497,13 @@ export const langFromName = (name: string): PostingLang => {
 
 export const displayName = (name: string) => name.replace(LOCALE, "").trim() || name;
 
+/** Karol alone can still send Sunday 15 November after that day has left the desk. */
+export const sundayCatchupFor = (name: string) => {
+  const key = displayName(name).toLowerCase().split(/[\s-–—]/)[0];
+  if (key !== "karol") return null;
+  return BILAN_DATE;
+};
+
 export const accountWord = (index: number, lang: PostingLang) => {
   const number = index + 1;
   if (lang === "es") return `Cuenta ${number}`;
