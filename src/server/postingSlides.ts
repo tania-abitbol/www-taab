@@ -1,10 +1,11 @@
-import { mkdir, readFile, writeFile } from "fs/promises";
+import { mkdir, readFile, unlink, writeFile } from "fs/promises";
 import path from "path";
 
 import {
   type SlideBoard,
   type SlideImage,
   SLIDE_MAX_BYTES,
+  SLIDE_PART_BYTES,
   cleanSlideBoard,
   emptySlideBoard,
   removeAt,
@@ -115,6 +116,80 @@ const enqueue = <T>(job: () => Promise<T>) => {
 };
 
 export const loadSlideBoard = () => readBoard();
+
+const partFile = (id: string, part: number) => path.join(dir(), `part-${id}-${part}`);
+const partKey = (id: string, part: number) => `slide-part-${id}-${part}`;
+
+const writePart = async (id: string, part: number, bytes: Uint8Array) => {
+  if (!remote()) {
+    await mkdir(dir(), { recursive: true });
+    await writeFile(partFile(id, part), bytes);
+    return;
+  }
+  const url = await sign(partKey(id, part), "PUT");
+  if (!url) throw new Error("slide-sign");
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: { "content-type": "application/octet-stream" },
+    body: bytes,
+    signal: AbortSignal.timeout(20000),
+  });
+  if (!response.ok) throw new Error("slide-write");
+};
+
+const readPart = async (id: string, part: number) => {
+  if (!remote()) {
+    try {
+      return await readFile(partFile(id, part));
+    } catch {
+      return null;
+    }
+  }
+  const url = await sign(partKey(id, part), "GET");
+  if (!url) return null;
+  const response = await fetch(url, { signal: AbortSignal.timeout(20000) });
+  if (!response.ok) return null;
+  return Buffer.from(await response.arrayBuffer());
+};
+
+const discardPart = async (id: string, part: number) => {
+  if (!remote()) {
+    await unlink(partFile(id, part)).catch(() => undefined);
+    return;
+  }
+  const context = blobsContext();
+  if (!context?.siteID || !context.token) return;
+  await fetch(endpoint(context, partKey(id, part)), {
+    method: "DELETE",
+    headers: { authorization: `Bearer ${context.token}` },
+  }).catch(() => undefined);
+};
+
+/** Stores one piece. The last piece assembles the file the girls download. */
+export const saveSlideUpload = async (id: string, part: number, parts: number, total: number, bytes: Uint8Array) => {
+  if (!slideImageIdOk(id) || total < 1 || total > SLIDE_MAX_BYTES) throw new Error("slide-size");
+  if (part < 0 || part >= parts || bytes.byteLength < 1 || bytes.byteLength > SLIDE_PART_BYTES) throw new Error("slide-size");
+  if (parts === 1) {
+    if (bytes.byteLength !== total) throw new Error("slide-size");
+    await saveSlideImage(id, bytes);
+    return;
+  }
+  if (part < parts - 1) {
+    await writePart(id, part, bytes);
+    return;
+  }
+  const chunks: Buffer[] = [];
+  for (let index = 0; index < parts - 1; index += 1) {
+    const piece = await readPart(id, index);
+    if (!piece) throw new Error("slide-read");
+    chunks.push(piece);
+  }
+  chunks.push(Buffer.from(bytes));
+  const all = Buffer.concat(chunks);
+  if (all.byteLength !== total) throw new Error("slide-size");
+  await saveSlideImage(id, all);
+  await Promise.all(Array.from({ length: parts - 1 }, (_, index) => discardPart(id, index)));
+};
 
 export const saveSlideImage = async (id: string, bytes: Uint8Array) => {
   if (!slideImageIdOk(id) || bytes.byteLength < 1 || bytes.byteLength > SLIDE_MAX_BYTES) throw new Error("slide-size");

@@ -39,7 +39,7 @@ import {
   BILAN_DATE,
 } from "~/config/posting";
 import { BILAN_MAX_BYTES } from "~/config/bilanVideo";
-import { SLIDE_MAX_BYTES, slideshowOf, type SlideBoard, type SlideImage } from "~/config/slideBoard";
+import { SLIDE_MAX_BYTES, SLIDE_PART_BYTES, slidePartCount, slideshowOf, type SlideBoard, type SlideImage } from "~/config/slideBoard";
 import { zipStoredFiles } from "~/config/slideZip";
 import { leavePosting } from "~/app/dashboard/creator/actions";
 import { addManagedProfile, commitProof, deleteManagedProfile, deleteValidatedDay, dropSharedSlide, loadSharedSlides, prepareProofUpload, publishSlideCaption, publishSlides, saveManagedProfile, saveMyDay } from "~/app/posting/actions";
@@ -323,25 +323,65 @@ const slideFileId = () => {
   return raw.slice(0, 16);
 };
 
+const READ_WINDOW = 5 * 1024 * 1024;
+
+const readSharedFile = async (id: string) => {
+  const pieces: Uint8Array[] = [];
+  let start = 0;
+  let total = 0;
+  while (total === 0 || start < total) {
+    const response = await fetch(`/posting/slide/${id}`, {
+      cache: "no-store",
+      headers: { range: `bytes=${start}-${start + READ_WINDOW - 1}` },
+    });
+    if (response.status !== 206 && !response.ok) throw new Error("download");
+    const match = /^bytes (\d+)-(\d+)\/(\d+)$/.exec(response.headers.get("content-range") ?? "");
+    const piece = new Uint8Array(await response.arrayBuffer());
+    if (!match) {
+      if (piece.byteLength < 1) throw new Error("download");
+      return piece;
+    }
+    total = Number(match[3]);
+    pieces.push(piece);
+    start += piece.byteLength;
+    if (piece.byteLength < 1 || start >= total) break;
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const piece of pieces) {
+    bytes.set(piece, offset);
+    offset += piece.byteLength;
+  }
+  return bytes;
+};
+
 const uploadSlideFile = async (date: string, storageId: string, file: Blob, name: string, type: string) => {
   if (file.size < 1 || file.size > SLIDE_MAX_BYTES) throw new Error("size");
   const id = slideFileId();
-  const response = await fetch("/posting/slides", {
-    method: "POST",
-    headers: {
-      "content-type": "application/octet-stream",
-      "x-slide-date": date,
-      "x-slide-storage": storageId,
-      "x-slide-name": encodeURIComponent(name),
-      "x-slide-type": type || "image/jpeg",
-      "x-slide-size": String(file.size),
-      "x-slide-id": id,
-    },
-    body: file,
-  });
-  if (!response.ok) throw new Error(response.status === 413 ? "size" : "upload");
-  const saved = (await response.json()) as Partial<SlideImage>;
-  if (!saved.id || !saved.name || !saved.type) throw new Error("upload");
+  const parts = slidePartCount(file.size);
+  const media = type || (/\.(mp4|m4v|mov|webm)$/i.test(name) ? "video/mp4" : "image/jpeg");
+  let saved: Partial<SlideImage> | null = null;
+  for (let index = 0; index < parts; index += 1) {
+    const start = index * SLIDE_PART_BYTES;
+    const response = await fetch("/posting/slides", {
+      method: "POST",
+      headers: {
+        "content-type": "application/octet-stream",
+        "x-slide-date": date,
+        "x-slide-storage": storageId,
+        "x-slide-name": encodeURIComponent(name),
+        "x-slide-type": media,
+        "x-slide-size": String(file.size),
+        "x-slide-id": id,
+        "x-slide-part": String(index),
+        "x-slide-parts": String(parts),
+      },
+      body: file.slice(start, Math.min(file.size, start + SLIDE_PART_BYTES)),
+    });
+    if (!response.ok) throw new Error(response.status === 413 ? "size" : "upload");
+    if (index === parts - 1) saved = (await response.json()) as Partial<SlideImage>;
+  }
+  if (!saved?.id || !saved.name || !saved.type) throw new Error("upload");
   return { id: saved.id, name: saved.name, type: saved.type };
 };
 
@@ -930,7 +970,11 @@ export const PostingDashboard = ({
   };
 
   const onSlides = async (date: string, accountId: string, list: FileList | null) => {
-    const files = list ? Array.from(list).filter((file) => file.type.startsWith("image/")) : [];
+    const files = list
+      ? Array.from(list).filter(
+          (file) => file.type.startsWith("image/") || file.type.startsWith("video/") || /\.(mp4|m4v|mov|webm)$/i.test(file.name),
+        )
+      : [];
     if (files.length === 0) return;
     setFileError("");
     try {
@@ -949,7 +993,7 @@ export const PostingDashboard = ({
       const input = document.getElementById(`upload-${date}-${accountId}`);
       if (input instanceof HTMLInputElement) input.value = "";
     } catch (error) {
-      setFileError(error instanceof Error && error.message === "size" ? "Cette image dépasse 5 Mo." : "Les images n'ont pas été enregistrées sur le site. Réessaie.");
+      setFileError(error instanceof Error && error.message === "size" ? "Ce fichier dépasse 25 Mo." : "Le fichier n'a pas été enregistré sur le site. Réessaie.");
     }
   };
 
@@ -1062,9 +1106,7 @@ export const PostingDashboard = ({
       const files: { name: string; bytes: Uint8Array }[] = [];
       if (shared.length > 0) {
         for (const image of shared) {
-          const response = await fetch(`/posting/slide/${image.id}`, { cache: "no-store" });
-          if (!response.ok) throw new Error("download");
-          files.push({ name: image.name || "image", bytes: new Uint8Array(await response.arrayBuffer()) });
+          files.push({ name: image.name || "image", bytes: await readSharedFile(image.id) });
         }
       } else {
         for (let index = 0; index < localNames.length; index += 1) {
@@ -1337,7 +1379,7 @@ export const PostingDashboard = ({
                                   <input
                                     id={`upload-${plan.date}-${storageId}`}
                                     type="file"
-                                    accept="image/*"
+                                    accept="image/*,video/*"
                                     multiple
                                     aria-label={`${title} ${label}`}
                                     onChange={(event) => void onSlides(plan.date, storageId, event.target.files)}
@@ -1350,7 +1392,11 @@ export const PostingDashboard = ({
                                         return (
                                           <li key={`${storageId}-${imageIndex}-${name}`} className="flex items-center gap-2">
                                             {preview ? (
-                                              <img src={preview} alt="" className="h-12 w-12 shrink-0 rounded-lg object-cover" />
+                                              shared[imageIndex]?.type.startsWith("video/") ? (
+                                                <video src={preview} muted playsInline className="h-12 w-12 shrink-0 rounded-lg bg-black object-cover" />
+                                              ) : (
+                                                <img src={preview} alt="" className="h-12 w-12 shrink-0 rounded-lg object-cover" />
+                                              )
                                             ) : null}
                                             <span className="min-w-0 flex-1 truncate font-body text-sm">{name}</span>
                                             <button

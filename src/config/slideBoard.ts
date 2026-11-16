@@ -1,4 +1,6 @@
-export const SLIDE_MAX_BYTES = 5 * 1024 * 1024;
+export const SLIDE_MAX_BYTES = 25 * 1024 * 1024;
+/** Each piece stays under the hosting request limit. */
+export const SLIDE_PART_BYTES = 3 * 1024 * 1024;
 export const SLIDE_FROM = "2026-11-10";
 export const SLIDE_UNTIL = "2026-11-16";
 
@@ -13,7 +15,20 @@ const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const STORAGE = /^p[a-z0-9-]{1,40}__(fr|es|us)$/;
 const IMAGE_ID = /^[a-f0-9]{16}$/;
 const PROFILE = /^p[a-z0-9-]{1,40}$/;
-const TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/heic", "image/heif", "image/avif"]);
+const TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "image/heic",
+  "image/heif",
+  "image/avif",
+  "video/mp4",
+  "video/quicktime",
+  "video/webm",
+]);
+
+export const slidePartCount = (size: number) => Math.max(1, Math.ceil(size / SLIDE_PART_BYTES));
 
 export const emptySlideBoard = (): SlideBoard => ({ files: {}, captions: {} });
 
@@ -29,7 +44,12 @@ export const cleanSlideName = (name: string) => {
   return trimmed || "image";
 };
 
-export const cleanSlideType = (type: string) => (TYPES.has(type) ? type : "image/jpeg");
+export const cleanSlideType = (type: string) => {
+  const lower = type.toLowerCase();
+  if (TYPES.has(lower)) return lower;
+  if (lower.startsWith("video/")) return "video/mp4";
+  return "image/jpeg";
+};
 
 const cleanImages = (value: unknown) => {
   if (!Array.isArray(value)) return [];
