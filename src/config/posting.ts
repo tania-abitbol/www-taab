@@ -152,6 +152,11 @@ const WEEK_STEPS: Record<string, WeekStep[]> = {
     { account: 1, kind: "post" },
     { account: 2, kind: "post" },
   ],
+  "2026-11-16": [
+    { account: 0, kind: "post" },
+    { account: 1, kind: "post" },
+    { account: 2, kind: "post" },
+  ],
 };
 
 const publishersOn = (date: string) =>
@@ -167,6 +172,7 @@ const SESSION_TOTALS: Record<string, readonly [number, number, number]> = {
   "2026-11-13": [45, 45, 45],
   "2026-11-14": [55, 55, 55],
   "2026-11-15": [65, 65, 65],
+  "2026-11-16": [65, 65, 65],
 };
 
 const post = (date: string, index: number): DayPlan => ({
@@ -198,7 +204,7 @@ export const DAY_PLANS: DayPlan[] = [
 ];
 
 /** Day tasks are written through this date. */
-export const PLANNED_THROUGH = "2026-11-15";
+export const PLANNED_THROUGH = "2026-11-16";
 /** Sunday 15 Nov only. The week-end review lives on this day. */
 export const BILAN_DATE = "2026-11-15";
 
@@ -273,7 +279,7 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
   }
   const steps = WEEK_STEPS[plan.date];
   if (steps) {
-    const hard = plan.date >= "2026-11-12" && plan.date <= "2026-11-15";
+    const hard = (plan.date >= "2026-11-12" && plan.date <= "2026-11-15") || plan.date === "2026-11-16";
     const total = (accountIndex: number) => SESSION_TOTALS[plan.date]?.[accountIndex] ?? 0;
     const engage = plan.date === "2026-11-09" ? say.engageMore : undefined;
     const checks = [

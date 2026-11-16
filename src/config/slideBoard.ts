@@ -1,6 +1,6 @@
 export const SLIDE_MAX_BYTES = 5 * 1024 * 1024;
 export const SLIDE_FROM = "2026-11-10";
-export const SLIDE_UNTIL = "2026-11-15";
+export const SLIDE_UNTIL = "2026-11-16";
 
 export type SlideImage = { id: string; name: string; type: string };
 

@@ -347,7 +347,7 @@ const uploadSlideFile = async (date: string, storageId: string, file: Blob, name
 
 const proofKey = (personId: string, date: string) => `proof:${personId}:${date}`;
 const SLIDES_FROM = "2026-11-10";
-const SLIDES_UNTIL = "2026-11-15";
+const SLIDES_UNTIL = "2026-11-16";
 const saveDownload = (href: string, name: string) => {
   const link = document.createElement("a");
   link.href = href;
@@ -706,7 +706,7 @@ export const PostingDashboard = ({
               }
             }
             if (role !== "tania" || cancelled) continue;
-            if (date < "2026-11-10" || date > "2026-11-15" || !/^p[a-z0-9-]{1,40}__(fr|es|us)$/.test(accountId)) continue;
+            if (date < SLIDES_FROM || date > SLIDES_UNTIL || !/^p[a-z0-9-]{1,40}__(fr|es|us)$/.test(accountId)) continue;
             try {
               const caption = loaded.captions?.[date]?.[accountId];
               if (caption && shared.captions[date]?.[accountId] === undefined) {
