@@ -512,6 +512,14 @@ export const langFromName = (name: string): PostingLang => {
 
 export const displayName = (name: string) => name.replace(LOCALE, "").trim() || name;
 
+/** One label per market: FR, ES, US. */
+export const marketLabel = (name: string) => {
+  const lang = langFromName(name);
+  return lang === "es" ? "ES" : lang === "en" ? "US" : "FR";
+};
+
+export const girlLabel = (name: string) => `${displayName(name)} · ${marketLabel(name)}`;
+
 /** Karol alone can still send Sunday 15 November after that day has left the desk. */
 export const sundayCatchupFor = (name: string) => {
   const key = displayName(name).toLowerCase().split(/[\s-–—]/)[0];
@@ -1365,6 +1373,11 @@ export const postingUi = (lang: PostingLang) =>
       savePending: "Enregistrement…",
       saveError: "Pas enregistré. Vérifie ta connexion.",
       saveRetry: "Réessayer",
+      proofLoading: "Chargement de la vidéo…",
+      proofError: "La vidéo ne se lit pas ici. Télécharge-la pour la regarder.",
+      proofDownload: "Télécharger",
+      proofDownloading: (percent: number) => `Téléchargement… ${percent} %`,
+      proofDownloadFail: "Le téléchargement a échoué. Réessaie.",
     },
     es: {
       switchProfile: "Cambiar de perfil",
@@ -1416,6 +1429,11 @@ export const postingUi = (lang: PostingLang) =>
       savePending: "Guardando…",
       saveError: "No se ha guardado. Revisa tu conexión.",
       saveRetry: "Reintentar",
+      proofLoading: "Cargando el vídeo…",
+      proofError: "El vídeo no se reproduce aquí. Descárgalo para verlo.",
+      proofDownload: "Descargar",
+      proofDownloading: (percent: number) => `Descargando… ${percent} %`,
+      proofDownloadFail: "La descarga ha fallado. Vuelve a intentarlo.",
     },
     en: {
       switchProfile: "Switch profile",
@@ -1467,5 +1485,10 @@ export const postingUi = (lang: PostingLang) =>
       savePending: "Saving…",
       saveError: "Not saved. Check your connection.",
       saveRetry: "Try again",
+      proofLoading: "Loading the video…",
+      proofError: "The video won't play here. Download it to watch it.",
+      proofDownload: "Download",
+      proofDownloading: (percent: number) => `Downloading… ${percent}%`,
+      proofDownloadFail: "The download failed. Try again.",
     },
   })[lang];

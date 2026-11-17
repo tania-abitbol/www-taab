@@ -3,7 +3,7 @@
 import { cookies } from "next/headers";
 
 import { DASHBOARD_COOKIE, readSession } from "~/server/dashboardSession";
-import { planFor } from "~/config/posting";
+import { isSlotId, planFor } from "~/config/posting";
 import { type SlideImage, emptySlideBoard, visibleBoard } from "~/config/slideBoard";
 import { DayWork, cleanDayWork, proofAllowed, proofFileName } from "~/server/postingProofs";
 import { callProductionAction, liveRemovedDays, mirrorPosting } from "~/server/postingLive";
@@ -148,6 +148,28 @@ export const dropSharedSlide = async (date: string, storageId: string, index: nu
   try {
     const board = await hideSlideAt(date, storageId, index);
     return { ok: true as const, board };
+  } catch {
+    return { ok: false as const };
+  }
+};
+
+/** Tania moves a girl to another hour, or clears it. A cleared hour also clears the day's validation. */
+export const reassignSlot = async (profileId: string, date: string, slot: string | null) => {
+  if (!(await asTania())) return { ok: false as const };
+  if (!planFor(date) || (slot !== null && !isSlotId(slot)) || mirrorPosting()) return { ok: false as const };
+  try {
+    const profiles = await listProfiles();
+    if (!profiles.some((profile) => profile.id === profileId)) return { ok: false as const };
+    const current = (await loadWork(profileId)).days[date];
+    const clean = cleanDayWork({
+      slot,
+      checks: current?.checks ?? {},
+      proofName: current?.proofName ?? null,
+      validated: slot !== null && current?.validated === true,
+    });
+    if (!clean) return { ok: false as const };
+    await saveWorkDay(profileId, date, clean);
+    return { ok: true as const };
   } catch {
     return { ok: false as const };
   }

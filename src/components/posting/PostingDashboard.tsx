@@ -1,8 +1,6 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { flushSync } from "react-dom";
-
 import {
   ACCOUNTS,
   ACTIVE_WEEK_START,
@@ -24,7 +22,6 @@ import {
   formatMinutes,
   formatShortDay,
   isSlotId,
-  madridToday,
   PostingLang,
   accountWord,
   displayName,
@@ -39,8 +36,14 @@ import {
   BILAN_DATE,
   calendarDate,
   timeZoneForGirl,
+  girlLabel,
+  type AccountName,
   type DayPlan,
 } from "~/config/posting";
+import { AdminSummary, type SummaryCell } from "~/components/posting/AdminSummary";
+import { ProofPlayer } from "~/components/posting/ProofPlayer";
+import { SlotConflicts, type SlotConflict } from "~/components/posting/SlotConflicts";
+import { hourText } from "~/components/posting/SlotPicker";
 import { ACCOUNT_TONE, accountGroups, actionLabel } from "~/components/posting/accountTone";
 import { Checklist } from "~/components/posting/Checklist";
 import type { DayCardProps } from "~/components/posting/DayCard";
@@ -51,7 +54,7 @@ import { BILAN_MAX_BYTES } from "~/config/bilanVideo";
 import { SLIDE_MAX_BYTES, SLIDE_PART_BYTES, slidePartCount, slideshowOf, type SlideBoard, type SlideImage } from "~/config/slideBoard";
 import { zipStoredFiles } from "~/config/slideZip";
 import { leavePosting } from "~/app/dashboard/creator/actions";
-import { addManagedProfile, commitProof, deleteManagedProfile, deleteValidatedDay, dropSharedSlide, loadSharedSlides, prepareProofUpload, publishSlideCaption, publishSlides, saveManagedProfile, saveMyDay } from "~/app/posting/actions";
+import { addManagedProfile, commitProof, deleteManagedProfile, deleteValidatedDay, dropSharedSlide, loadSharedSlides, prepareProofUpload, publishSlideCaption, publishSlides, reassignSlot, saveManagedProfile, saveMyDay } from "~/app/posting/actions";
 import { PROOF_PART_BYTES, proofPartCount, type DayWork, type ProfileWork, type ProofRecord } from "~/server/postingProofs";
 import { deleteBlob, loadBlob, readDesk, saveBlob, writeDesk } from "~/components/posting/storage";
 
@@ -392,13 +395,6 @@ const girlRank = (name: string) => {
 };
 const slideGirls = (people: { id: string; name: string }[]) =>
   [...people].filter((worker) => girlRank(worker.name) < 3).sort((a, b) => girlRank(a.name) - girlRank(b.name));
-const slideCardTitle = (name: string) => {
-  const key = displayName(name).toLowerCase();
-  if (key === "ghada") return "Ghada - FR";
-  if (key === "peches") return "Peches - ES";
-  if (key === "karol") return "Karol - EN";
-  return displayName(name);
-};
 const slideCopy = {
   fr: {
     button: "Télécharger toutes les images",
@@ -604,7 +600,6 @@ export const PostingDashboard = ({
       .filter((entry): entry is [string, DayWork & { proofName: string }] => Boolean(entry[1].proofName))
       .map(([date, day]) => ({ profileId, date, name: day.proofName }))
   );
-  const today = madridToday();
   const [desk, setDesk] = useState<Desk | null>(null);
   const [roster, setRoster] = useState(profiles);
   const [urls, setUrls] = useState<Record<string, string>>({});
@@ -631,6 +626,13 @@ export const PostingDashboard = ({
   const [saveState, setSaveState] = useState<SaveState>("synced");
   const saving = useRef(0);
   const failedDates = useRef(new Set<string>());
+  const [girlFilter, setGirlFilter] = useState("all");
+  const [adminOpen, setAdminOpen] = useState<string | null>(() => {
+    const parisDay = calendarDate("Europe/Paris");
+    return parisDay >= ACTIVE_WEEK_START && parisDay <= CALENDAR_END ? parisDay : ACTIVE_WEEK_START;
+  });
+  const [slotBusy, setSlotBusy] = useState<string | null>(null);
+  const [slotError, setSlotError] = useState<string | null>(null);
   const rememberBoard = (next: SlideBoard) => {
     boardStamp.current += 1;
     setBoard(next);
@@ -1174,7 +1176,154 @@ export const PostingDashboard = ({
     setProfileError("");
   };
 
-  const workerToday = person ? calendarDate(timeZoneForGirl(girlName), clock) : today;
+  const adminToday = calendarDate("Europe/Paris", clock);
+  const workerToday = person ? calendarDate(timeZoneForGirl(girlName), clock) : adminToday;
+
+  const adminGirls = slideGirls(roster).map((worker) => ({ id: worker.id, label: girlLabel(worker.name), name: worker.name }));
+  const shownGirls = girlFilter === "all" ? adminGirls : adminGirls.filter((worker) => worker.id === girlFilter);
+
+  const summaryCell = (date: string, girlId: string): SummaryCell => {
+    const plan = DAY_PLANS.find((item) => item.date === date);
+    const worker = roster.find((item) => item.id === girlId);
+    const day = desk.days[girlId]?.[date];
+    const tasks =
+      plan && worker
+        ? checksFor(plan, "fr").filter((check) => taskIsHers(check.id, accountForLang(langFromName(worker.name))) && !check.banner)
+        : [];
+    return {
+      slot: slotsFor(desk, girlId, date)[0] ?? null,
+      done: tasks.filter((check) => day?.checks[check.id] === true).length,
+      total: tasks.length,
+      proof: Boolean(day?.proofName),
+      validated: day?.validated === true,
+    };
+  };
+
+  const openAdminDay = (date: string) => {
+    setAdminOpen(date);
+    window.requestAnimationFrame(() => document.getElementById(`admin-day-${date}`)?.scrollIntoView({ block: "start", behavior: "smooth" }));
+  };
+
+  const slotConflicts: SlotConflict[] = visibleDates().flatMap((date) =>
+    SLOTS.map((slot) => ({
+      date,
+      slot: slot.id,
+      girls: people.filter((item) => slotsFor(desk, item.id, date).includes(slot.id)).map((item) => ({ id: item.id, label: girlLabel(item.name) })),
+    })).filter((conflict) => conflict.girls.length > 1),
+  );
+
+  const reassign = async (profileId: string, date: string, slot: SlotId | null) => {
+    const key = `${profileId}-${date}`;
+    setSlotBusy(key);
+    setSlotError(null);
+    const result = await reassignSlot(profileId, date, slot).catch(() => ({ ok: false as const }));
+    setSlotBusy(null);
+    if (!result.ok) {
+      setSlotError("L'heure n'a pas été changée. Réessaie.");
+      return;
+    }
+    update((current) => {
+      const day = current.days[profileId]?.[date];
+      return {
+        ...current,
+        slots: { ...current.slots, [profileId]: { ...current.slots[profileId], [date]: slot ? [slot] : [] } },
+        days:
+          day && !slot ? { ...current.days, [profileId]: { ...current.days[profileId], [date]: { ...day, validated: false } } } : current.days,
+      };
+    });
+  };
+
+  const slideCard = (plan: DayPlan, worker: { id: string; label: string }, account: AccountName, index: number) => {
+    const storageId = slideStorageId(worker.id, account.id);
+    const shared = board.files[plan.date]?.[storageId] ?? [];
+    const names = shared.length > 0 ? shared.map((image) => image.name) : desk.taniaFiles[plan.date]?.[storageId] ?? [];
+    const title = accountWord(index, "fr");
+    const video = account.id === "us" && plan.date >= ACTIVE_WEEK_START;
+    return (
+      <div key={storageId} className="rounded-2xl bg-gray-100 p-3">
+        <label htmlFor={`upload-${plan.date}-${storageId}`} className="block font-title text-xl leading-none tracking-tight" style={{ color: ACCOUNT_TONE[index].ink }}>
+          {title}
+        </label>
+        {video ? <p className="mt-1 font-body text-sm leading-relaxed text-gray-700">Une vidéo, pas des photos. Pas de musique.</p> : null}
+        <input
+          id={`upload-${plan.date}-${storageId}`}
+          type="file"
+          accept={video ? "video/*" : "image/*,video/*"}
+          multiple={!video}
+          aria-label={`${title} ${worker.label}`}
+          onChange={(event) => void onSlides(plan.date, storageId, event.target.files)}
+          className="mt-2 block w-full font-body text-sm"
+        />
+        {names.length > 0 && (
+          <ul className="mt-3 flex flex-col gap-2">
+            {names.map((name, imageIndex) => {
+              const preview = shared[imageIndex] ? `/posting/slide/${shared[imageIndex].id}` : urls[slideKey(plan.date, storageId, imageIndex)];
+              return (
+                <li key={`${storageId}-${imageIndex}-${name}`} className="flex items-center gap-2">
+                  {preview ? (
+                    shared[imageIndex]?.type.startsWith("video/") ? (
+                      <video src={preview} muted playsInline className="h-12 w-12 shrink-0 rounded-lg bg-black object-cover" />
+                    ) : (
+                      <img src={preview} alt="" className="h-12 w-12 shrink-0 rounded-lg object-cover" />
+                    )
+                  ) : null}
+                  <span className="min-w-0 flex-1 truncate font-body text-sm">{name}</span>
+                  <button
+                    id={`remove-slide-${plan.date}-${storageId}-${imageIndex}`}
+                    type="button"
+                    aria-label={`Retirer ${name}`}
+                    onClick={() => void removeSlide(plan.date, storageId, imageIndex)}
+                    className="inline-flex h-12 shrink-0 items-center rounded-xl border border-black bg-white px-3 font-body text-sm font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
+                  >
+                    Retirer
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+        <textarea
+          id={`caption-${plan.date}-${storageId}`}
+          value={captionOf(plan.date, storageId)}
+          onChange={(event) => saveCaption(plan.date, storageId, event.target.value)}
+          rows={3}
+          placeholder="Description du jour"
+          aria-label={`Description de ${worker.label}, ${title}`}
+          className="mt-3 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 font-body text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
+        />
+      </div>
+    );
+  };
+
+  const girlBlock = (plan: DayPlan, worker: { id: string; label: string; name: string }) => {
+    const value = summaryCell(plan.date, worker.id);
+    const slot = SLOTS.find((item) => item.id === value.slot);
+    const chip = "rounded-full px-2.5 py-1 font-body text-xs font-bold";
+    return (
+      <div key={worker.id} id={`admin-girl-${plan.date}-${worker.id}`} className="rounded-2xl border-2 border-gray-200 p-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="mr-auto font-title text-xl leading-none tracking-tight">{worker.label}</h3>
+          <span className={`${chip} ${slot ? "bg-black text-white" : "bg-gray-100 text-gray-700"}`}>{slot ? hourText(slot.short) : "Pas d'heure"}</span>
+          {value.total > 0 ? (
+            <span className={`${chip} bg-gray-100`}>
+              {value.done}/{value.total} tâches
+            </span>
+          ) : null}
+          <span className={`${chip} ${value.validated ? "bg-[#E7F6EC] text-[#146C36]" : "bg-[#FFF3C4]"}`}>{value.validated ? "Validée" : "Pas validée"}</span>
+        </div>
+        {value.proof ? (
+          <ProofPlayer src={`/posting/proof/${worker.id}/${plan.date}`} label={worker.label} fileName={`${displayName(worker.name)}-${plan.date}.mp4`} />
+        ) : (
+          <p className="mt-2 font-body text-sm text-gray-700">Pas encore de preuve.</p>
+        )}
+        {plan.date >= SLIDES_FROM && plan.date <= SLIDES_UNTIL && plan.publishers.length > 0 ? (
+          <div className="mt-3 flex flex-col gap-3">
+            {ACCOUNTS.map((account, index) => (plan.publishers.includes(account.id) ? slideCard(plan, worker, account, index) : null))}
+          </div>
+        ) : null}
+      </div>
+    );
+  };
 
   const slideActions = (plan: DayPlan, check: CheckItem): SlideLineActions | undefined => {
     const accountId = check.id.startsWith("post-") ? check.id.slice(5) : "";
@@ -1295,7 +1444,22 @@ export const PostingDashboard = ({
             text={uploading ? proofNote?.text ?? "" : ""}
             error={proofError?.date === plan.date ? proofError.text : null}
           />
-          {proofSrc && person ? <ProofThumb src={proofSrc} label={displayName(person.name)} play={ui.proofPlay} close={ui.proofClose} /> : null}
+          {proofSrc && person ? (
+            <ProofPlayer
+              src={proofSrc}
+              label={displayName(person.name)}
+              fileName={`${displayName(person.name)}-${plan.date}.mp4`}
+              labels={{
+                play: ui.proofPlay,
+                close: ui.proofClose,
+                loading: ui.proofLoading,
+                error: ui.proofError,
+                download: ui.proofDownload,
+                downloading: ui.proofDownloading,
+                downloadFail: ui.proofDownloadFail,
+              }}
+            />
+          ) : null}
         </>
       ),
       onProofFile: (file) => void onProof(plan.date, file),
@@ -1328,10 +1492,24 @@ export const PostingDashboard = ({
         </header>
 
         {isTania && (
+          <AdminSummary
+            dates={visibleDates().filter((date) => !hiddenDays.includes(date))}
+            today={adminToday}
+            girls={shownGirls}
+            allGirls={adminGirls}
+            filter={girlFilter}
+            onFilter={setGirlFilter}
+            cell={summaryCell}
+            dayLabel={(date) => formatShortDay(date)}
+            onOpen={openAdminDay}
+          />
+        )}
+
+        {isTania && (
           <section className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
             <h2 className="font-title text-2xl tracking-tight">Créneaux</h2>
             <p className="mt-1 font-body text-xs text-gray-700">
-              {people.map((item) => `${personMark(item)} ${item.name}`).join(" · ")}
+              {people.map((item) => `${personMark(item)} ${girlLabel(item.name)}`).join(" · ")}
             </p>
             <div className="mt-4 grid grid-cols-[4.75rem_repeat(4,minmax(0,1fr))] gap-2 font-body text-base">
               <span />
@@ -1342,7 +1520,7 @@ export const PostingDashboard = ({
               ))}
               {visibleDates().map((date) => (
                 <div key={date} className="contents">
-                  <span className={`flex items-center text-sm font-bold ${date === today ? "text-black" : "text-gray-700"}`}>
+                  <span className={`flex items-center text-sm font-bold ${date === adminToday ? "text-black underline decoration-2 underline-offset-4" : "text-gray-700"}`}>
                     {formatShortDay(date)}
                   </span>
                   {SLOTS.map((slot) => {
@@ -1364,11 +1542,14 @@ export const PostingDashboard = ({
                 </div>
               ))}
             </div>
-            {visibleDates().some((date) =>
-              SLOTS.some(
-                (slot) => people.filter((item) => slotsFor(desk, item.id, date).includes(slot.id)).length > 1
-              )
-            ) && <p className="mt-3 font-body text-sm text-gray-700">Deux filles ont la même heure.</p>}
+            <SlotConflicts
+              conflicts={slotConflicts}
+              dayLabel={(date) => formatShortDay(date)}
+              takenOn={(date) => SLOTS.map((slot) => slot.id).filter((id) => people.some((item) => slotsFor(desk, item.id, date).includes(id)))}
+              busy={slotBusy}
+              error={slotError}
+              onReassign={(profileId, date, slot) => void reassign(profileId, date, slot)}
+            />
             <div className="mt-5 border-t border-gray-200 pt-4">
               <h3 className="font-body text-base font-bold">Profils</h3>
               <ul className="mt-3 flex flex-col gap-4">
@@ -1474,10 +1655,42 @@ export const PostingDashboard = ({
           .map((plan) => {
           const checks = checksFor(plan, isTania ? "fr" : lang);
           if (isTania) {
+            const open = adminOpen === plan.date;
+            const isToday = plan.date === adminToday;
+            const validatedCount = adminGirls.filter((worker) => desk.days[worker.id]?.[plan.date]?.validated === true).length;
             return (
-              <section key={plan.date} className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
-                <p className="font-body text-sm text-gray-700">{dayHeading(plan)}</p>
-                <h2 className="font-title text-2xl tracking-tight">{formatDay(plan.date)}</h2>
+              <section
+                key={plan.date}
+                id={`admin-day-${plan.date}`}
+                aria-current={isToday ? "date" : undefined}
+                className={`rounded-3xl bg-white shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)] ${isToday ? "ring-2 ring-black" : ""}`}
+              >
+                <button
+                  type="button"
+                  aria-expanded={open}
+                  aria-controls={`admin-day-body-${plan.date}`}
+                  onClick={() => setAdminOpen((current) => (current === plan.date ? null : plan.date))}
+                  className="flex min-h-16 w-full items-center gap-3 rounded-3xl px-4 py-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
+                >
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="flex items-center gap-2 font-body text-sm text-gray-700">
+                      {dayHeading(plan)}
+                      {isToday ? <span className="rounded-full bg-black px-2 py-0.5 text-xs font-bold text-white">Aujourd&apos;hui</span> : null}
+                    </span>
+                    <span className="font-title text-2xl leading-tight tracking-tight">{formatDay(plan.date)}</span>
+                  </span>
+                  <span
+                    className={`shrink-0 rounded-full px-2.5 py-1 font-body text-xs font-bold ${
+                      checks.length === 0 ? "bg-gray-100 text-gray-700" : validatedCount === adminGirls.length && adminGirls.length > 0 ? "bg-[#E7F6EC] text-[#146C36]" : "bg-[#FFF3C4]"
+                    }`}
+                  >
+                    {checks.length === 0 ? "Pas encore de tâches" : `${validatedCount}/${adminGirls.length} validées`}
+                  </span>
+                  <span aria-hidden className={`shrink-0 font-body text-lg transition-transform ${open ? "rotate-180" : ""}`}>
+                    ▾
+                  </span>
+                </button>
+                <div id={`admin-day-body-${plan.date}`} hidden={!open} className="px-4 pb-4">
                 {plan.date === BILAN_DATE && (
                   <div className="mt-4 rounded-2xl border-2 border-black bg-[#FFF3C4] px-3 py-3">
                     <h3 className="font-title text-2xl leading-none tracking-tight">Bilan fin de semaine</h3>
@@ -1497,85 +1710,10 @@ export const PostingDashboard = ({
                     {guide ? <BilanPlayer file={guide} /> : null}
                   </div>
                 )}
-                {plan.date >= SLIDES_FROM && plan.date <= SLIDES_UNTIL && (
-                  <div className="mt-4 flex flex-col gap-4">
-                    {ACCOUNTS.map((account, index) => {
-                      if (!plan.publishers.includes(account.id)) return null;
-                      const title = accountWord(index, "fr");
-                      return (
-                        <div key={account.id}>
-                          <p className="font-title text-xl leading-none tracking-tight" style={{ color: ACCOUNT_TONE[index].ink }}>
-                            {title}
-                          </p>
-                          {account.id === "us" && plan.date >= ACTIVE_WEEK_START ? (
-                            <p className="mt-1 font-body text-sm leading-relaxed text-gray-700">Une vidéo, pas des photos. Pas de musique.</p>
-                          ) : null}
-                          <div className="mt-2 grid gap-3 sm:grid-cols-3">
-                            {slideGirls(roster).map((worker) => {
-                              const storageId = slideStorageId(worker.id, account.id);
-                              const shared = board.files[plan.date]?.[storageId] ?? [];
-                              const names = shared.length > 0 ? shared.map((image) => image.name) : desk.taniaFiles[plan.date]?.[storageId] ?? [];
-                              const label = slideCardTitle(worker.name);
-                              return (
-                                <div key={storageId} className="rounded-2xl bg-gray-100 p-3">
-                                  <label htmlFor={`upload-${plan.date}-${storageId}`} className="block font-body text-base font-bold">
-                                    {label}
-                                  </label>
-                                  <input
-                                    id={`upload-${plan.date}-${storageId}`}
-                                    type="file"
-                                    accept={account.id === "us" && plan.date >= ACTIVE_WEEK_START ? "video/*" : "image/*,video/*"}
-                                    multiple={!(account.id === "us" && plan.date >= ACTIVE_WEEK_START)}
-                                    aria-label={`${title} ${label}`}
-                                    onChange={(event) => void onSlides(plan.date, storageId, event.target.files)}
-                                    className="mt-2 block w-full font-body text-sm"
-                                  />
-                                  {names.length > 0 && (
-                                    <ul className="mt-3 flex flex-col gap-2">
-                                      {names.map((name, imageIndex) => {
-                                        const preview = shared[imageIndex] ? `/posting/slide/${shared[imageIndex].id}` : urls[slideKey(plan.date, storageId, imageIndex)];
-                                        return (
-                                          <li key={`${storageId}-${imageIndex}-${name}`} className="flex items-center gap-2">
-                                            {preview ? (
-                                              shared[imageIndex]?.type.startsWith("video/") ? (
-                                                <video src={preview} muted playsInline className="h-12 w-12 shrink-0 rounded-lg bg-black object-cover" />
-                                              ) : (
-                                                <img src={preview} alt="" className="h-12 w-12 shrink-0 rounded-lg object-cover" />
-                                              )
-                                            ) : null}
-                                            <span className="min-w-0 flex-1 truncate font-body text-sm">{name}</span>
-                                            <button
-                                              id={`remove-slide-${plan.date}-${storageId}-${imageIndex}`}
-                                              type="button"
-                                              aria-label={`Retirer ${name}`}
-                                              onClick={() => void removeSlide(plan.date, storageId, imageIndex)}
-                                              className="inline-flex h-10 shrink-0 items-center rounded-xl border border-black bg-white px-3 font-body text-sm font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
-                                            >
-                                              Retirer
-                                            </button>
-                                          </li>
-                                        );
-                                      })}
-                                    </ul>
-                                  )}
-                                  <textarea
-                                    id={`caption-${plan.date}-${storageId}`}
-                                    value={captionOf(plan.date, storageId)}
-                                    onChange={(event) => saveCaption(plan.date, storageId, event.target.value)}
-                                    rows={3}
-                                    placeholder="Description du jour"
-                                    aria-label={`Description de ${label}, ${title}`}
-                                    className="mt-3 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 font-body text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
-                                  />
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+                <div className="mt-2 flex flex-col gap-3">{shownGirls.map((worker) => girlBlock(plan, worker))}</div>
+                {checks.length > 0 ? (
+                <details className="mt-4 rounded-2xl bg-gray-50 px-3">
+                  <summary className="flex min-h-12 cursor-pointer items-center font-body text-base font-bold">Consignes du jour</summary>
                 <AccountChecks
                   checks={checks}
                   lang="fr"
@@ -1603,19 +1741,9 @@ export const PostingDashboard = ({
                     </label>
                   )}
                 />
-                <div className="mt-5 flex flex-wrap gap-4">
-                  {profiles.map((worker) => {
-                    const day = work[worker.id]?.days[plan.date];
-                    if (!day?.proofName) return null;
-                    const name = displayName(worker.name);
-                    return (
-                      <div key={worker.id} className="w-[180px]">
-                        <ProofThumb src={`/posting/proof/${worker.id}/${plan.date}`} label={name} />
-                        <p className="mt-2 text-center font-body text-sm font-bold">{name}</p>
-                      </div>
-                    );
-                  })}
-                </div>
+                <div className="h-3" />
+                </details>
+                ) : null}
                 <div className="mt-5">
                   <button
                     id={`delete-day-${plan.date}`}
@@ -1629,6 +1757,7 @@ export const PostingDashboard = ({
                   {dayError === plan.date && (
                     <p className="mt-2 font-body text-sm text-[#C8102E]">Le jour n&apos;a pas été supprimé. Réessaie.</p>
                   )}
+                </div>
                 </div>
               </section>
             );
@@ -1655,53 +1784,6 @@ export const PostingDashboard = ({
         {isTania && <p className="font-body text-sm leading-relaxed text-gray-700">{ui.local}</p>}
       </div>
     </main>
-  );
-};
-
-const ProofThumb = ({ src, label, play = "Lire", close = "Fermer" }: { src: string; label: string; play?: string; close?: string }) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [open, setOpen] = useState(false);
-  const start = () => {
-    flushSync(() => setOpen(true));
-    const video = videoRef.current;
-    if (!video) return;
-    video.muted = false;
-    void video.play().catch(() => {
-      video.muted = true;
-      void video.play().catch(() => undefined);
-    });
-  };
-  const stop = () => {
-    videoRef.current?.pause();
-    setOpen(false);
-  };
-  const mediaSrc = src.startsWith("blob:") || src.startsWith("data:") ? src : `${src}${src.includes("?") ? "&" : "?"}v=2`;
-  return (
-    <>
-      <button
-        type="button"
-        onClick={start}
-        aria-label={`${play} ${label}`}
-        className="relative mt-2 block h-[120px] w-[180px] max-w-full overflow-hidden rounded-2xl bg-black text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
-      >
-        <span className="pointer-events-none absolute bottom-2 left-2 rounded-full bg-white px-2 py-1 font-body text-xs font-bold">{play}</span>
-      </button>
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" role="dialog" aria-modal="true" aria-label={label}>
-          <button type="button" className="absolute inset-0 z-0 cursor-default" aria-label={close} onClick={stop} />
-          <div className="relative z-10 w-full max-w-sm">
-            <video ref={videoRef} src={mediaSrc} controls playsInline preload="auto" className="max-h-[80vh] w-full rounded-2xl bg-black" />
-            <button
-              type="button"
-              onClick={stop}
-              className="mt-3 h-12 w-full rounded-xl bg-white font-body text-base font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
-            >
-              {close}
-            </button>
-          </div>
-        </div>
-      )}
-    </>
   );
 };
 
