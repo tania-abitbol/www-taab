@@ -984,10 +984,6 @@ export const adminCopy = {
   summaryCell: (girl: string, day: string, hour: string | null, done: number, total: number, proof: boolean, validated: boolean) =>
     `${girl}, ${day} : ${hour ?? "pas d'heure"}, ${done} sur ${total} tâches, ${proof ? "preuve envoyée" : "pas de preuve"}${validated ? ", validée" : ""}`,
   slotsTitle: "Créneaux",
-  conflictTitle: "Même heure pour plusieurs filles",
-  slotTaken: " (prise)",
-  noSlot: "Aucune heure",
-  slotFail: "L'heure n'a pas été changée. Réessaie.",
   noHour: "Pas d'heure",
   tasks: (done: number, total: number) => `${done}/${total} tâches`,
   validated: "Validée",

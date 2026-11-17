@@ -41,7 +41,6 @@ import {
 } from "~/config/posting";
 import { AdminSummary, type SummaryCell } from "~/components/posting/AdminSummary";
 import { ProofPlayer } from "~/components/posting/ProofPlayer";
-import { SlotConflicts, type SlotConflict } from "~/components/posting/SlotConflicts";
 import { hourText } from "~/components/posting/SlotPicker";
 import { ACCOUNT_TONE } from "~/components/posting/accountTone";
 import { Checklist } from "~/components/posting/Checklist";
@@ -53,7 +52,7 @@ import { BILAN_MAX_BYTES } from "~/config/bilanVideo";
 import { slideshowOf, type SlideBoard, type SlideImage } from "~/config/slideBoard";
 import { zipStoredFiles } from "~/config/slideZip";
 import { leavePosting } from "~/app/dashboard/creator/actions";
-import { addManagedProfile, commitProof, deleteManagedProfile, deleteValidatedDay, dropSharedSlide, loadSharedSlides, prepareProofUpload, publishSlideCaption, publishSlides, reassignSlot, saveManagedProfile, saveMyDay } from "~/app/posting/actions";
+import { addManagedProfile, commitProof, deleteManagedProfile, deleteValidatedDay, dropSharedSlide, loadSharedSlides, prepareProofUpload, publishSlideCaption, publishSlides, saveManagedProfile, saveMyDay } from "~/app/posting/actions";
 import { type DayWork, type ProfileWork, type ProofRecord } from "~/server/postingProofs";
 import { deleteBlob, loadBlob, readDesk, saveBlob, writeDesk } from "~/components/posting/storage";
 import { ProfileEditor, fieldClass, type ManagedProfile } from "~/components/posting/ProfileEditor";
@@ -131,8 +130,6 @@ export const PostingDashboard = ({
     const parisDay = calendarDate("Europe/Paris");
     return parisDay >= ACTIVE_WEEK_START && parisDay <= CALENDAR_END ? parisDay : ACTIVE_WEEK_START;
   });
-  const [slotBusy, setSlotBusy] = useState<string | null>(null);
-  const [slotError, setSlotError] = useState<string | null>(null);
   const rememberBoard = (next: SlideBoard) => {
     boardStamp.current += 1;
     setBoard(next);
@@ -704,35 +701,6 @@ export const PostingDashboard = ({
     window.requestAnimationFrame(() => document.getElementById(`admin-day-${date}`)?.scrollIntoView({ block: "start", behavior: "smooth" }));
   };
 
-  const slotConflicts: SlotConflict[] = visibleDates().flatMap((date) =>
-    SLOTS.map((slot) => ({
-      date,
-      slot: slot.id,
-      girls: people.filter((item) => slotsFor(desk, item.id, date).includes(slot.id)).map((item) => ({ id: item.id, label: girlLabel(item.name) })),
-    })).filter((conflict) => conflict.girls.length > 1),
-  );
-
-  const reassign = async (profileId: string, date: string, slot: SlotId | null) => {
-    const key = `${profileId}-${date}`;
-    setSlotBusy(key);
-    setSlotError(null);
-    const result = await reassignSlot(profileId, date, slot).catch(() => ({ ok: false as const }));
-    setSlotBusy(null);
-    if (!result.ok) {
-      setSlotError(adminCopy.slotFail);
-      return;
-    }
-    update((current) => {
-      const day = current.days[profileId]?.[date];
-      return {
-        ...current,
-        slots: { ...current.slots, [profileId]: { ...current.slots[profileId], [date]: slot ? [slot] : [] } },
-        days:
-          day && !slot ? { ...current.days, [profileId]: { ...current.days[profileId], [date]: { ...day, validated: false } } } : current.days,
-      };
-    });
-  };
-
   const slideCard = (plan: DayPlan, worker: { id: string; label: string }, account: AccountName, index: number) => {
     const storageId = slideStorageId(worker.id, account.id);
     const shared = board.files[plan.date]?.[storageId] ?? [];
@@ -1025,13 +993,10 @@ export const PostingDashboard = ({
                     const marks = people
                       .filter((item) => slotsFor(desk, item.id, date).includes(slot.id))
                       .map((item) => personMark(item));
-                    const shared = marks.length > 1;
                     return (
                       <span
                         key={slot.id}
-                        className={`flex min-h-12 items-center justify-center rounded-lg px-1 py-2 text-center text-base font-bold ${
-                          shared ? "bg-[#F8E3B0] text-black" : "bg-gray-100"
-                        }`}
+                        className="flex min-h-12 items-center justify-center rounded-lg bg-gray-100 px-1 py-2 text-center text-base font-bold"
                       >
                         {marks.length > 0 ? marks.join(" ") : "·"}
                       </span>
@@ -1040,14 +1005,6 @@ export const PostingDashboard = ({
                 </div>
               ))}
             </div>
-            <SlotConflicts
-              conflicts={slotConflicts}
-              dayLabel={(date) => formatShortDay(date)}
-              takenOn={(date) => SLOTS.map((slot) => slot.id).filter((id) => people.some((item) => slotsFor(desk, item.id, date).includes(id)))}
-              busy={slotBusy}
-              error={slotError}
-              onReassign={(profileId, date, slot) => void reassign(profileId, date, slot)}
-            />
             <div className="mt-5 border-t border-gray-200 pt-4">
               <h3 className="font-body text-base font-bold">{adminCopy.profiles}</h3>
               <ul className="mt-3 flex flex-col gap-4">
