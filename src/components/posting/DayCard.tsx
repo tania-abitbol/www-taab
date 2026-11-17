@@ -13,8 +13,6 @@ export type DayCardProps = {
     noTasksBody: string;
     proof: string;
     proofBody: string;
-    proofUpload: string;
-    proofReplace: string;
     proofDrop: string;
     proofDropHint: string;
     proofDropReplace: string;
@@ -144,37 +142,15 @@ export const DayCard = ({
               {day.proofExtra}
             </div>
             <div className="sticky bottom-0 z-10 -mx-4 mt-4 border-t border-gray-200 bg-white/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
-              <div className="grid grid-cols-2 gap-2">
-                <label
-                  htmlFor={`proof-${day.date}`}
-                  aria-disabled={day.uploading || undefined}
-                  className={`flex h-12 cursor-pointer items-center justify-center rounded-xl border-2 border-black bg-white px-2 text-center font-body text-sm font-bold leading-tight focus-within:ring-2 focus-within:ring-black focus-within:ring-offset-2 ${
-                    day.uploading ? "pointer-events-none opacity-40" : ""
-                  }`}
-                >
-                  {day.hasProof ? labels.proofReplace : labels.proofUpload}
-                  <input
-                    id={`proof-${day.date}`}
-                    type="file"
-                    accept="video/*"
-                    disabled={day.uploading}
-                    onChange={(event) => {
-                      day.onProofFile(event.target.files?.[0]);
-                      event.target.value = "";
-                    }}
-                    className="sr-only"
-                  />
-                </label>
                 <button
                   id={`validate-day-${day.date}`}
                   type="button"
                   disabled={!day.canValidate || day.validated}
                   onClick={day.onValidate}
-                  className="h-12 rounded-xl bg-black px-2 font-body text-sm font-bold leading-tight text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:opacity-40"
+                  className="h-12 w-full rounded-xl bg-black px-2 font-body text-sm font-bold leading-tight text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:opacity-40"
                 >
                   {day.validated ? labels.validated : labels.validate}
                 </button>
-              </div>
               {!day.validated ? <p className="mt-2 font-body text-sm text-gray-700">{day.hint}</p> : null}
             </div>
           </>

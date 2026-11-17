@@ -661,12 +661,11 @@ assert.equal(sundayCatchupFor("Karol - US"), "2026-11-15");
 assert.deepEqual(suiviDates("2026-11-08"), ["2026-11-06", "2026-11-07", "2026-11-08"]);
 assert.deepEqual(CATCHUP_DATES, ["2026-11-06", "2026-11-07"]);
 assert.equal(postingUi("fr").catchupFriday, "Vidéo du vendredi 6 novembre");
-assert.ok(postingUi("fr").catchupBody.includes("10 Go"));
-assert.ok(postingUi("fr").proofTooBig.includes("10 Go"));
-assert.ok(postingUi("es").catchupBody.includes("10 GB"));
-assert.ok(postingUi("es").proofTooBig.includes("10 GB"));
-assert.ok(postingUi("en").catchupBody.includes("10 GB"));
-assert.ok(postingUi("en").proofTooBig.includes("10 GB"));
+for (const lang of ["fr", "es", "en"]) {
+  const copy = postingUi(lang);
+  for (const text of [copy.catchupBody, copy.lateProofBody, copy.proofTooBig, copy.proofDropHint]) assert.equal(/10 G/.test(text), false, `${lang} ${text}`);
+  assert.equal("proofUpload" in copy, false, lang);
+}
 assert.ok(postingUi("es").catchupSaturday.includes("sábado"));
 assert.ok(postingUi("en").catchupTitle.includes("Videos"));
 assert.equal(openPlans("2026-11-06").some((plan) => plan.date === "2026-11-15"), true);
@@ -832,7 +831,7 @@ assert.equal("validateWeek" in postingUi("fr"), false);
 const { adminCopy, slideCopy, sundayCatchupCopy } = await import("../src/config/postingCopy.ts");
 assert.equal(adminCopy.dayValidated(2, 3), "2/3 validées");
 assert.equal(slideCopy.fr.videoDownload, "Télécharger la vidéo");
-assert.ok(sundayCatchupCopy.body.includes("10 GB"));
+assert.equal(sundayCatchupCopy.body.includes("10 GB"), false);
 const steadyDay = DAY_PLANS.find((plan) => plan.date === "2026-11-18");
 assert.deepEqual(steadyDay.publishers, ["fr", "es", "us"]);
 const steadyFr = checksFor(steadyDay, "fr");

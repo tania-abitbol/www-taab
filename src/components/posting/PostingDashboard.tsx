@@ -838,8 +838,6 @@ export const PostingDashboard = ({
         noTasksBody: ui.noTasksBody,
         proof: ui.proof,
         proofBody: plan.kind === "friday" ? ui.proofScroll : ui.proofBody,
-        proofUpload: ui.proofUpload,
-        proofReplace: ui.proofReplace,
         proofDrop: ui.proofDrop,
         proofDropHint: ui.proofDropHint,
         proofDropReplace: ui.proofDropReplace,
