@@ -1316,7 +1316,7 @@ export const PostingDashboard = ({
           <form action={leavePosting}>
             <button
               type="submit"
-              className="font-body text-sm font-bold underline decoration-gray-300 underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
+              className="inline-flex h-12 items-center font-body text-sm font-bold underline decoration-gray-300 underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
             >
               {ui.switchProfile}
             </button>
