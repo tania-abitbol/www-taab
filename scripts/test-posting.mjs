@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 
+import "./register-alias.mjs";
+
 const {
   ACCOUNTS,
   CATCHUP_DATES,
@@ -740,9 +742,6 @@ assert.ok(postingUi("en").downloadPreparing.includes("Preparing"));
 assert.equal(DAY_PLANS.some((plan) => plan.date === "2026-11-09"), true);
 assert.equal(DAY_PLANS.some((plan) => plan.date === "2026-11-06"), true);
 assert.equal(langFromName("Profil 1"), "fr");
-assert.ok(postingUi("fr").slotsHelp.includes("une seule heure"));
-assert.ok(postingUi("es").slotsHelp.includes("una sola hora"));
-assert.ok(postingUi("en").weekEdit.includes("still change"));
 assert.equal(postingUi("fr").imagesMissing, "Les images ne sont pas encore là.");
 assert.equal(postingUi("es").imagesMissing, "Las imágenes todavía no están.");
 assert.equal(postingUi("en").imagesMissing, "The images are not here yet.");
@@ -825,4 +824,27 @@ assert.deepEqual(
   slideshowOf(replaceCard(emptySlideBoard(), "2026-11-10", "p1__fr", [imageA]), "2026-11-10", "p1__fr").map((image) => image.id),
   [imageA.id]
 );
+
+const { blobEndpoint, blobsContext, blobsRemote } = await import("../src/server/postingBlobs.ts");
+const savedBlobs = process.env.NETLIFY_BLOBS_CONTEXT;
+delete process.env.NETLIFY_BLOBS_CONTEXT;
+assert.equal(blobsContext(), null);
+assert.equal(blobsRemote(), false);
+process.env.NETLIFY_BLOBS_CONTEXT = Buffer.from(JSON.stringify({ siteID: "site", token: "secret" })).toString("base64");
+assert.deepEqual(blobsContext(), { siteID: "site", token: "secret" });
+assert.equal(blobEndpoint(blobsContext(), "posting-work", "slides").toString(), "https://api.netlify.com/api/v1/blobs/site/posting-work/slides");
+process.env.NETLIFY_BLOBS_CONTEXT = Buffer.from(JSON.stringify({ siteID: "site" })).toString("base64");
+assert.equal(blobsRemote(), false);
+process.env.NETLIFY_BLOBS_CONTEXT = "not base64 json";
+assert.equal(blobsContext(), null);
+if (savedBlobs === undefined) delete process.env.NETLIFY_BLOBS_CONTEXT;
+else process.env.NETLIFY_BLOBS_CONTEXT = savedBlobs;
+
+const postingConfig = await import("../src/config/posting.ts");
+assert.equal("weekValidated" in postingConfig.emptyDesk(), false);
+assert.equal("validateWeek" in postingUi("fr"), false);
+const { adminCopy, slideCopy, sundayCatchupCopy } = await import("../src/config/postingCopy.ts");
+assert.equal(adminCopy.dayValidated(2, 3), "2/3 validées");
+assert.equal(slideCopy.fr.videoDownload, "Télécharger la vidéo");
+assert.ok(sundayCatchupCopy.body.includes("10 GB"));
 console.log("posting codes ok");

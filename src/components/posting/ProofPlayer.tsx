@@ -1,6 +1,8 @@
 import { useRef, useState } from "react";
 import { flushSync } from "react-dom";
 
+import { postingUi } from "~/config/postingCopy";
+
 type Labels = {
   play: string;
   close: string;
@@ -11,14 +13,15 @@ type Labels = {
   downloadFail: string;
 };
 
+const fr = postingUi("fr");
 const FRENCH: Labels = {
-  play: "Lire",
-  close: "Fermer",
-  loading: "Chargement de la vidéo…",
-  error: "La vidéo ne se lit pas ici. Télécharge-la pour la regarder.",
-  download: "Télécharger",
-  downloading: (percent) => `Téléchargement… ${percent} %`,
-  downloadFail: "Le téléchargement a échoué. Réessaie.",
+  play: fr.proofPlay,
+  close: fr.proofClose,
+  loading: fr.proofLoading,
+  error: fr.proofError,
+  download: fr.proofDownload,
+  downloading: fr.proofDownloading,
+  downloadFail: fr.proofDownloadFail,
 };
 
 /** The proof route answers in 5 MB slices, so the file is fetched slice by slice. */

@@ -16,51 +16,14 @@ import {
   proofPartKey,
   proofWindow,
 } from "~/server/postingProofs";
+import { blobsRemote, deleteBlob, signBlob } from "~/server/postingBlobs";
 import { liveWork } from "~/server/postingLive";
 import { deleteLocalProof, localProofNames } from "~/server/postingLocalProof";
 
 const PROOFS = "posting-proofs";
 const WORK = "posting-work";
 
-type BlobsContext = {
-  siteID?: string;
-  token?: string;
-  apiURL?: string;
-};
-
-const blobsContext = (): BlobsContext | null => {
-  const raw = (globalThis as { netlifyBlobsContext?: unknown }).netlifyBlobsContext ?? process.env.NETLIFY_BLOBS_CONTEXT;
-  if (!raw) return null;
-  if (typeof raw === "object") {
-    const context = raw as BlobsContext;
-    return context.siteID && context.token ? context : null;
-  }
-  if (typeof raw !== "string") return null;
-  try {
-    const context = JSON.parse(Buffer.from(raw, "base64").toString("utf8")) as BlobsContext;
-    return context.siteID && context.token ? context : null;
-  } catch {
-    return null;
-  }
-};
-
-const endpoint = (context: BlobsContext, store: string, key: string) =>
-  new URL(`/api/v1/blobs/${context.siteID}/${store}/${key}`, context.apiURL || "https://api.netlify.com");
-
-const sign = async (store: string, key: string, method: "GET" | "PUT") => {
-  const context = blobsContext();
-  if (!context?.siteID || !context.token) return null;
-  const response = await fetch(endpoint(context, store, key), {
-    method,
-    headers: { authorization: `Bearer ${context.token}`, accept: "application/json;type=signed-url" },
-    signal: AbortSignal.timeout(8000),
-  });
-  if (response.status === 404) return null;
-  if (!response.ok) throw new Error("proof-sign");
-  const body = (await response.json()) as { url?: string };
-  if (!body.url) throw new Error("proof-sign");
-  return body.url;
-};
+const sign = (store: string, key: string, method: "GET" | "PUT") => signBlob(store, key, method, "proof-sign");
 
 const readJson = async (store: string, key: string) => {
   const url = await sign(store, key, "GET");
@@ -87,17 +50,10 @@ const writeJson = async (store: string, key: string, value: unknown) => {
   if (!response.ok) throw new Error("proof-write");
 };
 
-/** Netlify deletes a blob on the API itself. DELETE does not return a signed URL. */
 const discard = async (store: string, key: string, signal?: AbortSignal) => {
   if (signal?.aborted) return;
-  const context = blobsContext();
-  if (!context?.siteID || !context.token) return;
-  const response = await fetch(endpoint(context, store, key), {
-    method: "DELETE",
-    headers: { authorization: `Bearer ${context.token}` },
-    signal,
-  });
-  if (response.status === 200 || response.status === 204 || response.status === 404) return;
+  const response = await deleteBlob(store, key, signal);
+  if (!response || response.status === 200 || response.status === 204 || response.status === 404) return;
   throw new Error("proof-delete");
 };
 
@@ -124,10 +80,7 @@ const enqueue = <T>(job: () => Promise<T>) => {
   return run;
 };
 
-export const proofStorageReady = () => {
-  const context = blobsContext();
-  return Boolean(context?.siteID && context.token);
-};
+export const proofStorageReady = blobsRemote;
 
 export const signProofRead = (profileId: string, date: string) => sign(PROOFS, proofObjectKey(profileId, date), "GET");
 

@@ -13,54 +13,17 @@ import {
   setCaption,
   slideImageIdOk,
 } from "~/config/slideBoard";
+import { blobsRemote, deleteBlob, signBlob } from "~/server/postingBlobs";
 import { callProductionAction, mirrorPosting, readLivePosting, readProductionSlide } from "~/server/postingLive";
 
 const STORE = "posting-work";
 const BOARD_KEY = "slides";
 
-type BlobsContext = {
-  siteID?: string;
-  token?: string;
-  apiURL?: string;
-};
-
-const blobsContext = (): BlobsContext | null => {
-  const raw = (globalThis as { netlifyBlobsContext?: unknown }).netlifyBlobsContext ?? process.env.NETLIFY_BLOBS_CONTEXT;
-  if (!raw) return null;
-  if (typeof raw === "object") {
-    const context = raw as BlobsContext;
-    return context.siteID && context.token ? context : null;
-  }
-  if (typeof raw !== "string") return null;
-  try {
-    const context = JSON.parse(Buffer.from(raw, "base64").toString("utf8")) as BlobsContext;
-    return context.siteID && context.token ? context : null;
-  } catch {
-    return null;
-  }
-};
-
-const remote = () => Boolean(blobsContext()?.siteID && blobsContext()?.token);
+const remote = blobsRemote;
 
 const dir = () => process.env.POSTING_SLIDES_DIR || path.join(process.cwd(), ".data", "posting-slides");
 
-const endpoint = (context: BlobsContext, key: string) =>
-  new URL(`/api/v1/blobs/${context.siteID}/${STORE}/${key}`, context.apiURL || "https://api.netlify.com");
-
-const sign = async (key: string, method: "GET" | "PUT") => {
-  const context = blobsContext();
-  if (!context?.siteID || !context.token) return null;
-  const response = await fetch(endpoint(context, key), {
-    method,
-    headers: { authorization: `Bearer ${context.token}`, accept: "application/json;type=signed-url" },
-    signal: AbortSignal.timeout(8000),
-  });
-  if (response.status === 404) return null;
-  if (!response.ok) throw new Error("slide-sign");
-  const body = (await response.json()) as { url?: string };
-  if (!body.url) throw new Error("slide-sign");
-  return body.url;
-};
+const sign = (key: string, method: "GET" | "PUT") => signBlob(STORE, key, method, "slide-sign");
 
 const readBoard = async (): Promise<SlideBoard> => {
   if (mirrorPosting()) {
@@ -157,12 +120,7 @@ const discardPart = async (id: string, part: number) => {
     await unlink(partFile(id, part)).catch(() => undefined);
     return;
   }
-  const context = blobsContext();
-  if (!context?.siteID || !context.token) return;
-  await fetch(endpoint(context, partKey(id, part)), {
-    method: "DELETE",
-    headers: { authorization: `Bearer ${context.token}` },
-  }).catch(() => undefined);
+  await deleteBlob(STORE, partKey(id, part)).catch(() => undefined);
 };
 
 /** Stores one piece. The last piece assembles the file the girls download. */

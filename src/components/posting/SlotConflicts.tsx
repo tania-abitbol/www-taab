@@ -1,5 +1,6 @@
 import { hourText } from "~/components/posting/SlotPicker";
 import { SLOTS, type SlotId } from "~/config/posting";
+import { adminCopy } from "~/config/postingCopy";
 
 export type SlotConflict = { date: string; slot: SlotId; girls: { id: string; label: string }[] };
 
@@ -22,7 +23,7 @@ export const SlotConflicts = ({
   if (conflicts.length === 0) return null;
   return (
     <div id="slot-conflicts" className="mt-4 rounded-2xl border-2 border-[#D99A00] bg-[#FFF3C4] p-3">
-      <h3 className="font-body text-base font-bold">Même heure pour plusieurs filles</h3>
+      <h3 className="font-body text-base font-bold">{adminCopy.conflictTitle}</h3>
       <ul className="mt-2 flex flex-col gap-4">
         {conflicts.map((conflict) => {
           const slot = SLOTS.find((item) => item.id === conflict.slot);
@@ -48,10 +49,10 @@ export const SlotConflicts = ({
                         {SLOTS.map((option) => (
                           <option key={option.id} value={option.id}>
                             {hourText(option.short)}
-                            {option.id !== conflict.slot && taken.includes(option.id) ? " (prise)" : ""}
+                            {option.id !== conflict.slot && taken.includes(option.id) ? adminCopy.slotTaken : ""}
                           </option>
                         ))}
-                        <option value="none">Aucune heure</option>
+                        <option value="none">{adminCopy.noSlot}</option>
                       </select>
                     </label>
                   );

@@ -1,5 +1,6 @@
 import { hourText } from "~/components/posting/SlotPicker";
 import { SLOTS } from "~/config/posting";
+import { adminCopy } from "~/config/postingCopy";
 
 export type SummaryCell = { slot: string | null; done: number; total: number; proof: boolean; validated: boolean };
 
@@ -26,9 +27,9 @@ export const AdminSummary = ({
   onOpen: (date: string) => void;
 }) => (
   <section id="admin-summary" className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
-    <h2 className="font-title text-2xl tracking-tight">Qui a fait quoi</h2>
-    <div role="group" aria-label="Filtrer par fille" className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1">
-      {[{ id: "all", label: "Toutes" }, ...allGirls].map((girl) => {
+    <h2 className="font-title text-2xl tracking-tight">{adminCopy.summaryTitle}</h2>
+    <div role="group" aria-label={adminCopy.filterLabel} className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1">
+      {[{ id: "all", label: adminCopy.filterAll }, ...allGirls].map((girl) => {
         const active = filter === girl.id;
         return (
           <button
@@ -68,9 +69,7 @@ export const AdminSummary = ({
                 id={`summary-${date}-${girl.id}`}
                 type="button"
                 onClick={() => onOpen(date)}
-                aria-label={`${girl.label}, ${dayLabel(date)} : ${slot ? hourText(slot.short) : "pas d'heure"}, ${value.done} sur ${value.total} tâches, ${
-                  value.proof ? "preuve envoyée" : "pas de preuve"
-                }${value.validated ? ", validée" : ""}`}
+                aria-label={adminCopy.summaryCell(girl.label, dayLabel(date), slot ? hourText(slot.short) : null, value.done, value.total, value.proof, value.validated)}
                 className={`flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-lg px-1 py-1.5 text-center leading-tight focus:outline-none focus-visible:ring-2 focus-visible:ring-black ${tone} ${
                   date === today ? "ring-1 ring-black" : ""
                 }`}
@@ -82,13 +81,13 @@ export const AdminSummary = ({
                     <span aria-hidden> · {value.proof ? "🎥" : "∅"}</span>
                   </span>
                 ) : null}
-                {value.validated ? <span className="text-[0.7rem] font-bold text-[#146C36]">Validée</span> : null}
+                {value.validated ? <span className="text-[0.7rem] font-bold text-[#146C36]">{adminCopy.validated}</span> : null}
               </button>
             );
           })}
         </div>
       ))}
     </div>
-    <p className="mt-3 font-body text-xs leading-relaxed text-gray-700">Heure · tâches faites / total · 🎥 preuve envoyée, ∅ pas de preuve. Vert : journée validée.</p>
+    <p className="mt-3 font-body text-xs leading-relaxed text-gray-700">{adminCopy.summaryLegend}</p>
   </section>
 );

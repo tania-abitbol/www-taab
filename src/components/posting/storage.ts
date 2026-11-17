@@ -49,10 +49,6 @@ export const parseDesk = (raw: string | null): Desk => {
         }
       }
     }
-    const weekValidated: Record<string, boolean> = {};
-    if (parsed.weekValidated && typeof parsed.weekValidated === "object") {
-      for (const person of people) if (parsed.weekValidated[person.id] === true) weekValidated[person.id] = true;
-    }
     const days: Desk["days"] = {};
     if (parsed.days && typeof parsed.days === "object") {
       for (const [personId, byDate] of Object.entries(parsed.days)) {
@@ -89,7 +85,7 @@ export const parseDesk = (raw: string | null): Desk => {
         }
       }
     }
-    return { people, slots, weekValidated, days, taniaFiles, captions };
+    return { people, slots, days, taniaFiles, captions };
   } catch {
     return base;
   }

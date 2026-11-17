@@ -9,37 +9,14 @@ import {
   profileIdForCode,
   updateProfile,
 } from "~/config/postingProfiles";
+import { blobsContext } from "~/server/postingBlobs";
 import { readLivePosting } from "~/server/postingLive";
 
 const FILE = path.join(process.cwd(), ".data", "posting-profiles.json");
 const STORE = "posting-profiles";
 const KEY = "directory";
 
-type BlobsContext = {
-  siteID?: string;
-  token?: string;
-  apiURL?: string;
-  edgeURL?: string;
-  uncachedEdgeURL?: string;
-};
-
 const onNetlify = () => process.env.NETLIFY === "true" || Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME);
-
-const blobsContext = (): BlobsContext | null => {
-  const raw = (globalThis as { netlifyBlobsContext?: unknown }).netlifyBlobsContext ?? process.env.NETLIFY_BLOBS_CONTEXT;
-  if (!raw) return null;
-  if (typeof raw === "object") {
-    const context = raw as BlobsContext;
-    return context.siteID && context.token ? context : null;
-  }
-  if (typeof raw !== "string") return null;
-  try {
-    const context = JSON.parse(Buffer.from(raw, "base64").toString("utf8")) as BlobsContext;
-    return context.siteID && context.token ? context : null;
-  } catch {
-    return null;
-  }
-};
 
 const request = async (url: string, init: RequestInit) => {
   const response = await fetch(url, { ...init, signal: AbortSignal.timeout(8000) });

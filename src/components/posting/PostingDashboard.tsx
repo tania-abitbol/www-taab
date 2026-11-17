@@ -19,7 +19,6 @@ import {
   emptyDayState,
   CheckItem,
   formatDay,
-  formatMinutes,
   formatShortDay,
   isSlotId,
   PostingLang,
@@ -44,343 +43,28 @@ import { AdminSummary, type SummaryCell } from "~/components/posting/AdminSummar
 import { ProofPlayer } from "~/components/posting/ProofPlayer";
 import { SlotConflicts, type SlotConflict } from "~/components/posting/SlotConflicts";
 import { hourText } from "~/components/posting/SlotPicker";
-import { ACCOUNT_TONE, accountGroups, actionLabel } from "~/components/posting/accountTone";
+import { ACCOUNT_TONE } from "~/components/posting/accountTone";
 import { Checklist } from "~/components/posting/Checklist";
 import type { DayCardProps } from "~/components/posting/DayCard";
 import { SaveStatus, type SaveState } from "~/components/posting/SaveStatus";
 import { SlotPicker } from "~/components/posting/SlotPicker";
 import { WorkerView } from "~/components/posting/WorkerView";
 import { BILAN_MAX_BYTES } from "~/config/bilanVideo";
-import { SLIDE_MAX_BYTES, SLIDE_PART_BYTES, slidePartCount, slideshowOf, type SlideBoard, type SlideImage } from "~/config/slideBoard";
+import { slideshowOf, type SlideBoard, type SlideImage } from "~/config/slideBoard";
 import { zipStoredFiles } from "~/config/slideZip";
 import { leavePosting } from "~/app/dashboard/creator/actions";
 import { addManagedProfile, commitProof, deleteManagedProfile, deleteValidatedDay, dropSharedSlide, loadSharedSlides, prepareProofUpload, publishSlideCaption, publishSlides, reassignSlot, saveManagedProfile, saveMyDay } from "~/app/posting/actions";
-import { PROOF_PART_BYTES, proofPartCount, type DayWork, type ProfileWork, type ProofRecord } from "~/server/postingProofs";
+import { type DayWork, type ProfileWork, type ProofRecord } from "~/server/postingProofs";
 import { deleteBlob, loadBlob, readDesk, saveBlob, writeDesk } from "~/components/posting/storage";
-
-type ManagedProfile = { id: string; name: string; code?: string };
-
-const fieldClass =
-  "h-12 w-full rounded-xl border border-gray-300 bg-white px-4 font-body text-base text-black placeholder:text-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-1";
-
-const emojiFont = { fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif' };
-
-const taskEmoji = (id: string) => {
-  if (id === "create") return "👩‍💻";
-  if (id === "username") return "🏷️";
-  if (id === "no-profile") return "🚫";
-  if (id.startsWith("photo-")) return "📸";
-  if (id.startsWith("bio-")) return "✍️";
-  if (id.startsWith("profile-")) return "👤";
-  if (id.startsWith("post-")) return "🚀";
-  if (id === "bilan") return "📊";
-  return "🔥";
-};
-
-const TimeBadge = ({ minutes }: { minutes: number }) => {
-  const tone = minutes >= 30 ? "bg-bae-primaryLight" : minutes >= 20 ? "bg-[#FFF3C4]" : "bg-vouv-primaryLight";
-  return (
-    <span className={`inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 font-body text-xs font-bold text-black ${tone}`}>
-      <span aria-hidden className="text-sm leading-none" style={emojiFont}>
-        ⏱️
-      </span>
-      {formatMinutes(minutes)}
-    </span>
-  );
-};
-
-const lineClass = (line: string, index: number, large?: boolean) =>
-  line.startsWith("•")
-    ? "text-sm leading-relaxed"
-    : index === 0
-      ? `${large ? "text-lg" : ""} font-bold leading-snug`
-      : "text-sm leading-relaxed";
-
-const CopyCaptionButton = ({ id, text, copy, copied }: { id: string; text: string; copy: string; copied: string }) => {
-  const [done, setDone] = useState(false);
-  const value = text.trim();
-  const onCopy = async () => {
-    if (!value) return;
-    try {
-      await navigator.clipboard.writeText(value);
-    } catch {
-      const area = document.createElement("textarea");
-      area.value = value;
-      document.body.appendChild(area);
-      area.select();
-      document.execCommand("copy");
-      area.remove();
-    }
-    setDone(true);
-  };
-  return (
-    <button
-      id={id}
-      type="button"
-      disabled={!value}
-      onMouseDown={(event) => event.preventDefault()}
-      onClick={(event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        void onCopy();
-      }}
-      className="inline-flex h-10 shrink-0 items-center rounded-xl border border-black bg-white px-3 font-body text-sm font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:opacity-40"
-    >
-      {done && value ? copied : copy}
-    </button>
-  );
-};
-
-const TaskCopy = ({
-  label,
-  large,
-  slides,
-  copy,
-}: {
-  label: string;
-  large?: boolean;
-  slides?: SlideLineActions;
-  copy?: { id: string; text: string; copy: string; copied: string };
-}) => {
-  const lines = label.split("\n").map((line) => line.trim()).filter(Boolean);
-  return (
-    <span className="flex flex-col gap-1.5">
-      {lines.map((line, index) => {
-        const key = `${index}-${line.slice(0, 24)}`;
-        const plain = line.replace(/^•\s*/, "");
-        const textClass = lineClass(line, index, large);
-        if (slides && plain === slides.downloadLine) {
-          return (
-            <span key={key} className="flex flex-wrap items-center gap-2">
-              <span className={textClass}>{line}</span>
-              {slides.namesCount > 0 ? (
-                <button
-                  id={`download-slides-${slides.date}`}
-                  type="button"
-                  disabled={slides.busy}
-                  aria-busy={slides.busy || undefined}
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={(event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    slides.onDownload();
-                  }}
-                  className="inline-flex h-10 shrink-0 items-center rounded-xl bg-black px-3 font-body text-sm font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:opacity-40"
-                >
-                  {slides.busy ? slides.busyLabel : slides.downloadLabel}
-                </button>
-              ) : (
-                <span className="font-body text-sm font-normal leading-relaxed text-gray-700">{slides.waiting}</span>
-              )}
-            </span>
-          );
-        }
-        const captionStart = slides?.copyLine.replace(/\.$/, "") ?? "";
-        if (slides && captionStart && (plain === slides.copyLine || plain.startsWith(captionStart))) {
-          return (
-            <span key={key} className="flex flex-wrap items-center gap-2">
-              <span className={textClass}>{line}</span>
-              <span className="flex min-w-[12rem] flex-1 items-center gap-2">
-                <span className="min-w-0 flex-1 rounded-xl bg-gray-100 px-3 py-2 font-body text-sm font-normal leading-relaxed">
-                  {slides.caption.trim() || slides.emptyCaption}
-                </span>
-                {slides.caption.trim() ? (
-                  <CopyCaptionButton id={`copy-caption-${slides.date}`} text={slides.caption} copy={slides.copyLabel} copied={slides.copiedLabel} />
-                ) : null}
-              </span>
-            </span>
-          );
-        }
-        if (copy && plain === copy.text) {
-          return (
-            <span key={key} className="flex flex-wrap items-center gap-2">
-              <span className={textClass}>{line}</span>
-              <CopyCaptionButton id={copy.id} text={copy.text} copy={copy.copy} copied={copy.copied} />
-            </span>
-          );
-        }
-        return (
-          <span key={key} className={textClass}>
-            {line}
-          </span>
-        );
-      })}
-    </span>
-  );
-};
-
-const AccountChecks = ({
-  checks,
-  lang,
-  date,
-  item,
-  clip,
-}: {
-  checks: CheckItem[];
-  lang: PostingLang;
-  date: string;
-  item: (check: CheckItem, label: string) => JSX.Element;
-  clip?: JSX.Element | null;
-}) => (
-  <div className="mt-4 flex flex-col gap-4">
-    {accountGroups(checks).map((group) => {
-      const tone = group.account === null ? null : ACCOUNT_TONE[group.account];
-      const title = group.account === null ? null : accountWord(group.account, lang);
-      return (
-        <div
-          key={group.items[0].id}
-          className={tone ? "rounded-2xl border-2 px-3 py-3" : undefined}
-          style={tone ? { borderColor: tone.frame } : undefined}
-        >
-          {title && tone ? (
-            <p className="font-title text-2xl leading-none tracking-tight" style={{ color: tone.ink }}>
-              {title}
-            </p>
-          ) : null}
-          <ul className={title ? "mt-3 flex flex-col gap-5" : "flex flex-col gap-5"}>
-            {group.items.map((check) =>
-              check.banner ? (
-                <li key={check.id}>
-                  <div className="rounded-2xl border-2 border-black bg-[#FFF3C4] px-3 py-3">
-                    <TaskCopy label={check.label} large />
-                  </div>
-                </li>
-              ) : check.id === "bilan" ? (
-                <li key={check.id}>
-                  <div className="rounded-2xl border-2 border-black bg-[#FFF3C4] px-3 py-3">
-                    {item(check, actionLabel(check.label, title))}
-                    {clip}
-                  </div>
-                </li>
-              ) : (
-                <li key={check.id} className={check.parent ? "ml-8" : ""}>
-                  {item(check, actionLabel(check.label, title))}
-                </li>
-              )
-            )}
-          </ul>
-          {tone && group.items.some((check) => check.goal) ? (
-            <p
-              id={`session-goal-${date}-${group.account}`}
-              className="mt-4 rounded-xl px-3 py-2 font-body text-base font-bold leading-relaxed"
-              style={{ backgroundColor: tone.frame, color: tone.ink }}
-            >
-              {group.items.find((check) => check.goal)?.goal}
-            </p>
-          ) : null}
-        </div>
-      );
-    })}
-  </div>
-);
-
-const TaskFace = ({
-  check,
-  label,
-  large,
-  slides,
-  copy,
-}: {
-  check: CheckItem;
-  label: string;
-  large?: boolean;
-  slides?: SlideLineActions;
-  copy?: { id: string; text: string; copy: string; copied: string };
-}) => (
-  <>
-    <span aria-hidden className="mt-0.5 text-[1.35rem] leading-none" style={emojiFont}>
-      {taskEmoji(check.id)}
-    </span>
-    <span className="flex min-w-0 flex-1 flex-col gap-2">
-      {typeof check.minutes === "number" ? <TimeBadge minutes={check.minutes} /> : null}
-      <TaskCopy label={label} large={large} slides={slides} copy={copy} />
-      {check.note ? (
-        <span className="rounded-xl bg-[#E7F6EC] px-3 py-2 font-body text-sm font-normal leading-relaxed text-[#146C36]">
-          {check.note}
-        </span>
-      ) : null}
-    </span>
-  </>
-);
-
-const slideFileId = () => {
-  const raw = globalThis.crypto?.randomUUID?.().replace(/-/g, "") ?? `${Date.now().toString(16)}0000000000000000`;
-  return raw.slice(0, 16);
-};
-
-const READ_WINDOW = 5 * 1024 * 1024;
-
-const readSharedFile = async (id: string) => {
-  const pieces: Uint8Array[] = [];
-  let start = 0;
-  let total = 0;
-  while (total === 0 || start < total) {
-    const response = await fetch(`/posting/slide/${id}`, {
-      cache: "no-store",
-      headers: { range: `bytes=${start}-${start + READ_WINDOW - 1}` },
-    });
-    if (response.status !== 206 && !response.ok) throw new Error("download");
-    const match = /^bytes (\d+)-(\d+)\/(\d+)$/.exec(response.headers.get("content-range") ?? "");
-    const piece = new Uint8Array(await response.arrayBuffer());
-    if (!match) {
-      if (piece.byteLength < 1) throw new Error("download");
-      return piece;
-    }
-    total = Number(match[3]);
-    pieces.push(piece);
-    start += piece.byteLength;
-    if (piece.byteLength < 1 || start >= total) break;
-  }
-  const bytes = new Uint8Array(total);
-  let offset = 0;
-  for (const piece of pieces) {
-    bytes.set(piece, offset);
-    offset += piece.byteLength;
-  }
-  return bytes;
-};
-
-const uploadSlideFile = async (date: string, storageId: string, file: Blob, name: string, type: string) => {
-  if (file.size < 1 || file.size > SLIDE_MAX_BYTES) throw new Error("size");
-  const id = slideFileId();
-  const parts = slidePartCount(file.size);
-  const media = type || (/\.(mp4|m4v|mov|webm)$/i.test(name) ? "video/mp4" : "image/jpeg");
-  let saved: Partial<SlideImage> | null = null;
-  for (let index = 0; index < parts; index += 1) {
-    const start = index * SLIDE_PART_BYTES;
-    const response = await fetch("/posting/slides", {
-      method: "POST",
-      headers: {
-        "content-type": "application/octet-stream",
-        "x-slide-date": date,
-        "x-slide-storage": storageId,
-        "x-slide-name": encodeURIComponent(name),
-        "x-slide-type": media,
-        "x-slide-size": String(file.size),
-        "x-slide-id": id,
-        "x-slide-part": String(index),
-        "x-slide-parts": String(parts),
-      },
-      body: file.slice(start, Math.min(file.size, start + SLIDE_PART_BYTES)),
-    });
-    if (!response.ok) throw new Error(response.status === 413 ? "size" : "upload");
-    if (index === parts - 1) saved = (await response.json()) as Partial<SlideImage>;
-  }
-  if (!saved?.id || !saved.name || !saved.type) throw new Error("upload");
-  return { id: saved.id, name: saved.name, type: saved.type };
-};
+import { ProfileEditor, fieldClass, type ManagedProfile } from "~/components/posting/ProfileEditor";
+import { AccountChecks, TaskCopy, TaskFace, type SlideLineActions } from "~/components/posting/TaskParts";
+import { BilanPlayer, ProofFeedback } from "~/components/posting/UploadFeedback";
+import { readSharedFile, saveDownload, uploadBilan, uploadProof, uploadSlideFile } from "~/components/posting/uploads";
+import { adminCopy, slideCopy, sundayCatchupCopy } from "~/config/postingCopy";
 
 const proofKey = (personId: string, date: string) => `proof:${personId}:${date}`;
 const SLIDES_FROM = "2026-11-10";
 const SLIDES_UNTIL = "2026-11-16";
-const saveDownload = (href: string, name: string) => {
-  const link = document.createElement("a");
-  link.href = href;
-  link.download = name || "image";
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-};
 
 const slideKey = (date: string, profileId: string, index = 0) => `tania:${date}:${profileId}:${index}`;
 const legacySlideKey = (date: string, accountId: string) => `tania:${date}:${accountId}`;
@@ -395,190 +79,6 @@ const girlRank = (name: string) => {
 };
 const slideGirls = (people: { id: string; name: string }[]) =>
   [...people].filter((worker) => girlRank(worker.name) < 3).sort((a, b) => girlRank(a.name) - girlRank(b.name));
-const slideCopy = {
-  fr: {
-    button: "Télécharger toutes les images",
-    note: "Tu fais le diaporama avec ces images.",
-    download: "Télécharger les images",
-    downloadLine: "Tu le télécharges ici.",
-    videoDownload: "Télécharger la vidéo",
-    videoDownloadLine: "Tu télécharges la vidéo ici.",
-    videoWaiting: "La vidéo n'est pas encore là.",
-    copy: "Copier",
-    copyLine: "Copie cette description.",
-    copied: "Copié.",
-    noCaption: "Pas encore de description.",
-  },
-  es: {
-    button: "Descargar todas las imágenes",
-    note: "Haces el carrusel con estas imágenes.",
-    download: "Descargar las imágenes",
-    downloadLine: "Lo descargas aquí.",
-    videoDownload: "Descargar el vídeo",
-    videoDownloadLine: "Descargas el vídeo aquí.",
-    videoWaiting: "El vídeo todavía no está.",
-    copy: "Copiar",
-    copyLine: "Copia esta descripción.",
-    copied: "Copiado.",
-    noCaption: "Todavía no hay descripción.",
-  },
-  en: {
-    button: "Download all the images",
-    note: "You make the slideshow with these images.",
-    download: "Download the images",
-    downloadLine: "Download it here.",
-    videoDownload: "Download the video",
-    videoDownloadLine: "Download the video here.",
-    videoWaiting: "The video is not here yet.",
-    copy: "Copy",
-    copyLine: "Copy this caption.",
-    copied: "Copied.",
-    noCaption: "No caption yet.",
-  },
-};
-
-type SlideLineActions = {
-  date: string;
-  downloadLabel: string;
-  downloadLine: string;
-  namesCount: number;
-  onDownload: () => void;
-  busy?: boolean;
-  busyLabel?: string;
-  copyLabel: string;
-  copiedLabel: string;
-  copyLine: string;
-  caption: string;
-  emptyCaption: string;
-  waiting: string;
-};
-
-const uploadProof = (file: File, date: string, onProgress: (percent: number) => void) =>
-  new Promise<void>((resolve, reject) => {
-    const parts = Math.max(1, proofPartCount(file.size));
-    const generation = (globalThis.crypto?.randomUUID?.() ?? `${Date.now().toString(36)}abcdefghijkl`)
-      .replace(/-/g, "")
-      .slice(0, 12);
-    const send = (index: number) => {
-      const start = index * PROOF_PART_BYTES;
-      const blob = file.slice(start, Math.min(file.size, start + PROOF_PART_BYTES));
-      const request = new XMLHttpRequest();
-      request.open("POST", "/posting/upload");
-      request.setRequestHeader("content-type", "application/octet-stream");
-      request.setRequestHeader("x-proof-date", date);
-      request.setRequestHeader("x-proof-generation", generation);
-      request.setRequestHeader("x-proof-part", String(index));
-      request.setRequestHeader("x-proof-parts", String(parts));
-      request.setRequestHeader("x-proof-size", String(file.size));
-      request.setRequestHeader("x-proof-name", encodeURIComponent(file.name));
-      request.setRequestHeader("x-proof-type", /^video\/[a-z0-9.+-]+$/i.test(file.type) ? file.type : "video/mp4");
-      request.upload.onprogress = (event) => {
-        if (event.lengthComputable) onProgress(Math.min(99, Math.round(((start + event.loaded) / file.size) * 100)));
-      };
-      request.onload = () => {
-        if (request.status < 200 || request.status >= 300) {
-          reject(new Error(String(request.status)));
-          return;
-        }
-        if (index + 1 >= parts) {
-          onProgress(100);
-          resolve();
-          return;
-        }
-        send(index + 1);
-      };
-      request.onerror = () => reject(new Error("upload"));
-      request.send(blob);
-    };
-    onProgress(0);
-    send(0);
-  });
-
-const uploadBilan = (file: File, onProgress: (percent: number) => void) =>
-  new Promise<string>((resolve, reject) => {
-    const parts = Math.max(1, proofPartCount(file.size));
-    const generation = (globalThis.crypto?.randomUUID?.() ?? `${Date.now().toString(36)}abcdefghijkl`)
-      .replace(/-/g, "")
-      .slice(0, 12);
-    const send = (index: number) => {
-      const start = index * PROOF_PART_BYTES;
-      const blob = file.slice(start, Math.min(file.size, start + PROOF_PART_BYTES));
-      const request = new XMLHttpRequest();
-      request.open("POST", "/posting/bilan");
-      request.setRequestHeader("content-type", "application/octet-stream");
-      request.setRequestHeader("x-bilan-generation", generation);
-      request.setRequestHeader("x-bilan-part", String(index));
-      request.setRequestHeader("x-bilan-parts", String(parts));
-      request.setRequestHeader("x-bilan-size", String(file.size));
-      request.setRequestHeader("x-bilan-name", encodeURIComponent(file.name));
-      request.setRequestHeader("x-bilan-type", /^video\/[a-z0-9.+-]+$/i.test(file.type) ? file.type : "video/mp4");
-      request.upload.onprogress = (event) => {
-        if (event.lengthComputable) onProgress(Math.min(99, Math.round(((start + event.loaded) / file.size) * 100)));
-      };
-      request.onload = () => {
-        if (request.status < 200 || request.status >= 300) {
-          reject(new Error(String(request.status)));
-          return;
-        }
-        if (index + 1 >= parts) {
-          onProgress(100);
-          resolve(generation);
-          return;
-        }
-        send(index + 1);
-      };
-      request.onerror = () => reject(new Error("upload"));
-      request.send(blob);
-    };
-    onProgress(0);
-    send(0);
-  });
-
-const BilanPlayer = ({ file }: { file: { name: string; generation: string } }) => (
-  <video
-    key={file.generation}
-    src={`/posting/bilan?v=${file.generation}`}
-    controls
-    playsInline
-    preload="metadata"
-    aria-label={file.name}
-    className="mt-3 block h-auto max-h-60 w-auto max-w-[200px] rounded-xl bg-black object-contain"
-  />
-);
-
-const ProofFeedback = ({
-  active,
-  percent,
-  text,
-  error,
-}: {
-  active: boolean;
-  percent: number;
-  text: string;
-  error: string | null;
-}) => {
-  if (!active && !error) return null;
-  return (
-    <div className="mt-2">
-      {active && (
-        <>
-          <p className="font-body text-sm text-gray-700">{text}</p>
-          <div
-            role="progressbar"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={percent}
-            aria-label={text}
-            className="mt-2 h-2 overflow-hidden rounded-full bg-gray-200"
-          >
-            <div className="h-full bg-black" style={{ width: `${percent}%` }} />
-          </div>
-        </>
-      )}
-      {error && <p className="mt-2 font-body text-sm text-[#C8102E]">{error}</p>}
-    </div>
-  );
-};
 
 export const PostingDashboard = ({
   role,
@@ -765,7 +265,7 @@ export const PostingDashboard = ({
               shared = published.board;
               rememberBoard(shared);
             } catch {
-              if (!cancelled) setFileError("Les images déjà dans ce navigateur n'ont pas été envoyées au site.");
+              if (!cancelled) setFileError(adminCopy.localSyncFail);
             }
           }
         }
@@ -961,7 +461,7 @@ export const PostingDashboard = ({
   const onBilan = async (file: File | undefined) => {
     if (!file || !isTania || guideSending.current) return;
     if (file.size > BILAN_MAX_BYTES) {
-      setGuideError("Cette vidéo dépasse 1 Go.");
+      setGuideError(adminCopy.bilanTooBig);
       return;
     }
     guideSending.current = true;
@@ -975,7 +475,7 @@ export const PostingDashboard = ({
       if (input instanceof HTMLInputElement) input.value = "";
     } catch (error) {
       setGuideNote(null);
-      setGuideError(error instanceof Error && error.message === "413" ? "Cette vidéo dépasse 1 Go." : "La vidéo n'a pas été enregistrée. Réessaie.");
+      setGuideError(error instanceof Error && error.message === "413" ? adminCopy.bilanTooBig : adminCopy.bilanFail);
     } finally {
       guideSending.current = false;
     }
@@ -1005,7 +505,7 @@ export const PostingDashboard = ({
       const input = document.getElementById(`upload-${date}-${accountId}`);
       if (input instanceof HTMLInputElement) input.value = "";
     } catch (error) {
-      setFileError(error instanceof Error && error.message === "size" ? "Ce fichier dépasse 25 Mo." : "Le fichier n'a pas été enregistré sur le site. Réessaie.");
+      setFileError(error instanceof Error && error.message === "size" ? adminCopy.fileTooBig : adminCopy.fileFail);
     }
   };
 
@@ -1016,7 +516,7 @@ export const PostingDashboard = ({
       setFileError("");
       const result = await dropSharedSlide(date, storageId, index);
       if (!result.ok) {
-        setFileError("L'image n'a pas été retirée.");
+        setFileError(adminCopy.removeFail);
         return;
       }
       rememberBoard(result.board);
@@ -1064,7 +564,7 @@ export const PostingDashboard = ({
       const input = document.getElementById(`upload-${date}-${storageId}`);
       if (input instanceof HTMLInputElement) input.value = "";
     } catch {
-      setFileError("L'image n'a pas été retirée.");
+      setFileError(adminCopy.removeFail);
     }
   };
 
@@ -1083,7 +583,7 @@ export const PostingDashboard = ({
     captionTimers.current[key] = window.setTimeout(() => {
       void publishSlideCaption(date, profileId, text).then((result) => {
         if (!result.ok) {
-          setFileError("La description n'a pas été enregistrée sur le site.");
+          setFileError(adminCopy.captionFail);
           return;
         }
         rememberBoard(result.board);
@@ -1219,7 +719,7 @@ export const PostingDashboard = ({
     const result = await reassignSlot(profileId, date, slot).catch(() => ({ ok: false as const }));
     setSlotBusy(null);
     if (!result.ok) {
-      setSlotError("L'heure n'a pas été changée. Réessaie.");
+      setSlotError(adminCopy.slotFail);
       return;
     }
     update((current) => {
@@ -1244,7 +744,7 @@ export const PostingDashboard = ({
         <label htmlFor={`upload-${plan.date}-${storageId}`} className="block font-title text-xl leading-none tracking-tight" style={{ color: ACCOUNT_TONE[index].ink }}>
           {title}
         </label>
-        {video ? <p className="mt-1 font-body text-sm leading-relaxed text-gray-700">Une vidéo, pas des photos. Pas de musique.</p> : null}
+        {video ? <p className="mt-1 font-body text-sm leading-relaxed text-gray-700">{adminCopy.videoOnly}</p> : null}
         <input
           id={`upload-${plan.date}-${storageId}`}
           type="file"
@@ -1271,11 +771,11 @@ export const PostingDashboard = ({
                   <button
                     id={`remove-slide-${plan.date}-${storageId}-${imageIndex}`}
                     type="button"
-                    aria-label={`Retirer ${name}`}
+                    aria-label={adminCopy.removeFile(name)}
                     onClick={() => void removeSlide(plan.date, storageId, imageIndex)}
                     className="inline-flex h-12 shrink-0 items-center rounded-xl border border-black bg-white px-3 font-body text-sm font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
                   >
-                    Retirer
+                    {adminCopy.remove}
                   </button>
                 </li>
               );
@@ -1287,8 +787,8 @@ export const PostingDashboard = ({
           value={captionOf(plan.date, storageId)}
           onChange={(event) => saveCaption(plan.date, storageId, event.target.value)}
           rows={3}
-          placeholder="Description du jour"
-          aria-label={`Description de ${worker.label}, ${title}`}
+          placeholder={adminCopy.captionPlaceholder}
+          aria-label={adminCopy.captionLabel(worker.label, title)}
           className="mt-3 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 font-body text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
         />
       </div>
@@ -1303,18 +803,16 @@ export const PostingDashboard = ({
       <div key={worker.id} id={`admin-girl-${plan.date}-${worker.id}`} className="rounded-2xl border-2 border-gray-200 p-3">
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="mr-auto font-title text-xl leading-none tracking-tight">{worker.label}</h3>
-          <span className={`${chip} ${slot ? "bg-black text-white" : "bg-gray-100 text-gray-700"}`}>{slot ? hourText(slot.short) : "Pas d'heure"}</span>
+          <span className={`${chip} ${slot ? "bg-black text-white" : "bg-gray-100 text-gray-700"}`}>{slot ? hourText(slot.short) : adminCopy.noHour}</span>
           {value.total > 0 ? (
-            <span className={`${chip} bg-gray-100`}>
-              {value.done}/{value.total} tâches
-            </span>
+            <span className={`${chip} bg-gray-100`}>{adminCopy.tasks(value.done, value.total)}</span>
           ) : null}
-          <span className={`${chip} ${value.validated ? "bg-[#E7F6EC] text-[#146C36]" : "bg-[#FFF3C4]"}`}>{value.validated ? "Validée" : "Pas validée"}</span>
+          <span className={`${chip} ${value.validated ? "bg-[#E7F6EC] text-[#146C36]" : "bg-[#FFF3C4]"}`}>{value.validated ? adminCopy.validated : adminCopy.notValidated}</span>
         </div>
         {value.proof ? (
           <ProofPlayer src={`/posting/proof/${worker.id}/${plan.date}`} label={worker.label} fileName={`${displayName(worker.name)}-${plan.date}.mp4`} />
         ) : (
-          <p className="mt-2 font-body text-sm text-gray-700">Pas encore de preuve.</p>
+          <p className="mt-2 font-body text-sm text-gray-700">{adminCopy.noProof}</p>
         )}
         {plan.date >= SLIDES_FROM && plan.date <= SLIDES_UNTIL && plan.publishers.length > 0 ? (
           <div className="mt-3 flex flex-col gap-3">
@@ -1507,7 +1005,7 @@ export const PostingDashboard = ({
 
         {isTania && (
           <section className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
-            <h2 className="font-title text-2xl tracking-tight">Créneaux</h2>
+            <h2 className="font-title text-2xl tracking-tight">{adminCopy.slotsTitle}</h2>
             <p className="mt-1 font-body text-xs text-gray-700">
               {people.map((item) => `${personMark(item)} ${girlLabel(item.name)}`).join(" · ")}
             </p>
@@ -1551,7 +1049,7 @@ export const PostingDashboard = ({
               onReassign={(profileId, date, slot) => void reassign(profileId, date, slot)}
             />
             <div className="mt-5 border-t border-gray-200 pt-4">
-              <h3 className="font-body text-base font-bold">Profils</h3>
+              <h3 className="font-body text-base font-bold">{adminCopy.profiles}</h3>
               <ul className="mt-3 flex flex-col gap-4">
                 {people.map((item) => (
                   <li key={item.id}>
@@ -1561,13 +1059,13 @@ export const PostingDashboard = ({
               </ul>
               <form onSubmit={(event) => void addPerson(event)} className="mt-4 flex flex-col gap-2">
                 <label htmlFor="new-person" className="font-body text-sm font-bold">
-                  Nouveau profil
+                  {adminCopy.newProfile}
                 </label>
                 <input
                   id="new-person"
                   value={newName}
                   onChange={(event) => setNewName(event.target.value)}
-                  placeholder="Nom"
+                  placeholder={adminCopy.namePlaceholder}
                   className={fieldClass}
                 />
                 <input
@@ -1576,14 +1074,14 @@ export const PostingDashboard = ({
                   onChange={(event) => setNewCode(event.target.value)}
                   inputMode="numeric"
                   autoComplete="off"
-                  placeholder="Code"
+                  placeholder={adminCopy.codePlaceholder}
                   className={fieldClass}
                 />
                 <button
                   type="submit"
                   className="h-12 rounded-xl bg-black px-4 font-body text-sm font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
                 >
-                  Ajouter
+                  {adminCopy.add}
                 </button>
               </form>
               {profileError && <p className="mt-2 font-body text-sm text-[#C8102E]">{profileError}</p>}
@@ -1593,9 +1091,9 @@ export const PostingDashboard = ({
 
         {showCatchup && catchupDate && (
           <section id="sunday-catchup" className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
-            <h2 className="font-title text-2xl tracking-tight">Sunday, November 15</h2>
+            <h2 className="font-title text-2xl tracking-tight">{sundayCatchupCopy.title}</h2>
             <p className="mt-2 font-body text-sm leading-relaxed text-gray-700">
-              This day is no longer on the page. Upload the proof video here. It includes the end-of-week review. One hour, up to 10 GB. Keep this page open.
+              {sundayCatchupCopy.body}
             </p>
             <div className="mt-4 rounded-2xl border-2 border-black bg-[#FFF3C4] px-3 py-3">
               <TaskCopy
@@ -1612,7 +1110,7 @@ export const PostingDashboard = ({
               id={`sunday-catchup-${catchupDate}`}
               type="file"
               accept="video/*"
-              aria-label="Sunday, November 15 proof video"
+              aria-label={sundayCatchupCopy.input}
               onChange={(event) => void onProof(catchupDate, event.target.files?.[0])}
               className="mt-3 font-body text-sm"
             />
@@ -1675,7 +1173,7 @@ export const PostingDashboard = ({
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="flex items-center gap-2 font-body text-sm text-gray-700">
                       {dayHeading(plan)}
-                      {isToday ? <span className="rounded-full bg-black px-2 py-0.5 text-xs font-bold text-white">Aujourd&apos;hui</span> : null}
+                      {isToday ? <span className="rounded-full bg-black px-2 py-0.5 text-xs font-bold text-white">{adminCopy.today}</span> : null}
                     </span>
                     <span className="font-title text-2xl leading-tight tracking-tight">{formatDay(plan.date)}</span>
                   </span>
@@ -1684,7 +1182,7 @@ export const PostingDashboard = ({
                       checks.length === 0 ? "bg-gray-100 text-gray-700" : validatedCount === adminGirls.length && adminGirls.length > 0 ? "bg-[#E7F6EC] text-[#146C36]" : "bg-[#FFF3C4]"
                     }`}
                   >
-                    {checks.length === 0 ? "Pas encore de tâches" : `${validatedCount}/${adminGirls.length} validées`}
+                    {checks.length === 0 ? adminCopy.noTasks : adminCopy.dayValidated(validatedCount, adminGirls.length)}
                   </span>
                   <span aria-hidden className={`shrink-0 font-body text-lg transition-transform ${open ? "rotate-180" : ""}`}>
                     ▾
@@ -1693,15 +1191,15 @@ export const PostingDashboard = ({
                 <div id={`admin-day-body-${plan.date}`} hidden={!open} className="px-4 pb-4">
                 {plan.date === BILAN_DATE && (
                   <div className="mt-4 rounded-2xl border-2 border-black bg-[#FFF3C4] px-3 py-3">
-                    <h3 className="font-title text-2xl leading-none tracking-tight">Bilan fin de semaine</h3>
+                    <h3 className="font-title text-2xl leading-none tracking-tight">{adminCopy.bilanTitle}</h3>
                     <p className="mt-2 font-body text-sm leading-relaxed">
-                      Dépose la vidéo de tuto. Elle s&apos;affiche dans l&apos;encart du dimanche, chez les filles.
+                      {adminCopy.bilanBody}
                     </p>
                     <input
                       id="bilan-upload"
                       type="file"
                       accept="video/*"
-                      aria-label="Vidéo de tuto du bilan fin de semaine"
+                      aria-label={adminCopy.bilanInput}
                       onChange={(event) => void onBilan(event.target.files?.[0])}
                       className="mt-3 block w-full font-body text-sm"
                     />
@@ -1713,7 +1211,7 @@ export const PostingDashboard = ({
                 <div className="mt-2 flex flex-col gap-3">{shownGirls.map((worker) => girlBlock(plan, worker))}</div>
                 {checks.length > 0 ? (
                 <details className="mt-4 rounded-2xl bg-gray-50 px-3">
-                  <summary className="flex min-h-12 cursor-pointer items-center font-body text-base font-bold">Consignes du jour</summary>
+                  <summary className="flex min-h-12 cursor-pointer items-center font-body text-base font-bold">{adminCopy.dayBrief}</summary>
                 <AccountChecks
                   checks={checks}
                   lang="fr"
@@ -1752,10 +1250,10 @@ export const PostingDashboard = ({
                     onClick={() => void removeDay(plan.date)}
                     className="h-12 w-full rounded-xl border border-black bg-white px-4 font-body text-base font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:opacity-40"
                   >
-                    Supprimer ce jour
+                    {adminCopy.deleteDay}
                   </button>
                   {dayError === plan.date && (
-                    <p className="mt-2 font-body text-sm text-[#C8102E]">Le jour n&apos;a pas été supprimé. Réessaie.</p>
+                    <p className="mt-2 font-body text-sm text-[#C8102E]">{adminCopy.deleteDayFail}</p>
                   )}
                 </div>
                 </div>
@@ -1784,59 +1282,5 @@ export const PostingDashboard = ({
         {isTania && <p className="font-body text-sm leading-relaxed text-gray-700">{ui.local}</p>}
       </div>
     </main>
-  );
-};
-
-const ProfileEditor = ({
-  profile,
-  onSave,
-  onDelete,
-}: {
-  profile: ManagedProfile;
-  onSave: (id: string, name: string, code: string) => Promise<void>;
-  onDelete: (id: string) => Promise<void>;
-}) => {
-  const [name, setName] = useState(profile.name);
-  const [code, setCode] = useState(profile.code ?? "");
-  return (
-    <div className="flex flex-col gap-2">
-      <label htmlFor={`profile-name-${profile.id}`} className="sr-only">
-        Nom de {profile.name}
-      </label>
-      <input
-        id={`profile-name-${profile.id}`}
-        value={name}
-        onChange={(event) => setName(event.target.value)}
-        className={fieldClass}
-      />
-      <label htmlFor={`profile-code-${profile.id}`} className="sr-only">
-        Code de {profile.name}
-      </label>
-      <input
-        id={`profile-code-${profile.id}`}
-        value={code}
-        onChange={(event) => setCode(event.target.value)}
-        inputMode="numeric"
-        autoComplete="off"
-        className={fieldClass}
-      />
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          onClick={() => void onSave(profile.id, name, code)}
-          className="h-12 rounded-xl bg-black px-3 font-body text-sm font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
-        >
-          Enregistrer
-        </button>
-        <button
-          id={`profile-delete-${profile.id}`}
-          type="button"
-          onClick={() => void onDelete(profile.id)}
-          className="h-12 rounded-xl border border-black bg-white px-3 font-body text-sm font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
-        >
-          Supprimer
-        </button>
-      </div>
-    </div>
   );
 };

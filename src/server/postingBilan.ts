@@ -2,6 +2,7 @@ import { mkdir, readFile, writeFile } from "fs/promises";
 import path from "path";
 
 import { bilanPartKey, cleanBilanFile, type BilanFile } from "~/config/bilanVideo";
+import { blobsRemote, signBlob } from "~/server/postingBlobs";
 import { mirrorPosting, productionCookie } from "~/server/postingLive";
 import { proofWindow } from "~/server/postingProofs";
 
@@ -9,49 +10,11 @@ const STORE = "posting-work";
 const META_KEY = "bilan-meta";
 const ORIGIN = "https://taabapps.com";
 
-type BlobsContext = {
-  siteID?: string;
-  token?: string;
-  apiURL?: string;
-};
-
-const blobsContext = (): BlobsContext | null => {
-  const raw = (globalThis as { netlifyBlobsContext?: unknown }).netlifyBlobsContext ?? process.env.NETLIFY_BLOBS_CONTEXT;
-  if (!raw) return null;
-  if (typeof raw === "object") {
-    const context = raw as BlobsContext;
-    return context.siteID && context.token ? context : null;
-  }
-  if (typeof raw !== "string") return null;
-  try {
-    const context = JSON.parse(Buffer.from(raw, "base64").toString("utf8")) as BlobsContext;
-    return context.siteID && context.token ? context : null;
-  } catch {
-    return null;
-  }
-};
-
-const remote = () => Boolean(blobsContext()?.siteID && blobsContext()?.token);
+const remote = blobsRemote;
 
 const dir = () => process.env.POSTING_BILAN_DIR || path.join(process.cwd(), ".data", "posting-bilan");
 
-const endpoint = (context: BlobsContext, key: string) =>
-  new URL(`/api/v1/blobs/${context.siteID}/${STORE}/${key}`, context.apiURL || "https://api.netlify.com");
-
-const sign = async (key: string, method: "GET" | "PUT") => {
-  const context = blobsContext();
-  if (!context?.siteID || !context.token) return null;
-  const response = await fetch(endpoint(context, key), {
-    method,
-    headers: { authorization: `Bearer ${context.token}`, accept: "application/json;type=signed-url" },
-    signal: AbortSignal.timeout(8000),
-  });
-  if (response.status === 404) return null;
-  if (!response.ok) throw new Error("bilan-sign");
-  const body = (await response.json()) as { url?: string };
-  if (!body.url) throw new Error("bilan-sign");
-  return body.url;
-};
+const sign = (key: string, method: "GET" | "PUT") => signBlob(STORE, key, method, "bilan-sign");
 
 const readStored = async (): Promise<BilanFile | null> => {
   if (remote()) {
