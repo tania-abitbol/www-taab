@@ -847,4 +847,7 @@ assert.equal(checksFor(DAY_PLANS[DAY_PLANS.length - 1]).length, 9);
 const { slideDateOk } = await import("../src/config/slideBoard.ts");
 assert.equal(slideDateOk("2026-11-22"), true);
 assert.equal(slideDateOk("2026-11-23"), false);
+for (const lang of ["fr", "es", "en"]) {
+  for (const key of ["proofDrop", "proofDropHint", "proofDropReplace", "proofDropActive", "proofDropWrong"]) assert.ok(postingUi(lang)[key].length > 0, `${lang} ${key}`);
+}
 console.log("posting codes ok");

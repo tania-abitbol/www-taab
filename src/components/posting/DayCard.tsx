@@ -1,4 +1,6 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+
+const isVideo = (file: File) => file.type.startsWith("video/") || /\.(mp4|m4v|mov|webm|3gp)$/i.test(file.name);
 
 export type DayCardProps = {
   date: string;
@@ -13,6 +15,11 @@ export type DayCardProps = {
     proofBody: string;
     proofUpload: string;
     proofReplace: string;
+    proofDrop: string;
+    proofDropHint: string;
+    proofDropReplace: string;
+    proofDropActive: string;
+    proofDropWrong: string;
     validate: string;
     validated: string;
     progress: (done: number, total: number) => string;
@@ -39,6 +46,17 @@ export const DayCard = ({
   ...day
 }: DayCardProps & { open: boolean; onToggle: () => void }) => {
   const { labels } = day;
+  const [dragging, setDragging] = useState(false);
+  const [wrongFile, setWrongFile] = useState(false);
+  const takeFile = (file: File | undefined) => {
+    if (!file) return;
+    if (!isVideo(file)) {
+      setWrongFile(true);
+      return;
+    }
+    setWrongFile(false);
+    day.onProofFile(file);
+  };
   const hasTasks = day.checklist !== null;
   const chip = day.validated
     ? { text: labels.validated, className: "bg-[#E7F6EC] text-[#146C36]" }
@@ -78,6 +96,50 @@ export const DayCard = ({
             <div className="mt-4 rounded-2xl bg-gray-100 p-3">
               <h3 className="font-body text-base font-bold">{labels.proof}</h3>
               <p className="mt-1 font-body text-sm leading-relaxed text-gray-700">{labels.proofBody}</p>
+              <label
+                htmlFor={`proof-drop-${day.date}`}
+                id={`proof-zone-${day.date}`}
+                aria-disabled={day.uploading || undefined}
+                onDragEnter={(event) => {
+                  event.preventDefault();
+                  setDragging(true);
+                }}
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  event.dataTransfer.dropEffect = "copy";
+                }}
+                onDragLeave={(event) => {
+                  if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false);
+                }}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  setDragging(false);
+                  if (!day.uploading) takeFile(event.dataTransfer.files?.[0]);
+                }}
+                className={`mt-3 flex min-h-32 cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed px-4 py-5 text-center font-body focus-within:ring-2 focus-within:ring-black focus-within:ring-offset-2 ${
+                  dragging ? "border-black bg-[#FFF3C4]" : "border-gray-400 bg-white hover:border-black"
+                } ${day.uploading ? "pointer-events-none opacity-40" : ""}`}
+              >
+                <span aria-hidden className="text-3xl leading-none">
+                  🎥
+                </span>
+                <span className="text-base font-bold leading-snug">
+                  {dragging ? labels.proofDropActive : day.hasProof ? labels.proofDropReplace : labels.proofDrop}
+                </span>
+                <span className="text-sm leading-relaxed text-gray-700">{labels.proofDropHint}</span>
+                <input
+                  id={`proof-drop-${day.date}`}
+                  type="file"
+                  accept="video/*"
+                  disabled={day.uploading}
+                  onChange={(event) => {
+                    takeFile(event.target.files?.[0]);
+                    event.target.value = "";
+                  }}
+                  className="sr-only"
+                />
+              </label>
+              {wrongFile ? <p className="mt-2 font-body text-sm text-[#C8102E]">{labels.proofDropWrong}</p> : null}
               {day.proofName ? <p className="mt-2 break-all font-body text-sm font-bold">{day.proofName}</p> : null}
               {day.proofExtra}
             </div>
