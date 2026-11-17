@@ -1,11 +1,8 @@
 /** Posting desk. The week of 16–22 Nov starts empty. Proof is the recording, never a link. */
 
 export const CALENDAR_START = "2026-11-05";
-export const CALENDAR_END = "2026-11-22";
 /** Monday 16 Nov. Days before this stay off the desk. Their tasks remain in the file. */
 export const ACTIVE_WEEK_START = "2026-11-16";
-/** Workers see the current list, through Sunday 22 Nov. Past days stay off their screen. */
-export const WORKER_VISIBLE_THROUGH = "2026-11-22";
 export const FRIDAY_CREATE_MINUTES = 30;
 export const FRIDAY_WARM_MINUTES = 10;
 export const SATURDAY_ACCOUNT_MINUTES = 20;
@@ -183,28 +180,26 @@ const post = (date: string, index: number): DayPlan => ({
   publishers: publishersOn(date),
 });
 
+const addDays = (iso: string, days: number) => new Date(Date.parse(`${iso}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
+
+const FIRST_POST_DAY = "2026-11-09";
+/** The active week runs Monday to Sunday. */
+const ACTIVE_WEEK_END = addDays(ACTIVE_WEEK_START, 6);
+
 export const DAY_PLANS: DayPlan[] = [
   { date: "2026-11-06", index: 1, kind: "friday", repeatsDay7: false, publishers: [] },
   { date: "2026-11-07", index: 2, kind: "saturday", repeatsDay7: false, publishers: [] },
   { date: "2026-11-08", index: 3, kind: "sunday", repeatsDay7: false, publishers: [] },
-  post("2026-11-09", 4),
-  post("2026-11-10", 5),
-  post("2026-11-11", 6),
-  post("2026-11-12", 7),
-  post("2026-11-13", 8),
-  post("2026-11-14", 9),
-  post("2026-11-15", 10),
-  post("2026-11-16", 11),
-  post("2026-11-17", 12),
-  post("2026-11-18", 13),
-  post("2026-11-19", 14),
-  post("2026-11-20", 15),
-  post("2026-11-21", 16),
-  post("2026-11-22", 17),
+  ...Array.from({ length: (Date.parse(`${ACTIVE_WEEK_END}T00:00:00Z`) - Date.parse(`${FIRST_POST_DAY}T00:00:00Z`)) / 86_400_000 + 1 }, (_, offset) =>
+    post(addDays(FIRST_POST_DAY, offset), offset + 4),
+  ),
 ];
 
-/** Day tasks are written through this date. */
-export const PLANNED_THROUGH = "2026-11-16";
+export const CALENDAR_END = DAY_PLANS[DAY_PLANS.length - 1].date;
+/** Workers see the current list through the last planned day. Past days stay off their screen. */
+export const WORKER_VISIBLE_THROUGH = CALENDAR_END;
+/** Day tasks are written through the last day that has steps. */
+export const PLANNED_THROUGH = Object.keys(WEEK_STEPS).sort().reverse()[0] ?? CALENDAR_START;
 /** Sunday 15 Nov only. The week-end review lives on this day. */
 export const BILAN_DATE = "2026-11-15";
 
@@ -1360,6 +1355,16 @@ export const postingUi = (lang: PostingLang) =>
       catchupFriday: "Vidéo du vendredi 6 novembre",
       catchupSaturday: "Vidéo du samedi 7 novembre",
       opening: "Ouverture…",
+      todayChip: "Aujourd'hui",
+      noTasks: "Pas encore de tâches",
+      noTasksBody: "Les tâches de ce jour arrivent bientôt. Tu peux déjà choisir ton heure.",
+      proofUpload: "Envoyer la preuve",
+      proofReplace: "Changer la preuve",
+      progress: (done: number, total: number) => `${done}/${total}`,
+      saveSynced: "Tout est enregistré.",
+      savePending: "Enregistrement…",
+      saveError: "Pas enregistré. Vérifie ta connexion.",
+      saveRetry: "Réessayer",
     },
     es: {
       switchProfile: "Cambiar de perfil",
@@ -1401,6 +1406,16 @@ export const postingUi = (lang: PostingLang) =>
       catchupFriday: "Vídeo del viernes 6 de noviembre",
       catchupSaturday: "Vídeo del sábado 7 de noviembre",
       opening: "Abriendo…",
+      todayChip: "Hoy",
+      noTasks: "Todavía no hay tareas",
+      noTasksBody: "Las tareas de este día llegan pronto. Ya puedes elegir tu hora.",
+      proofUpload: "Enviar la prueba",
+      proofReplace: "Cambiar la prueba",
+      progress: (done: number, total: number) => `${done}/${total}`,
+      saveSynced: "Todo está guardado.",
+      savePending: "Guardando…",
+      saveError: "No se ha guardado. Revisa tu conexión.",
+      saveRetry: "Reintentar",
     },
     en: {
       switchProfile: "Switch profile",
@@ -1442,5 +1457,15 @@ export const postingUi = (lang: PostingLang) =>
       catchupFriday: "Friday, November 6 video",
       catchupSaturday: "Saturday, November 7 video",
       opening: "Opening…",
+      todayChip: "Today",
+      noTasks: "No tasks yet",
+      noTasksBody: "This day's tasks are coming soon. You can already pick your hour.",
+      proofUpload: "Upload proof",
+      proofReplace: "Replace proof",
+      progress: (done: number, total: number) => `${done}/${total}`,
+      saveSynced: "Everything is saved.",
+      savePending: "Saving…",
+      saveError: "Not saved. Check your connection.",
+      saveRetry: "Try again",
     },
   })[lang];

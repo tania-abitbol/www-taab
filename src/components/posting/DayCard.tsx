@@ -1,0 +1,128 @@
+import type { ReactNode } from "react";
+
+export type DayCardProps = {
+  date: string;
+  heading: string;
+  title: string;
+  isToday: boolean;
+  labels: {
+    today: string;
+    noTasks: string;
+    noTasksBody: string;
+    proof: string;
+    proofBody: string;
+    proofUpload: string;
+    proofReplace: string;
+    validate: string;
+    validated: string;
+    progress: (done: number, total: number) => string;
+  };
+  done: number;
+  total: number;
+  validated: boolean;
+  hasProof: boolean;
+  proofName: string | null;
+  uploading: boolean;
+  canValidate: boolean;
+  hint: string;
+  slots: ReactNode;
+  checklist: ReactNode | null;
+  proofExtra: ReactNode;
+  onProofFile: (file: File | undefined) => void;
+  onValidate: () => void;
+};
+
+/** A worker day. Collapsed it is a one-line summary; open it holds the whole session. */
+export const DayCard = ({
+  open,
+  onToggle,
+  ...day
+}: DayCardProps & { open: boolean; onToggle: () => void }) => {
+  const { labels } = day;
+  const hasTasks = day.checklist !== null;
+  const chip = day.validated
+    ? { text: labels.validated, className: "bg-[#E7F6EC] text-[#146C36]" }
+    : !hasTasks
+      ? { text: labels.noTasks, className: "bg-gray-100 text-gray-700" }
+      : { text: labels.progress(day.done, day.total), className: "bg-[#FFF3C4] text-black" };
+  return (
+    <section
+      id={`day-${day.date}`}
+      aria-current={day.isToday ? "date" : undefined}
+      className={`rounded-3xl bg-white shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)] ${day.isToday ? "ring-2 ring-black" : ""}`}
+    >
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={`day-body-${day.date}`}
+        onClick={onToggle}
+        className="flex min-h-16 w-full items-center gap-3 rounded-3xl px-4 py-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
+      >
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="flex items-center gap-2 font-body text-sm text-gray-700">
+            {day.heading}
+            {day.isToday ? <span className="rounded-full bg-black px-2 py-0.5 text-xs font-bold text-white">{labels.today}</span> : null}
+          </span>
+          <span className="font-title text-2xl leading-tight tracking-tight">{day.title}</span>
+        </span>
+        <span className={`shrink-0 rounded-full px-2.5 py-1 font-body text-xs font-bold ${chip.className}`}>{chip.text}</span>
+        <span aria-hidden className={`shrink-0 font-body text-lg transition-transform ${open ? "rotate-180" : ""}`}>
+          ▾
+        </span>
+      </button>
+      <div id={`day-body-${day.date}`} hidden={!open} className="px-4 pb-4">
+        {day.slots}
+        {hasTasks ? (
+          <>
+            <div className="mt-5">{day.checklist}</div>
+            <div className="mt-4 rounded-2xl bg-gray-100 p-3">
+              <h3 className="font-body text-base font-bold">{labels.proof}</h3>
+              <p className="mt-1 font-body text-sm leading-relaxed text-gray-700">{labels.proofBody}</p>
+              {day.proofName ? <p className="mt-2 break-all font-body text-sm font-bold">{day.proofName}</p> : null}
+              {day.proofExtra}
+            </div>
+            <div className="sticky bottom-0 z-10 -mx-4 mt-4 border-t border-gray-200 bg-white/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
+              <div className="grid grid-cols-2 gap-2">
+                <label
+                  htmlFor={`proof-${day.date}`}
+                  aria-disabled={day.uploading || undefined}
+                  className={`flex h-12 cursor-pointer items-center justify-center rounded-xl border-2 border-black bg-white px-2 text-center font-body text-sm font-bold leading-tight focus-within:ring-2 focus-within:ring-black focus-within:ring-offset-2 ${
+                    day.uploading ? "pointer-events-none opacity-40" : ""
+                  }`}
+                >
+                  {day.hasProof ? labels.proofReplace : labels.proofUpload}
+                  <input
+                    id={`proof-${day.date}`}
+                    type="file"
+                    accept="video/*"
+                    disabled={day.uploading}
+                    onChange={(event) => {
+                      day.onProofFile(event.target.files?.[0]);
+                      event.target.value = "";
+                    }}
+                    className="sr-only"
+                  />
+                </label>
+                <button
+                  id={`validate-day-${day.date}`}
+                  type="button"
+                  disabled={!day.canValidate || day.validated}
+                  onClick={day.onValidate}
+                  className="h-12 rounded-xl bg-black px-2 font-body text-sm font-bold leading-tight text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:opacity-40"
+                >
+                  {day.validated ? labels.validated : labels.validate}
+                </button>
+              </div>
+              {!day.validated ? <p className="mt-2 font-body text-sm text-gray-700">{day.hint}</p> : null}
+            </div>
+          </>
+        ) : (
+          <div id={`no-tasks-${day.date}`} className="mt-5 rounded-2xl bg-gray-100 px-3 py-4">
+            <p className="font-body text-base font-bold">{labels.noTasks}</p>
+            <p className="mt-1 font-body text-sm leading-relaxed text-gray-700">{labels.noTasksBody}</p>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+};

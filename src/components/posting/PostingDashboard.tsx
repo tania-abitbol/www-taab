@@ -37,7 +37,16 @@ import {
   slotsFor,
   taskIsHers,
   BILAN_DATE,
+  calendarDate,
+  timeZoneForGirl,
+  type DayPlan,
 } from "~/config/posting";
+import { ACCOUNT_TONE, accountGroups, actionLabel } from "~/components/posting/accountTone";
+import { Checklist } from "~/components/posting/Checklist";
+import type { DayCardProps } from "~/components/posting/DayCard";
+import { SaveStatus, type SaveState } from "~/components/posting/SaveStatus";
+import { SlotPicker } from "~/components/posting/SlotPicker";
+import { WorkerView } from "~/components/posting/WorkerView";
 import { BILAN_MAX_BYTES } from "~/config/bilanVideo";
 import { SLIDE_MAX_BYTES, SLIDE_PART_BYTES, slidePartCount, slideshowOf, type SlideBoard, type SlideImage } from "~/config/slideBoard";
 import { zipStoredFiles } from "~/config/slideZip";
@@ -47,11 +56,6 @@ import { PROOF_PART_BYTES, proofPartCount, type DayWork, type ProfileWork, type 
 import { deleteBlob, loadBlob, readDesk, saveBlob, writeDesk } from "~/components/posting/storage";
 
 type ManagedProfile = { id: string; name: string; code?: string };
-
-const hourText = (short: string) => {
-  const [start, end] = short.split("–");
-  return `${start}h–${end}h`;
-};
 
 const fieldClass =
   "h-12 w-full rounded-xl border border-gray-300 bg-white px-4 font-body text-base text-black placeholder:text-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-1";
@@ -201,28 +205,6 @@ const TaskCopy = ({
     </span>
   );
 };
-
-const ACCOUNT_TONE = [
-  { ink: "#1D6FB8", frame: "#9DCEF5" },
-  { ink: "#C45C12", frame: "#F3C091" },
-  { ink: "#6B3FA0", frame: "#D2B4EE" },
-] as const;
-
-const accountIndexFromId = (id: string) => (id.endsWith("-fr") ? 0 : id.endsWith("-es") ? 1 : id.endsWith("-us") ? 2 : null);
-
-const accountGroups = (checks: CheckItem[]) => {
-  const groups: { account: number | null; items: CheckItem[] }[] = [];
-  for (const check of checks) {
-    const account = accountIndexFromId(check.id);
-    const last = groups[groups.length - 1];
-    if (last && last.account === account) last.items.push(check);
-    else groups.push({ account, items: [check] });
-  }
-  return groups;
-};
-
-const actionLabel = (label: string, title: string | null) =>
-  title && label.startsWith(`${title}\n`) ? label.slice(title.length + 1) : label;
 
 const AccountChecks = ({
   checks,
@@ -646,6 +628,9 @@ export const PostingDashboard = ({
   const boardStamp = useRef(0);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const captionTimers = useRef<Record<string, number>>({});
+  const [saveState, setSaveState] = useState<SaveState>("synced");
+  const saving = useRef(0);
+  const failedDates = useRef(new Set<string>());
   const rememberBoard = (next: SlideBoard) => {
     boardStamp.current += 1;
     setBoard(next);
@@ -857,12 +842,28 @@ export const PostingDashboard = ({
   const publishDay = (date: string, desk: Desk) => {
     if (!person) return;
     const record = desk.days[person.id]?.[date];
+    saving.current += 1;
+    setSaveState("pending");
     void saveMyDay(date, {
       slot: slotsFor(desk, person.id, date)[0] ?? null,
       checks: record?.checks ?? {},
       validated: record?.validated === true,
       proofName: record?.proofName ?? null,
-    });
+    })
+      .then(
+        (result) => result.ok,
+        () => false,
+      )
+      .then((ok) => {
+        saving.current -= 1;
+        if (ok) failedDates.current.delete(date);
+        else failedDates.current.add(date);
+        if (saving.current === 0) setSaveState(failedDates.current.size > 0 ? "error" : "synced");
+      });
+  };
+
+  const retrySave = () => {
+    for (const date of Array.from(failedDates.current)) publishDay(date, desk);
   };
 
   const toggleSlot = (date: string, slotId: SlotId) => {
@@ -1173,6 +1174,138 @@ export const PostingDashboard = ({
     setProfileError("");
   };
 
+  const workerToday = person ? calendarDate(timeZoneForGirl(girlName), clock) : today;
+
+  const slideActions = (plan: DayPlan, check: CheckItem): SlideLineActions | undefined => {
+    const accountId = check.id.startsWith("post-") ? check.id.slice(5) : "";
+    if (!person || !accountId || plan.date < SLIDES_FROM || plan.date > SLIDES_UNTIL || !plan.publishers.includes(accountId)) return undefined;
+    const storageId = slideStorageId(person.id, accountId);
+    const shared = slideshowOf(board, plan.date, storageId);
+    const names = shared.length > 0 ? shared.map((image) => image.name) : desk.taniaFiles[plan.date]?.[storageId] ?? [];
+    const zipKey = `${storageId}-${plan.date}`;
+    const video = accountId === "us" && plan.date >= ACTIVE_WEEK_START;
+    return {
+      date: zipKey,
+      downloadLabel: video ? slideCopy[lang].videoDownload : slideCopy[lang].download,
+      downloadLine: video ? slideCopy[lang].videoDownloadLine : slideCopy[lang].downloadLine,
+      namesCount: names.length,
+      busy: zipping === zipKey,
+      busyLabel: ui.downloadPreparing,
+      onDownload: () => void downloadSlides(plan.date, storageId),
+      copyLabel: slideCopy[lang].copy,
+      copiedLabel: slideCopy[lang].copied,
+      copyLine: slideCopy[lang].copyLine,
+      caption: captionOf(plan.date, storageId),
+      emptyCaption: slideCopy[lang].noCaption,
+      waiting: video ? slideCopy[lang].videoWaiting : ui.imagesMissing,
+    };
+  };
+
+  const workerDay = (plan: DayPlan): DayCardProps => {
+    const checks = checksFor(plan, lang);
+    const state = (person && desk.days[person.id]?.[plan.date]) || emptyDayState();
+    const hour = person ? slotsFor(desk, person.id, plan.date)[0] : undefined;
+    const counts = (check: CheckItem) => taskIsHers(check.id, ownAccount) && !check.banner;
+    const hers = checks.filter(counts);
+    const ticked = hers.filter((check) => state.checks[check.id] === true).length;
+    const checksDone = Boolean(state.proofName) && hers.length > 0 && ticked === hers.length;
+    const uploading = proofNote?.date === plan.date;
+    const proofSrc = !person
+      ? ""
+      : urls[proofKey(person.id, plan.date)] ||
+        (remoteProofs.some((item) => item.profileId === person.id && item.date === plan.date) ? `/posting/proof/${person.id}/${plan.date}` : "");
+    return {
+      date: plan.date,
+      heading: dayHeading(plan, lang),
+      title: formatDay(plan.date, lang),
+      isToday: plan.date === workerToday,
+      labels: {
+        today: ui.todayChip,
+        noTasks: ui.noTasks,
+        noTasksBody: ui.noTasksBody,
+        proof: ui.proof,
+        proofBody: plan.kind === "friday" ? ui.proofScroll : ui.proofBody,
+        proofUpload: ui.proofUpload,
+        proofReplace: ui.proofReplace,
+        validate: ui.validateDay,
+        validated: ui.dayDone,
+        progress: ui.progress,
+      },
+      done: ticked,
+      total: hers.length,
+      validated: state.validated,
+      hasProof: Boolean(state.proofName),
+      proofName: state.proofName || (uploading ? proofNote?.name ?? null : null),
+      uploading,
+      canValidate: checksDone && Boolean(hour),
+      hint: !hour ? ui.pickOne : checksDone ? ui.ready : ui.missing,
+      slots: (
+        <SlotPicker
+          date={plan.date}
+          dayLabel={formatDay(plan.date, lang)}
+          hour={hour}
+          onPick={(slot) => toggleSlot(plan.date, slot)}
+          labels={{ title: ui.slots, pickOne: ui.pickOne, picked: ui.picked, vary: showHoursVary(plan.date) ? ui.hoursVary : undefined }}
+        />
+      ),
+      checklist:
+        checks.length === 0 ? null : (
+          <Checklist
+            checks={checks}
+            lang={lang}
+            date={plan.date}
+            done={state.checks}
+            counts={counts}
+            progressLabel={ui.progress}
+            clip={plan.date === BILAN_DATE && guide ? <BilanPlayer file={guide} /> : null}
+            banner={(check) => (
+              <div className="rounded-2xl border-2 border-black bg-[#FFF3C4] px-3 py-3">
+                <TaskCopy label={check.label} large />
+              </div>
+            )}
+            item={(check, label) => (
+              <label htmlFor={`check-${plan.date}-${check.id}`} className={`flex min-h-12 items-start gap-3 py-1 font-body ${check.parent ? "text-sm" : "text-base"}`}>
+                <input
+                  id={`check-${plan.date}-${check.id}`}
+                  type="checkbox"
+                  checked={state.checks[check.id] === true}
+                  onChange={(event) => patchDay(plan.date, (day) => ({ ...day, checks: { ...day.checks, [check.id]: event.target.checked } }))}
+                  className={`shrink-0 accent-black ${check.parent ? "mt-0.5 h-5 w-5" : "mt-0.5 h-6 w-6"}`}
+                />
+                <TaskFace
+                  check={check}
+                  label={label}
+                  large={!check.parent}
+                  copy={
+                    check.copyText
+                      ? { id: `copy-bio-${plan.date}-${check.id}`, text: check.copyText, copy: slideCopy[lang].copy, copied: slideCopy[lang].copied }
+                      : undefined
+                  }
+                  slides={slideActions(plan, check)}
+                />
+              </label>
+            )}
+          />
+        ),
+      proofExtra: (
+        <>
+          <ProofFeedback
+            active={uploading}
+            percent={uploading ? proofNote?.percent ?? 0 : 0}
+            text={uploading ? proofNote?.text ?? "" : ""}
+            error={proofError?.date === plan.date ? proofError.text : null}
+          />
+          {proofSrc && person ? <ProofThumb src={proofSrc} label={displayName(person.name)} play={ui.proofPlay} close={ui.proofClose} /> : null}
+        </>
+      ),
+      onProofFile: (file) => void onProof(plan.date, file),
+      onValidate: () => {
+        if (!hour) return;
+        patchDay(plan.date, (day) => ({ ...day, validated: true }));
+      },
+    };
+  };
+
   return (
     <main lang={lang} className="min-h-dvh px-4 py-6 selection:bg-yellow selection:text-black sm:px-6 sm:py-8">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
@@ -1336,7 +1469,7 @@ export const PostingDashboard = ({
           </section>
         )}
 
-        {visiblePlans(isTania)
+        {(isTania ? visiblePlans(true) : [])
           .filter((plan) => !(isTania && hiddenDays.includes(plan.date)))
           .map((plan) => {
           const checks = checksFor(plan, isTania ? "fr" : lang);
@@ -1501,160 +1634,22 @@ export const PostingDashboard = ({
             );
           }
 
-          const state = person ? desk.days[person.id]?.[plan.date] ?? emptyDayState() : emptyDayState();
-          const hour = person ? slotsFor(desk, person.id, plan.date)[0] : undefined;
-          const chosenSlot = SLOTS.find((slot) => slot.id === hour);
-          const hers = checks.filter((check) => taskIsHers(check.id, ownAccount) && !check.banner);
-          const checksDone = Boolean(state.proofName) && hers.length > 0 && hers.every((check) => state.checks[check.id] === true);
-          const ready = checksDone && Boolean(hour);
-          return (
-            <section key={plan.date} className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
-              <p className="font-body text-sm text-gray-700">{dayHeading(plan, lang)}</p>
-              <h2 className="font-title text-2xl tracking-tight">{formatDay(plan.date, lang)}</h2>
-              {person && (
-                <div className="mt-4">
-                  {showHoursVary(plan.date) ? (
-                    <p id={`hours-vary-${plan.date}`} className="mb-3 rounded-xl bg-[#FFF3C4] px-3 py-2 font-body text-sm leading-relaxed">
-                      {ui.hoursVary}
-                    </p>
-                  ) : null}
-                  <p className="font-body text-base font-bold">{ui.slots}</p>
-                  <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                    {SLOTS.map((slot) => {
-                      const selected = hour === slot.id;
-                      return (
-                        <button
-                          key={slot.id}
-                          id={`slot-${plan.date}-${slot.id}`}
-                          type="button"
-                          aria-pressed={selected}
-                          aria-label={`${formatDay(plan.date, lang)} ${slot.label}`}
-                          onClick={() => toggleSlot(plan.date, slot.id)}
-                          className={`flex h-12 items-center justify-center rounded-xl px-2 font-body text-base font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-black ${
-                            selected ? "bg-black text-white" : "bg-gray-100 text-black"
-                          }`}
-                        >
-                          {hourText(slot.short)}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <p className="mt-2 font-body text-sm leading-relaxed text-gray-700">
-                    {chosenSlot ? ui.picked(hourText(chosenSlot.short)) : ui.pickOne}
-                  </p>
-                </div>
-              )}
-              <AccountChecks
-                checks={checks}
-                lang={lang}
-                date={plan.date}
-                clip={plan.date === BILAN_DATE && guide ? <BilanPlayer file={guide} /> : null}
-                item={(check, label) => (
-                  <label
-                    htmlFor={`check-${plan.date}-${check.id}`}
-                    className={`flex items-start gap-3 font-body ${check.parent ? "text-sm" : "text-base"}`}
-                  >
-                    <input
-                      id={`check-${plan.date}-${check.id}`}
-                      type="checkbox"
-                      checked={state.checks[check.id] === true}
-                      onChange={(event) =>
-                        patchDay(plan.date, (day) => ({ ...day, checks: { ...day.checks, [check.id]: event.target.checked } }))
-                      }
-                      className={`shrink-0 accent-black ${check.parent ? "mt-0.5 h-4 w-4" : "mt-1 h-5 w-5"}`}
-                    />
-                    <TaskFace
-                      check={check}
-                      label={label}
-                      large={!check.parent}
-                      copy={
-                        check.copyText
-                          ? {
-                              id: `copy-bio-${plan.date}-${check.id}`,
-                              text: check.copyText,
-                              copy: slideCopy[lang].copy,
-                              copied: slideCopy[lang].copied,
-                            }
-                          : undefined
-                      }
-                      slides={(() => {
-                        const accountId = check.id.startsWith("post-") ? check.id.slice(5) : "";
-                        if (!person || !accountId || plan.date < SLIDES_FROM || plan.date > SLIDES_UNTIL || !plan.publishers.includes(accountId)) {
-                          return undefined;
-                        }
-                        const storageId = slideStorageId(person.id, accountId);
-                        const shared = slideshowOf(board, plan.date, storageId);
-                        const names = shared.length > 0 ? shared.map((image) => image.name) : desk.taniaFiles[plan.date]?.[storageId] ?? [];
-                        const zipKey = `${storageId}-${plan.date}`;
-                        const video = accountId === "us" && plan.date >= ACTIVE_WEEK_START;
-                        return {
-                          date: zipKey,
-                          downloadLabel: video ? slideCopy[lang].videoDownload : slideCopy[lang].download,
-                          downloadLine: video ? slideCopy[lang].videoDownloadLine : slideCopy[lang].downloadLine,
-                          namesCount: names.length,
-                          busy: zipping === zipKey,
-                          busyLabel: ui.downloadPreparing,
-                          onDownload: () => void downloadSlides(plan.date, storageId),
-                          copyLabel: slideCopy[lang].copy,
-                          copiedLabel: slideCopy[lang].copied,
-                          copyLine: slideCopy[lang].copyLine,
-                          caption: captionOf(plan.date, storageId),
-                          emptyCaption: slideCopy[lang].noCaption,
-                          waiting: video ? slideCopy[lang].videoWaiting : ui.imagesMissing,
-                        };
-                      })()}
-                    />
-                  </label>
-                )}
-              />
-              <div className="mt-4 rounded-2xl bg-gray-100 p-3">
-                <h3 className="font-body text-base font-bold">{ui.proof}</h3>
-                <p className="mt-1 font-body text-sm leading-relaxed text-gray-700">
-                  {plan.kind === "friday" ? ui.proofScroll : ui.proofBody}
-                </p>
-                <input
-                  id={`proof-${plan.date}`}
-                  type="file"
-                  accept="video/*"
-                  onChange={(event) => void onProof(plan.date, event.target.files?.[0])}
-                  className="mt-2 font-body text-sm"
-                />
-                {(state.proofName || (proofNote?.date === plan.date && proofNote.name)) && (
-                  <p className="mt-2 font-body text-sm">{state.proofName || proofNote?.name}</p>
-                )}
-                <ProofFeedback
-                  active={proofNote?.date === plan.date}
-                  percent={proofNote?.date === plan.date ? proofNote.percent : 0}
-                  text={proofNote?.date === plan.date ? proofNote.text : ""}
-                  error={proofError?.date === plan.date ? proofError.text : null}
-                />
-                {person && (urls[proofKey(person.id, plan.date)] || remoteProofs.some((item) => item.profileId === person.id && item.date === plan.date)) && (
-                  <ProofThumb
-                    src={urls[proofKey(person.id, plan.date)] || `/posting/proof/${person.id}/${plan.date}`}
-                    label={displayName(person.name)}
-                    play={ui.proofPlay}
-                    close={ui.proofClose}
-                  />
-                )}
-              </div>
-              <button
-                id={`validate-day-${plan.date}`}
-                type="button"
-                disabled={!ready || state.validated}
-                onClick={() => {
-                  if (!hour) return;
-                  patchDay(plan.date, (day) => ({ ...day, validated: true }));
-                }}
-                className="mt-4 h-12 w-full rounded-xl bg-black px-4 font-body text-base font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:opacity-40"
-              >
-                {state.validated ? ui.dayDone : ui.validateDay}
-              </button>
-              {!state.validated && (
-                <p className="mt-2 font-body text-sm text-gray-700">{!hour ? ui.pickOne : checksDone ? ui.ready : ui.missing}</p>
-              )}
-            </section>
-          );
+          return null;
         })}
+
+        {!isTania && person ? (
+          <WorkerView
+            days={workerPlans.map(workerDay)}
+            today={workerToday}
+            status={
+              <SaveStatus
+                state={saveState}
+                labels={{ synced: ui.saveSynced, pending: ui.savePending, error: ui.saveError, retry: ui.saveRetry }}
+                onRetry={retrySave}
+              />
+            }
+          />
+        ) : null}
 
         {fileError && <p className="font-body text-sm text-[#C8102E]">{fileError === "files" ? ui.files : fileError}</p>}
         {isTania && <p className="font-body text-sm leading-relaxed text-gray-700">{ui.local}</p>}
