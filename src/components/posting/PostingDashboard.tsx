@@ -423,6 +423,9 @@ const slideCopy = {
     note: "Tu fais le diaporama avec ces images.",
     download: "Télécharger les images",
     downloadLine: "Tu le télécharges ici.",
+    videoDownload: "Télécharger la vidéo",
+    videoDownloadLine: "Tu télécharges la vidéo ici.",
+    videoWaiting: "La vidéo n'est pas encore là.",
     copy: "Copier",
     copyLine: "Copie cette description.",
     copied: "Copié.",
@@ -433,6 +436,9 @@ const slideCopy = {
     note: "Haces el carrusel con estas imágenes.",
     download: "Descargar las imágenes",
     downloadLine: "Lo descargas aquí.",
+    videoDownload: "Descargar el vídeo",
+    videoDownloadLine: "Descargas el vídeo aquí.",
+    videoWaiting: "El vídeo todavía no está.",
     copy: "Copiar",
     copyLine: "Copia esta descripción.",
     copied: "Copiado.",
@@ -443,6 +449,9 @@ const slideCopy = {
     note: "You make the slideshow with these images.",
     download: "Download the images",
     downloadLine: "Download it here.",
+    videoDownload: "Download the video",
+    videoDownloadLine: "Download the video here.",
+    videoWaiting: "The video is not here yet.",
     copy: "Copy",
     copyLine: "Copy this caption.",
     copied: "Copied.",
@@ -1365,6 +1374,9 @@ export const PostingDashboard = ({
                           <p className="font-title text-xl leading-none tracking-tight" style={{ color: ACCOUNT_TONE[index].ink }}>
                             {title}
                           </p>
+                          {account.id === "us" && plan.date >= ACTIVE_WEEK_START ? (
+                            <p className="mt-1 font-body text-sm leading-relaxed text-gray-700">Une vidéo, pas des photos. Pas de musique.</p>
+                          ) : null}
                           <div className="mt-2 grid gap-3 sm:grid-cols-3">
                             {slideGirls(roster).map((worker) => {
                               const storageId = slideStorageId(worker.id, account.id);
@@ -1379,8 +1391,8 @@ export const PostingDashboard = ({
                                   <input
                                     id={`upload-${plan.date}-${storageId}`}
                                     type="file"
-                                    accept="image/*,video/*"
-                                    multiple
+                                    accept={account.id === "us" && plan.date >= ACTIVE_WEEK_START ? "video/*" : "image/*,video/*"}
+                                    multiple={!(account.id === "us" && plan.date >= ACTIVE_WEEK_START)}
                                     aria-label={`${title} ${label}`}
                                     onChange={(event) => void onSlides(plan.date, storageId, event.target.files)}
                                     className="mt-2 block w-full font-body text-sm"
@@ -1574,10 +1586,11 @@ export const PostingDashboard = ({
                         const shared = slideshowOf(board, plan.date, storageId);
                         const names = shared.length > 0 ? shared.map((image) => image.name) : desk.taniaFiles[plan.date]?.[storageId] ?? [];
                         const zipKey = `${storageId}-${plan.date}`;
+                        const video = accountId === "us" && plan.date >= ACTIVE_WEEK_START;
                         return {
                           date: zipKey,
-                          downloadLabel: slideCopy[lang].download,
-                          downloadLine: slideCopy[lang].downloadLine,
+                          downloadLabel: video ? slideCopy[lang].videoDownload : slideCopy[lang].download,
+                          downloadLine: video ? slideCopy[lang].videoDownloadLine : slideCopy[lang].downloadLine,
                           namesCount: names.length,
                           busy: zipping === zipKey,
                           busyLabel: ui.downloadPreparing,
@@ -1587,7 +1600,7 @@ export const PostingDashboard = ({
                           copyLine: slideCopy[lang].copyLine,
                           caption: captionOf(plan.date, storageId),
                           emptyCaption: slideCopy[lang].noCaption,
-                          waiting: ui.imagesMissing,
+                          waiting: video ? slideCopy[lang].videoWaiting : ui.imagesMissing,
                         };
                       })()}
                     />

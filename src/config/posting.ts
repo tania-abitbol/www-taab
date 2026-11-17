@@ -332,7 +332,11 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
               closing ? say.sundayBefore(account) : say.hardBefore(account),
               closing ? (id === "us" ? 7 : 6) : POST_WARM_BEFORE_MINUTES,
             ),
-            task(`post-${id}`, say.hardPost(account), POST_PUBLISH_MINUTES),
+            task(
+              `post-${id}`,
+              plan.date >= ACTIVE_WEEK_START && id === "us" ? say.videoPost(account) : say.hardPost(account),
+              POST_PUBLISH_MINUTES,
+            ),
             task(
               `after-${id}`,
               closing ? say.sundayAfter(account, reply) : say.hardAfter(account, count, reply),
@@ -477,10 +481,11 @@ export const calendarDate = (timeZone: string, now = new Date()) =>
     day: "2-digit",
   }).format(now);
 
-/** Days still on a girl's screen: from her local today through Sunday 15 Nov. */
+/** Days still on a girl's screen. This week stays from Monday 16 so the video can still be downloaded. */
 export const workerVisiblePlans = (name: string, now = new Date()) => {
   const today = calendarDate(timeZoneForGirl(name), now);
-  return DAY_PLANS.filter((plan) => plan.date >= today && plan.date <= WORKER_VISIBLE_THROUGH);
+  const from = today >= ACTIVE_WEEK_START && today <= WORKER_VISIBLE_THROUGH ? ACTIVE_WEEK_START : today;
+  return DAY_PLANS.filter((plan) => plan.date >= from && plan.date <= WORKER_VISIBLE_THROUGH);
 };
 
 export const shiftIsoDate = (iso: string, days: number) => {
@@ -560,6 +565,7 @@ type Phrases = {
   hardRules: string;
   hardBefore: (account: string) => string;
   hardPost: (account: string) => string;
+  videoPost: (account: string) => string;
   hardAfter: (account: string, count: number, reply: boolean) => string;
   hardWarm: (account: string, count: number, reply: boolean) => string;
   hardProfileWarm: (account: string, count: number, reply: boolean) => string;
@@ -713,6 +719,17 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Prépare le diaporama et la description avant d'enregistrer.",
         "• Tu le télécharges ici.",
         "• Musique TikTok tendance.",
+        "• Copie cette description, puis colle-la.",
+        "• Appuie sur Publier. Si ça rate, recommence tout de suite, avant de changer de compte.",
+        "• Montre la vidéo dans la grille."
+      ),
+    videoPost: (account) =>
+      block(
+        account,
+        "Publication.",
+        "• Prépare la vidéo et la description avant d'enregistrer.",
+        "• Tu télécharges la vidéo ici.",
+        "• Pas de musique.",
         "• Copie cette description, puis colle-la.",
         "• Appuie sur Publier. Si ça rate, recommence tout de suite, avant de changer de compte.",
         "• Montre la vidéo dans la grille."
@@ -952,6 +969,17 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Pulsa Publicar. Si falla, inténtalo otra vez enseguida, antes de cambiar de cuenta.",
         "• Muestra el vídeo en la cuadrícula."
       ),
+    videoPost: (account) =>
+      block(
+        account,
+        "Publicación.",
+        "• Prepara el vídeo y la descripción antes de grabar.",
+        "• Descargas el vídeo aquí.",
+        "• Sin música.",
+        "• Copia esta descripción, luego pégala.",
+        "• Pulsa Publicar. Si falla, inténtalo otra vez enseguida, antes de cambiar de cuenta.",
+        "• Muestra el vídeo en la cuadrícula."
+      ),
     hardAfter: (account, count, reply) =>
       block(
         account,
@@ -1182,6 +1210,17 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Get the slideshow and the caption ready before you record.",
         "• Download it here.",
         "• A trending TikTok sound.",
+        "• Copy this caption, then paste it.",
+        "• Tap Post. If it fails, try again right away, before you switch accounts.",
+        "• Show the video in the grid."
+      ),
+    videoPost: (account) =>
+      block(
+        account,
+        "Post.",
+        "• Get the video and the caption ready before you record.",
+        "• Download the video here.",
+        "• No music.",
         "• Copy this caption, then paste it.",
         "• Tap Post. If it fails, try again right away, before you switch accounts.",
         "• Show the video in the grid."

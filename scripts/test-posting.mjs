@@ -639,10 +639,32 @@ for (const lang of ["fr", "es", "en"]) {
 const mondayFr = checksFor(mondayPlan, "fr");
 assert.ok(mondayFr.find((item) => item.id === "before-fr").label.includes("Montre ton profil"));
 assert.ok(mondayFr.find((item) => item.id === "post-fr").label.includes("Tu le télécharges ici."));
+assert.ok(mondayFr.find((item) => item.id === "post-fr").label.includes("Musique TikTok tendance."));
+assert.ok(mondayFr.find((item) => item.id === "post-es").label.includes("diaporama"));
+const mondayUs = mondayFr.find((item) => item.id === "post-us");
+assert.ok(mondayUs.label.includes("Tu télécharges la vidéo ici."));
+assert.ok(mondayUs.label.includes("Pas de musique."));
+assert.equal(mondayUs.label.includes("Musique TikTok"), false);
+assert.equal(mondayUs.label.includes("diaporama"), false);
+const mondayEs = checksFor(mondayPlan, "es");
+assert.ok(mondayEs.find((item) => item.id === "post-us").label.includes("Descargas el vídeo aquí."));
+assert.ok(mondayEs.find((item) => item.id === "post-us").label.includes("Sin música."));
+assert.ok(mondayEs.find((item) => item.id === "post-es").label.includes("Lo descargas aquí."));
+const mondayEn = checksFor(mondayPlan, "en");
+assert.ok(mondayEn.find((item) => item.id === "post-us").label.includes("Download the video here."));
+assert.ok(mondayEn.find((item) => item.id === "post-us").label.includes("No music."));
+assert.ok(mondayEn.find((item) => item.id === "post-fr").label.includes("Download it here."));
 assert.ok(mondayFr.find((item) => item.id === "after-fr").label.includes("Reste 7 minutes sur Pour toi"));
 assert.ok(mondayFr.find((item) => item.id === "after-us").label.includes("post d'hier"));
 assert.equal(checksFor(DAY_PLANS.find((plan) => plan.date === "2026-11-17")).length, 0);
 assert.equal(checksFor(DAY_PLANS.find((plan) => plan.date === "2026-11-22")).length, 0);
+const tuesdayMorning = new Date("2026-11-17T09:00:00Z");
+for (const name of ["Ghada - FR", "Peches - ES", "Karol - US"]) {
+  assert.equal(workerVisiblePlans(name, tuesdayMorning)[0].date, "2026-11-16", name);
+  const post = checksFor(DAY_PLANS.find((plan) => plan.date === "2026-11-16"), langFromName(name)).find((item) => item.id === "post-us");
+  assert.equal(missedProofDate(name, tuesdayMorning), null, name);
+  assert.ok(post.label.length > 0, name);
+}
 assert.equal(missedProofDate("Ghada - FR", mondayMorning), "2026-11-15");
 assert.equal(missedProofDate("Peches - ES", mondayMorning), "2026-11-15");
 assert.equal(sundayCatchupFor("Ghada - FR"), null);
