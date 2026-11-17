@@ -29,7 +29,6 @@ type Phrases = {
   thenWarm: string;
   noPostToday: string;
   engageMore: string;
-  hardRules: string;
   hardBefore: (account: string) => string;
   hardPost: (account: string) => string;
   videoPost: (account: string) => string;
@@ -165,11 +164,6 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Tu n'aimes pas tout.",
         "• Un like seulement quand ça te plaît vraiment."
       ),
-    hardRules: block(
-      "Règles",
-      "• Une seule vidéo, sans coupure, du début à la fin.",
-      "• Coche une tâche seulement si on la voit dans la vidéo."
-    ),
     hardBefore: (account) =>
       block(
         account,
@@ -411,11 +405,6 @@ const phrases: Record<PostingLang, Phrases> = {
         "• No le des like a todo.",
         "• Un like solo cuando de verdad te guste."
       ),
-    hardRules: block(
-      "Reglas",
-      "• Un solo vídeo, sin cortes, de principio a fin.",
-      "• Marca una tarea solo si se ve en el vídeo."
-    ),
     hardBefore: (account) =>
       block(
         account,
@@ -656,11 +645,6 @@ const phrases: Record<PostingLang, Phrases> = {
         "• You do not like everything.",
         "• A like only when you really like it."
       ),
-    hardRules: block(
-      "Rules",
-      "• One video, no cuts, from start to finish.",
-      "• Tick a task only if it shows in the video."
-    ),
     hardBefore: (account) =>
       block(
         account,

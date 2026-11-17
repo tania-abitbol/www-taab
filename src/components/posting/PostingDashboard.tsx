@@ -870,7 +870,6 @@ export const PostingDashboard = ({
             lang={lang}
             date={plan.date}
             done={state.checks}
-            counts={counts}
             progressLabel={ui.progress}
             clip={plan.date === BILAN_DATE && guide ? <BilanPlayer file={guide} /> : null}
             banner={(check) => (

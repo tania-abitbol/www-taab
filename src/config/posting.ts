@@ -279,7 +279,6 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
     const total = (accountIndex: number) => SESSION_TOTALS[plan.date]?.[accountIndex] ?? 0;
     const engage = plan.date === "2026-11-09" ? say.engageMore : undefined;
     const checks = [
-      ...(hard ? [{ ...task("rules", say.hardRules), banner: true }] : []),
       ...[...steps]
       .sort((a, b) => a.account - b.account)
       .flatMap((step) => {

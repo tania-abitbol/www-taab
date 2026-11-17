@@ -3,13 +3,12 @@ import { useState } from "react";
 import { accountWord, type CheckItem, type PostingLang } from "~/config/posting";
 import { ACCOUNT_TONE, accountGroups, actionLabel } from "~/components/posting/accountTone";
 
-/** One collapsible step per account. The first unfinished step opens by itself. */
+/** One collapsible step per account. The first unfinished step opens by itself. Progress shows every box, not only the ones that gate validation. */
 export const Checklist = ({
   checks,
   lang,
   date,
   done,
-  counts,
   item,
   banner,
   clip,
@@ -19,7 +18,6 @@ export const Checklist = ({
   lang: PostingLang;
   date: string;
   done: Record<string, boolean>;
-  counts: (check: CheckItem) => boolean;
   item: (check: CheckItem, label: string) => JSX.Element;
   banner: (check: CheckItem) => JSX.Element;
   clip?: JSX.Element | null;
@@ -27,7 +25,7 @@ export const Checklist = ({
 }) => {
   const groups = accountGroups(checks);
   const tally = (items: CheckItem[]) => {
-    const counted = items.filter(counts);
+    const counted = items.filter((check) => !check.banner);
     return { done: counted.filter((check) => done[check.id] === true).length, total: counted.length };
   };
   const [open, setOpen] = useState<Set<number>>(() => {

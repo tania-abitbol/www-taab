@@ -448,19 +448,7 @@ assert.equal(saturdayNext.find((item) => item.id === "after-us").label.includes(
 assert.ok(sundayNext.find((item) => item.id === "after-us").label.includes("post d'hier"));
 for (const plan of DAY_PLANS.filter((item) => item.date >= "2026-11-12" && item.date <= "2026-11-15")) {
   const fr = checksFor(plan);
-  assert.equal(fr[0].id, "rules", plan.date);
-  assert.equal(fr[0].banner, true, plan.date);
-  assert.ok(fr[0].label.includes("sans coupure"), plan.date);
-  assert.ok(fr[0].label.includes("Coche une tâche seulement si on la voit dans la vidéo."), plan.date);
-  assert.equal(fr[0].label.includes("préviens-moi tout de suite"), false, plan.date);
-  assert.equal(fr[0].label.includes("photo qui ne se télécharge pas"), false, plan.date);
-  assert.equal(checksFor(plan, "es")[0].label.includes("avísame enseguida"), false, plan.date);
-  assert.equal(checksFor(plan, "en")[0].label.includes("tell me right away"), false, plan.date);
-  assert.equal(fr[0].label.includes("payée"), false, plan.date);
-  assert.equal(checksFor(plan, "es")[0].label.includes("no se paga"), false, plan.date);
-  assert.equal(checksFor(plan, "en")[0].label.includes("not paid"), false, plan.date);
-  assert.ok(checksFor(plan, "es")[0].label.includes("sin cortes"), plan.date);
-  assert.ok(checksFor(plan, "en")[0].label.includes("no cuts"), plan.date);
+  assert.equal(fr.some((item) => item.id === "rules" || item.banner), false, plan.date);
   const count = plan.date === "2026-11-12" ? 35 : plan.date === "2026-11-13" ? 45 : plan.date === "2026-11-14" ? 55 : 65;
   for (const id of ["fr", "es", "us"]) {
     const post = fr.find((item) => item.id === `post-${id}`);
@@ -617,7 +605,7 @@ for (const name of ["Ghada - FR", "Peches - ES", "Karol - US"]) {
       assert.equal(timedMinutes(checks), 60, name);
       assert.deepEqual(
         checks.map((item) => item.id),
-        ["rules", "before-fr", "post-fr", "after-fr", "before-es", "post-es", "after-es", "before-us", "post-us", "after-us"],
+        ["before-fr", "post-fr", "after-fr", "before-es", "post-es", "after-es", "before-us", "post-us", "after-us"],
       );
       continue;
     }
