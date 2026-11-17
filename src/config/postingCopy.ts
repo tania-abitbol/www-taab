@@ -203,6 +203,7 @@ const phrases: Record<PostingLang, Phrases> = {
       block(
         account,
         "Engagement avant.",
+        "• Va sur ton post d'hier. S'il y a des commentaires, réponds à chacun.",
         "• Pour toi : regarde chaque vidéo 5 à 10 secondes. Ne fais pas défiler toutes les 2 secondes.",
         "• Like seulement ce qui te plaît vraiment, de créateurs de ton pays, jamais à la chaîne.",
         "• Au moins 3 commentaires et 2 réponses à des commentaires."
@@ -482,6 +483,7 @@ const phrases: Record<PostingLang, Phrases> = {
       block(
         account,
         "Interacción antes.",
+        "• Ve a tu publicación de ayer. Si hay comentarios, responde a cada uno.",
         "• Ve a Para ti y mira cada vídeo de 5 a 10 segundos. No deslices cada 2 segundos.",
         "• Like solo lo que de verdad te guste, de creadores de tu país, nunca varios seguidos.",
         "• Al menos 3 comentarios y 2 respuestas a comentarios."
@@ -760,6 +762,7 @@ const phrases: Record<PostingLang, Phrases> = {
       block(
         account,
         "Engage before.",
+        "• Go to yesterday's post. If there are comments, reply to each one.",
         "• Go to For You and watch each video for 5 to 10 seconds. Do not swipe every 2 seconds.",
         "• Like only what you really like, from creators in your country, never back to back.",
         "• At least 3 comments and 2 replies to comments."

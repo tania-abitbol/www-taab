@@ -850,4 +850,10 @@ assert.equal(slideDateOk("2026-11-23"), false);
 for (const lang of ["fr", "es", "en"]) {
   for (const key of ["proofDrop", "proofDropHint", "proofDropReplace", "proofDropActive", "proofDropWrong"]) assert.ok(postingUi(lang)[key].length > 0, `${lang} ${key}`);
 }
+for (const plan of DAY_PLANS.filter((item) => item.date >= "2026-11-17")) {
+  assert.ok(checksFor(plan, "fr").find((item) => item.id === "before-fr").label.includes("Va sur ton post d'hier. S'il y a des commentaires, réponds à chacun."), plan.date);
+  assert.ok(checksFor(plan, "es").find((item) => item.id === "before-us").label.includes("responde a cada uno"), plan.date);
+  assert.ok(checksFor(plan, "en").find((item) => item.id === "before-es").label.includes("reply to each one"), plan.date);
+  assert.equal(timedMinutes(checksFor(plan)), 60, plan.date);
+}
 console.log("posting codes ok");
