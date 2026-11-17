@@ -156,7 +156,16 @@ const WEEK_STEPS: Record<string, WeekStep[]> = {
     { account: 1, kind: "post" },
     { account: 2, kind: "post" },
   ],
+  ...Object.fromEntries(
+    ["2026-11-17", "2026-11-18", "2026-11-19", "2026-11-20", "2026-11-21", "2026-11-22"].map((date) => [
+      date,
+      [0, 1, 2].map((account) => ({ account, kind: "post" })) as WeekStep[],
+    ]),
+  ),
 };
+
+/** From Tuesday 17 Nov every account engages, posts, engages. No follow targets. */
+const STEADY_FROM = "2026-11-17";
 
 const publishersOn = (date: string) =>
   (WEEK_STEPS[date] ?? []).filter((step) => step.kind === "post").map((step) => ACCOUNTS[step.account].id);
@@ -317,6 +326,13 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
         ];
       }
       if (step.kind === "post") {
+        if (plan.date >= STEADY_FROM) {
+          return [
+            task(`before-${id}`, say.weekBefore(account), POST_WARM_BEFORE_MINUTES),
+            task(`post-${id}`, id === "us" ? say.weekVideoPost(account) : say.weekPost(account), POST_PUBLISH_MINUTES),
+            task(`after-${id}`, say.weekAfter(account, publishersOn(previousIso(plan.date)).includes(id)), POST_WARM_AFTER_MINUTES),
+          ];
+        }
         if (hard) {
           const count = total(step.account);
           const reply = publishersOn(previousIso(plan.date)).includes(id);

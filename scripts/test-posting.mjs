@@ -601,16 +601,15 @@ for (const name of ["Ghada - FR", "Peches - ES", "Karol - US"]) {
   );
   for (const plan of workerVisiblePlans(name, mondayMorning)) {
     const checks = checksFor(plan, langFromName(name));
-    if (plan.date === "2026-11-16") {
-      assert.equal(timedMinutes(checks), 60, name);
-      assert.deepEqual(
-        checks.map((item) => item.id),
-        ["before-fr", "post-fr", "after-fr", "before-es", "post-es", "after-es", "before-us", "post-us", "after-us"],
-      );
-      continue;
-    }
-    assert.equal(checks.length, 0, `${name} ${plan.date}`);
+    assert.equal(timedMinutes(checks), 60, `${name} ${plan.date}`);
+    assert.deepEqual(
+      checks.map((item) => item.id),
+      ["before-fr", "post-fr", "after-fr", "before-es", "post-es", "after-es", "before-us", "post-us", "after-us"],
+      `${name} ${plan.date}`,
+    );
+    if (plan.date === "2026-11-16") continue;
     assert.equal(checks.some((item) => item.goal), false, `${name} ${plan.date}`);
+    assert.equal(checks.some((item) => /abonnements ou plus|seguidos o más|follows or more/.test(item.label)), false, `${name} ${plan.date}`);
   }
 }
 const mondayPlan = DAY_PLANS.find((plan) => plan.date === "2026-11-16");
@@ -646,8 +645,7 @@ assert.ok(mondayEn.find((item) => item.id === "post-us").label.includes("No musi
 assert.ok(mondayEn.find((item) => item.id === "post-fr").label.includes("Download it here."));
 assert.ok(mondayFr.find((item) => item.id === "after-fr").label.includes("Reste 7 minutes sur Pour toi"));
 assert.ok(mondayFr.find((item) => item.id === "after-us").label.includes("post d'hier"));
-assert.equal(checksFor(DAY_PLANS.find((plan) => plan.date === "2026-11-17")).length, 0);
-assert.equal(checksFor(DAY_PLANS.find((plan) => plan.date === "2026-11-22")).length, 0);
+assert.equal(checksFor(DAY_PLANS.find((plan) => plan.date === "2026-11-17")).length, 9);
 const tuesdayMorning = new Date("2026-11-17T09:00:00Z");
 for (const name of ["Ghada - FR", "Peches - ES", "Karol - US"]) {
   assert.equal(workerVisiblePlans(name, tuesdayMorning)[0].date, "2026-11-16", name);
@@ -674,7 +672,7 @@ assert.ok(postingUi("en").catchupTitle.includes("Videos"));
 assert.equal(openPlans("2026-11-06").some((plan) => plan.date === "2026-11-15"), true);
 assert.equal(openPlans("2026-11-09").some((plan) => plan.date < "2026-11-09"), false);
 assert.equal(openPlans("2026-11-09")[0].date, "2026-11-09");
-assert.equal(openPlans("2026-11-09").at(-1).date, "2026-11-16");
+assert.equal(openPlans("2026-11-09").at(-1).date, "2026-11-22");
 assert.deepEqual(suiviDates("2026-11-09"), ["2026-11-06", "2026-11-07", "2026-11-08", "2026-11-09"]);
 
 const state = emptyDayState();
@@ -835,4 +833,18 @@ const { adminCopy, slideCopy, sundayCatchupCopy } = await import("../src/config/
 assert.equal(adminCopy.dayValidated(2, 3), "2/3 validées");
 assert.equal(slideCopy.fr.videoDownload, "Télécharger la vidéo");
 assert.ok(sundayCatchupCopy.body.includes("10 GB"));
+const steadyDay = DAY_PLANS.find((plan) => plan.date === "2026-11-18");
+assert.deepEqual(steadyDay.publishers, ["fr", "es", "us"]);
+const steadyFr = checksFor(steadyDay, "fr");
+assert.ok(steadyFr.find((item) => item.id === "post-fr").label.includes("Tu le télécharges ici."));
+assert.ok(steadyFr.find((item) => item.id === "post-es").label.includes("musique TikTok tendance"));
+assert.ok(steadyFr.find((item) => item.id === "post-us").label.includes("Tu télécharges la vidéo ici."));
+assert.ok(steadyFr.find((item) => item.id === "post-us").label.includes("jamais avec seulement le son original"));
+assert.ok(checksFor(steadyDay, "en").find((item) => item.id === "post-us").label.includes("Never post with only the original sound."));
+assert.ok(checksFor(steadyDay, "es").find((item) => item.id === "post-us").label.includes("sonido original"));
+assert.equal(DAY_PLANS[DAY_PLANS.length - 1].date, "2026-11-22");
+assert.equal(checksFor(DAY_PLANS[DAY_PLANS.length - 1]).length, 9);
+const { slideDateOk } = await import("../src/config/slideBoard.ts");
+assert.equal(slideDateOk("2026-11-22"), true);
+assert.equal(slideDateOk("2026-11-23"), false);
 console.log("posting codes ok");

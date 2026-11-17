@@ -49,7 +49,7 @@ import { SaveStatus, type SaveState } from "~/components/posting/SaveStatus";
 import { SlotPicker } from "~/components/posting/SlotPicker";
 import { WorkerView } from "~/components/posting/WorkerView";
 import { BILAN_MAX_BYTES } from "~/config/bilanVideo";
-import { slideshowOf, type SlideBoard, type SlideImage } from "~/config/slideBoard";
+import { SLIDE_FROM, SLIDE_UNTIL, slideshowOf, type SlideBoard, type SlideImage } from "~/config/slideBoard";
 import { zipStoredFiles } from "~/config/slideZip";
 import { leavePosting } from "~/app/dashboard/creator/actions";
 import { addManagedProfile, commitProof, deleteManagedProfile, deleteValidatedDay, dropSharedSlide, loadSharedSlides, prepareProofUpload, publishSlideCaption, publishSlides, saveManagedProfile, saveMyDay } from "~/app/posting/actions";
@@ -62,8 +62,6 @@ import { readSharedFile, saveDownload, uploadBilan, uploadProof, uploadSlideFile
 import { adminCopy, slideCopy, sundayCatchupCopy } from "~/config/postingCopy";
 
 const proofKey = (personId: string, date: string) => `proof:${personId}:${date}`;
-const SLIDES_FROM = "2026-11-10";
-const SLIDES_UNTIL = "2026-11-16";
 
 const slideKey = (date: string, profileId: string, index = 0) => `tania:${date}:${profileId}:${index}`;
 const legacySlideKey = (date: string, accountId: string) => `tania:${date}:${accountId}`;
@@ -239,7 +237,7 @@ export const PostingDashboard = ({
               }
             }
             if (role !== "tania" || cancelled) continue;
-            if (date < SLIDES_FROM || date > SLIDES_UNTIL || !/^p[a-z0-9-]{1,40}__(fr|es|us)$/.test(accountId)) continue;
+            if (date < SLIDE_FROM || date > SLIDE_UNTIL || !/^p[a-z0-9-]{1,40}__(fr|es|us)$/.test(accountId)) continue;
             try {
               const caption = loaded.captions?.[date]?.[accountId];
               if (caption && shared.captions[date]?.[accountId] === undefined) {
@@ -712,7 +710,7 @@ export const PostingDashboard = ({
         <label htmlFor={`upload-${plan.date}-${storageId}`} className="block font-title text-xl leading-none tracking-tight" style={{ color: ACCOUNT_TONE[index].ink }}>
           {title}
         </label>
-        {video ? <p className="mt-1 font-body text-sm leading-relaxed text-gray-700">{adminCopy.videoOnly}</p> : null}
+        {video ? <p className="mt-1 font-body text-sm leading-relaxed text-gray-700">{plan.date === ACTIVE_WEEK_START ? adminCopy.videoOnly : adminCopy.videoTrending}</p> : null}
         <input
           id={`upload-${plan.date}-${storageId}`}
           type="file"
@@ -782,7 +780,7 @@ export const PostingDashboard = ({
         ) : (
           <p className="mt-2 font-body text-sm text-gray-700">{adminCopy.noProof}</p>
         )}
-        {plan.date >= SLIDES_FROM && plan.date <= SLIDES_UNTIL && plan.publishers.length > 0 ? (
+        {plan.date >= SLIDE_FROM && plan.date <= SLIDE_UNTIL && plan.publishers.length > 0 ? (
           <div className="mt-3 flex flex-col gap-3">
             {ACCOUNTS.map((account, index) => (plan.publishers.includes(account.id) ? slideCard(plan, worker, account, index) : null))}
           </div>
@@ -793,7 +791,7 @@ export const PostingDashboard = ({
 
   const slideActions = (plan: DayPlan, check: CheckItem): SlideLineActions | undefined => {
     const accountId = check.id.startsWith("post-") ? check.id.slice(5) : "";
-    if (!person || !accountId || plan.date < SLIDES_FROM || plan.date > SLIDES_UNTIL || !plan.publishers.includes(accountId)) return undefined;
+    if (!person || !accountId || plan.date < SLIDE_FROM || plan.date > SLIDE_UNTIL || !plan.publishers.includes(accountId)) return undefined;
     const storageId = slideStorageId(person.id, accountId);
     const shared = slideshowOf(board, plan.date, storageId);
     const names = shared.length > 0 ? shared.map((image) => image.name) : desk.taniaFiles[plan.date]?.[storageId] ?? [];

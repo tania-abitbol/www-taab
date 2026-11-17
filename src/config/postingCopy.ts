@@ -32,6 +32,10 @@ type Phrases = {
   hardBefore: (account: string) => string;
   hardPost: (account: string) => string;
   videoPost: (account: string) => string;
+  weekBefore: (account: string) => string;
+  weekPost: (account: string) => string;
+  weekVideoPost: (account: string) => string;
+  weekAfter: (account: string, reply: boolean) => string;
   hardAfter: (account: string, count: number, reply: boolean) => string;
   hardWarm: (account: string, count: number, reply: boolean) => string;
   hardProfileWarm: (account: string, count: number, reply: boolean) => string;
@@ -194,6 +198,44 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Copie cette description, puis colle-la.",
         "• Appuie sur Publier. Si ça rate, recommence tout de suite, avant de changer de compte.",
         "• Montre la vidéo dans la grille."
+      ),
+    weekBefore: (account) =>
+      block(
+        account,
+        "Engagement avant.",
+        "• Pour toi : regarde chaque vidéo 5 à 10 secondes. Ne fais pas défiler toutes les 2 secondes.",
+        "• Like seulement ce qui te plaît vraiment, de créateurs de ton pays, jamais à la chaîne.",
+        "• Au moins 3 commentaires et 2 réponses à des commentaires."
+      ),
+    weekPost: (account) =>
+      block(
+        account,
+        "Publication du diaporama.",
+        "• Prépare le diaporama et la description avant d'enregistrer.",
+        "• Tu le télécharges ici.",
+        "• Ajoute une musique TikTok tendance.",
+        "• Copie cette description, puis colle-la.",
+        "• Appuie sur Publier. Si ça rate, recommence tout de suite, avant de changer de compte.",
+        "• Montre la vidéo dans la grille."
+      ),
+    weekVideoPost: (account) =>
+      block(
+        account,
+        "Publication de la vidéo.",
+        "• Prépare la vidéo et la description avant d'enregistrer.",
+        "• Tu télécharges la vidéo ici.",
+        "• Ajoute au minimum une musique TikTok tendance. Ne poste jamais avec seulement le son original.",
+        "• Copie cette description, puis colle-la.",
+        "• Appuie sur Publier. Si ça rate, recommence tout de suite, avant de changer de compte.",
+        "• Montre la vidéo dans la grille."
+      ),
+    weekAfter: (account, reply) =>
+      block(
+        account,
+        "Engagement après.",
+        "• Reste 7 minutes sur Pour toi : regarde, like ce qui te plaît, commente.",
+        "• Au moins 3 commentaires et 2 réponses à des commentaires.",
+        reply ? "• Réponds aux commentaires sous le post d'hier." : undefined
       ),
     hardAfter: (account, count, reply) =>
       block(
@@ -436,6 +478,44 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Pulsa Publicar. Si falla, inténtalo otra vez enseguida, antes de cambiar de cuenta.",
         "• Muestra el vídeo en la cuadrícula."
       ),
+    weekBefore: (account) =>
+      block(
+        account,
+        "Interacción antes.",
+        "• Ve a Para ti y mira cada vídeo de 5 a 10 segundos. No deslices cada 2 segundos.",
+        "• Like solo lo que de verdad te guste, de creadores de tu país, nunca varios seguidos.",
+        "• Al menos 3 comentarios y 2 respuestas a comentarios."
+      ),
+    weekPost: (account) =>
+      block(
+        account,
+        "Publicación del carrusel.",
+        "• Prepara el carrusel y la descripción antes de grabar.",
+        "• Lo descargas aquí.",
+        "• Añade una música de TikTok que esté de moda.",
+        "• Copia esta descripción, luego pégala.",
+        "• Pulsa Publicar. Si falla, inténtalo otra vez enseguida, antes de cambiar de cuenta.",
+        "• Muestra el vídeo en la cuadrícula."
+      ),
+    weekVideoPost: (account) =>
+      block(
+        account,
+        "Publicación del vídeo.",
+        "• Prepara el vídeo y la descripción antes de grabar.",
+        "• Descargas el vídeo aquí.",
+        "• Añade como mínimo una música de TikTok que esté de moda. Nunca publiques solo con el sonido original.",
+        "• Copia esta descripción, luego pégala.",
+        "• Pulsa Publicar. Si falla, inténtalo otra vez enseguida, antes de cambiar de cuenta.",
+        "• Muestra el vídeo en la cuadrícula."
+      ),
+    weekAfter: (account, reply) =>
+      block(
+        account,
+        "Interacción después.",
+        "• Quédate 7 minutos en Para ti: mira, dale like a lo que te guste, comenta.",
+        "• Al menos 3 comentarios y 2 respuestas a comentarios.",
+        reply ? "• Responde a los comentarios de la publicación de ayer." : undefined
+      ),
     hardAfter: (account, count, reply) =>
       block(
         account,
@@ -675,6 +755,44 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Copy this caption, then paste it.",
         "• Tap Post. If it fails, try again right away, before you switch accounts.",
         "• Show the video in the grid."
+      ),
+    weekBefore: (account) =>
+      block(
+        account,
+        "Engage before.",
+        "• Go to For You and watch each video for 5 to 10 seconds. Do not swipe every 2 seconds.",
+        "• Like only what you really like, from creators in your country, never back to back.",
+        "• At least 3 comments and 2 replies to comments."
+      ),
+    weekPost: (account) =>
+      block(
+        account,
+        "Post the slideshow.",
+        "• Get the slideshow and the caption ready before you record.",
+        "• Download it here.",
+        "• Add a trending TikTok sound.",
+        "• Copy this caption, then paste it.",
+        "• Tap Post. If it fails, try again right away, before you switch accounts.",
+        "• Show the video in the grid."
+      ),
+    weekVideoPost: (account) =>
+      block(
+        account,
+        "Post the video.",
+        "• Get the video and the caption ready before you record.",
+        "• Download the video here.",
+        "• Add at least a trending TikTok sound. Never post with only the original sound.",
+        "• Copy this caption, then paste it.",
+        "• Tap Post. If it fails, try again right away, before you switch accounts.",
+        "• Show the video in the grid."
+      ),
+    weekAfter: (account, reply) =>
+      block(
+        account,
+        "Engage after.",
+        "• Stay on For You for 7 minutes: watch, like what you enjoy, comment.",
+        "• At least 3 comments and 2 replies to comments.",
+        reply ? "• Reply to comments on yesterday's post." : undefined
       ),
     hardAfter: (account, count, reply) =>
       block(
@@ -980,6 +1098,7 @@ export const adminCopy = {
   deleteDay: "Supprimer ce jour",
   deleteDayFail: "Le jour n'a pas été supprimé. Réessaie.",
   videoOnly: "Une vidéo, pas des photos. Pas de musique.",
+  videoTrending: "Une vidéo, pas des photos. Elle ajoute une musique tendance avant de poster.",
   remove: "Retirer",
   removeFile: (name: string) => `Retirer ${name}`,
   captionPlaceholder: "Description du jour",
