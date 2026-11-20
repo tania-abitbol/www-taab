@@ -14,10 +14,11 @@ export const SUNDAY_WARM_MINUTES = 20;
 export const PROFILE_SETUP_MINUTES = 10;
 export const PROFILE_WARM_MINUTES = 10;
 export const ACCOUNT_BLOCK_MINUTES = 20;
-/** A posting account, from Tuesday 10 Nov, splits its 20 minutes into a warm-up, the slideshow, then a warm-up. */
+/** A posting account: engage, publish, engage. 8 + 3 + 7 = 18 minutes. */
 export const POST_WARM_BEFORE_MINUTES = 8;
-export const POST_PUBLISH_MINUTES = 5;
+export const POST_PUBLISH_MINUTES = 3;
 export const POST_WARM_AFTER_MINUTES = 7;
+export const POST_ACCOUNT_MINUTES = POST_WARM_BEFORE_MINUTES + POST_PUBLISH_MINUTES + POST_WARM_AFTER_MINUTES;
 
 export const SLOTS = [
   { id: "17-18", label: "17:00–18:00", short: "17–18" },
@@ -329,7 +330,7 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
         if (plan.date >= STEADY_FROM) {
           return [
             task(`before-${id}`, say.weekBefore(account), POST_WARM_BEFORE_MINUTES),
-            task(`post-${id}`, id === "us" ? say.weekVideoPost(account) : say.weekPost(account), POST_PUBLISH_MINUTES),
+            task(`post-${id}`, say.weekPost(account), POST_PUBLISH_MINUTES),
             task(`after-${id}`, say.weekAfter(account, publishersOn(previousIso(plan.date)).includes(id)), POST_WARM_AFTER_MINUTES),
           ];
         }
@@ -345,7 +346,7 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
             ),
             task(
               `post-${id}`,
-              plan.date >= ACTIVE_WEEK_START && id === "us" ? say.videoPost(account) : say.hardPost(account),
+              plan.date >= ACTIVE_WEEK_START ? say.weekPost(account) : say.hardPost(account),
               POST_PUBLISH_MINUTES,
             ),
             task(

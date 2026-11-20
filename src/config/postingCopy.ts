@@ -173,69 +173,69 @@ const phrases: Record<PostingLang, Phrases> = {
         account,
         "Échauffement avant.",
         "• Montre ton profil : le nombre d'abonnements de départ doit être lisible.",
-        "• Pour toi : regarde chaque vidéo 5 à 10 secondes. Ne fais pas défiler toutes les 2 secondes.",
+        "• Pour toi : regarde chaque vidéo 5 à 10 secondes. Ne scrolle pas trop vite : reste au moins 5 secondes sur chaque vidéo.",
         "• Like seulement ce qui te plaît vraiment, de créateurs de ton pays, pas les plus connus tout le temps, jamais à la chaîne.",
         "• Au moins 3 commentaires, 2 réponses à des commentaires, et plusieurs abonnements."
       ),
     hardPost: (account) =>
       block(
         account,
-        "Publication.",
+        "Publication du diaporama.",
         "• Prépare le diaporama et la description avant d'enregistrer.",
-        "• Tu le télécharges ici.",
-        "• Musique TikTok tendance.",
+        "• Tu télécharges les photos ici.",
+        "• Ajoute une musique TikTok tendance (onglet Populaire), volume audible. Ne poste jamais avec seulement le son original.",
         "• Copie cette description, puis colle-la.",
         "• Appuie sur Publier. Si ça rate, recommence tout de suite, avant de changer de compte.",
-        "• Montre la vidéo dans la grille."
+        "• Montre le post dans la grille."
       ),
     videoPost: (account) =>
       block(
         account,
-        "Publication.",
-        "• Prépare la vidéo et la description avant d'enregistrer.",
-        "• Tu télécharges la vidéo ici.",
-        "• Pas de musique.",
+        "Publication du diaporama.",
+        "• Prépare le diaporama et la description avant d'enregistrer.",
+        "• Tu télécharges les photos ici.",
+        "• Ajoute une musique TikTok tendance (onglet Populaire), volume audible. Ne poste jamais avec seulement le son original.",
         "• Copie cette description, puis colle-la.",
         "• Appuie sur Publier. Si ça rate, recommence tout de suite, avant de changer de compte.",
-        "• Montre la vidéo dans la grille."
+        "• Montre le post dans la grille."
       ),
     weekBefore: (account) =>
       block(
         account,
         "Engagement avant.",
-        "• Va sur ton post d'hier. S'il y a des commentaires, réponds à chacun.",
-        "• Pour toi : regarde chaque vidéo 5 à 10 secondes. Ne fais pas défiler toutes les 2 secondes.",
-        "• Like seulement ce qui te plaît vraiment, de créateurs de ton pays, jamais à la chaîne.",
-        "• Au moins 3 commentaires et 2 réponses à des commentaires."
+        "• Réponds aux commentaires sous ton post d'hier.",
+        "• Pour toi : Ne scrolle pas trop vite : reste au moins 5 secondes sur chaque vidéo.",
+        "• Like ce qui te plaît, créateurs de ton pays, jamais à la chaîne.",
+        "• Au moins 3 commentaires et 2 réponses."
       ),
     weekPost: (account) =>
       block(
         account,
         "Publication du diaporama.",
         "• Prépare le diaporama et la description avant d'enregistrer.",
-        "• Tu le télécharges ici.",
-        "• Ajoute une musique TikTok tendance.",
+        "• Tu télécharges les photos ici.",
+        "• Ajoute une musique TikTok tendance (onglet Populaire), volume audible. Ne poste jamais avec seulement le son original.",
         "• Copie cette description, puis colle-la.",
-        "• Appuie sur Publier. Si ça rate, recommence tout de suite, avant de changer de compte.",
-        "• Montre la vidéo dans la grille."
+        "• Appuie sur Publier. Si ça rate, recommence avant de changer de compte.",
+        "• Montre le post dans la grille."
       ),
     weekVideoPost: (account) =>
       block(
         account,
-        "Publication de la vidéo.",
-        "• Prépare la vidéo et la description avant d'enregistrer.",
-        "• Tu télécharges la vidéo ici.",
-        "• Ajoute au minimum une musique TikTok tendance. Ne poste jamais avec seulement le son original.",
+        "Publication du diaporama.",
+        "• Prépare le diaporama et la description avant d'enregistrer.",
+        "• Tu télécharges les photos ici.",
+        "• Ajoute une musique TikTok tendance (onglet Populaire), volume audible. Ne poste jamais avec seulement le son original.",
         "• Copie cette description, puis colle-la.",
-        "• Appuie sur Publier. Si ça rate, recommence tout de suite, avant de changer de compte.",
-        "• Montre la vidéo dans la grille."
+        "• Appuie sur Publier. Si ça rate, recommence avant de changer de compte.",
+        "• Montre le post dans la grille."
       ),
     weekAfter: (account, reply) =>
       block(
         account,
         "Engagement après.",
-        "• Reste 7 minutes sur Pour toi : regarde, like ce qui te plaît, commente.",
-        "• Au moins 3 commentaires et 2 réponses à des commentaires.",
+        "• Reste 7 minutes sur Pour toi : regarde, like, commente.",
+        "• Au moins 3 commentaires et 2 réponses.",
         reply ? "• Réponds aux commentaires sous le post d'hier." : undefined
       ),
     hardAfter: (account, count, reply) =>
@@ -275,7 +275,7 @@ const phrases: Record<PostingLang, Phrases> = {
       block(
         account,
         "Échauffement avant.",
-        "• Pour toi : regarde chaque vidéo 5 à 10 secondes. Ne fais pas défiler toutes les 2 secondes.",
+        "• Pour toi : regarde chaque vidéo 5 à 10 secondes. Ne scrolle pas trop vite : reste au moins 5 secondes sur chaque vidéo.",
         "• Like seulement ce qui te plaît vraiment, de créateurs de ton pays, pas les plus connus tout le temps, jamais à la chaîne.",
         "• Au moins 3 commentaires, 2 réponses à des commentaires, et plusieurs abonnements."
       ),
@@ -453,69 +453,69 @@ const phrases: Record<PostingLang, Phrases> = {
         account,
         "Calentamiento antes.",
         "• Muestra tu perfil: el número de seguidos del inicio tiene que leerse bien.",
-        "• Ve a Para ti y mira cada vídeo de 5 a 10 segundos. No deslices cada 2 segundos.",
+        "• Ve a Para ti y mira cada vídeo de 5 a 10 segundos. No hagas scroll demasiado rápido: quédate al menos 5 segundos en cada vídeo.",
         "• Like solo lo que de verdad te guste, de creadores de tu país, no siempre los más conocidos, nunca varios seguidos.",
         "• Al menos 3 comentarios, 2 respuestas a comentarios, y varios seguidos."
       ),
     hardPost: (account) =>
       block(
         account,
-        "Publicación.",
+        "Publicación del carrusel.",
         "• Prepara el carrusel y la descripción antes de grabar.",
-        "• Lo descargas aquí.",
-        "• Música de TikTok que esté de moda.",
+        "• Descargas las fotos aquí.",
+        "• Añade una música de TikTok en tendencia (pestaña Populares), volumen audible. Nunca publiques solo con el sonido original.",
         "• Copia esta descripción, luego pégala.",
         "• Pulsa Publicar. Si falla, inténtalo otra vez enseguida, antes de cambiar de cuenta.",
-        "• Muestra el vídeo en la cuadrícula."
+        "• Muestra el post en la cuadrícula."
       ),
     videoPost: (account) =>
       block(
         account,
-        "Publicación.",
-        "• Prepara el vídeo y la descripción antes de grabar.",
-        "• Descargas el vídeo aquí.",
-        "• Sin música.",
+        "Publicación del carrusel.",
+        "• Prepara el carrusel y la descripción antes de grabar.",
+        "• Descargas las fotos aquí.",
+        "• Añade una música de TikTok en tendencia (pestaña Populares), volumen audible. Nunca publiques solo con el sonido original.",
         "• Copia esta descripción, luego pégala.",
         "• Pulsa Publicar. Si falla, inténtalo otra vez enseguida, antes de cambiar de cuenta.",
-        "• Muestra el vídeo en la cuadrícula."
+        "• Muestra el post en la cuadrícula."
       ),
     weekBefore: (account) =>
       block(
         account,
         "Interacción antes.",
-        "• Ve a tu publicación de ayer. Si hay comentarios, responde a cada uno.",
-        "• Ve a Para ti y mira cada vídeo de 5 a 10 segundos. No deslices cada 2 segundos.",
-        "• Like solo lo que de verdad te guste, de creadores de tu país, nunca varios seguidos.",
-        "• Al menos 3 comentarios y 2 respuestas a comentarios."
+        "• Responde a los comentarios de tu publicación de ayer.",
+        "• Para ti: no hagas scroll demasiado rápido: quédate al menos 5 segundos en cada vídeo.",
+        "• Like a lo que te guste, creadores de tu país, nunca varios seguidos.",
+        "• Al menos 3 comentarios y 2 respuestas."
       ),
     weekPost: (account) =>
       block(
         account,
         "Publicación del carrusel.",
         "• Prepara el carrusel y la descripción antes de grabar.",
-        "• Lo descargas aquí.",
-        "• Añade una música de TikTok que esté de moda.",
+        "• Descargas las fotos aquí.",
+        "• Añade una música de TikTok en tendencia (pestaña Populares), volumen audible. Nunca publiques solo con el sonido original.",
         "• Copia esta descripción, luego pégala.",
-        "• Pulsa Publicar. Si falla, inténtalo otra vez enseguida, antes de cambiar de cuenta.",
-        "• Muestra el vídeo en la cuadrícula."
+        "• Pulsa Publicar. Si falla, inténtalo otra vez antes de cambiar de cuenta.",
+        "• Muestra el post en la cuadrícula."
       ),
     weekVideoPost: (account) =>
       block(
         account,
-        "Publicación del vídeo.",
-        "• Prepara el vídeo y la descripción antes de grabar.",
-        "• Descargas el vídeo aquí.",
-        "• Añade como mínimo una música de TikTok que esté de moda. Nunca publiques solo con el sonido original.",
+        "Publicación del carrusel.",
+        "• Prepara el carrusel y la descripción antes de grabar.",
+        "• Descargas las fotos aquí.",
+        "• Añade una música de TikTok en tendencia (pestaña Populares), volumen audible. Nunca publiques solo con el sonido original.",
         "• Copia esta descripción, luego pégala.",
-        "• Pulsa Publicar. Si falla, inténtalo otra vez enseguida, antes de cambiar de cuenta.",
-        "• Muestra el vídeo en la cuadrícula."
+        "• Pulsa Publicar. Si falla, inténtalo otra vez antes de cambiar de cuenta.",
+        "• Muestra el post en la cuadrícula."
       ),
     weekAfter: (account, reply) =>
       block(
         account,
         "Interacción después.",
-        "• Quédate 7 minutos en Para ti: mira, dale like a lo que te guste, comenta.",
-        "• Al menos 3 comentarios y 2 respuestas a comentarios.",
+        "• Quédate 7 minutos en Para ti: mira, dale like, comenta.",
+        "• Al menos 3 comentarios y 2 respuestas.",
         reply ? "• Responde a los comentarios de la publicación de ayer." : undefined
       ),
     hardAfter: (account, count, reply) =>
@@ -555,7 +555,7 @@ const phrases: Record<PostingLang, Phrases> = {
       block(
         account,
         "Calentamiento antes.",
-        "• Ve a Para ti y mira cada vídeo de 5 a 10 segundos. No deslices cada 2 segundos.",
+        "• Ve a Para ti y mira cada vídeo de 5 a 10 segundos. No hagas scroll demasiado rápido: quédate al menos 5 segundos en cada vídeo.",
         "• Like solo lo que de verdad te guste, de creadores de tu país, no siempre los más conocidos, nunca varios seguidos.",
         "• Al menos 3 comentarios, 2 respuestas a comentarios, y varios seguidos."
       ),
@@ -732,69 +732,69 @@ const phrases: Record<PostingLang, Phrases> = {
         account,
         "Warm-up before.",
         "• Show your profile: the starting follow count has to be easy to read.",
-        "• Go to For You and watch each video for 5 to 10 seconds. Do not swipe every 2 seconds.",
+        "• Go to For You and watch each video for 5 to 10 seconds. Do not scroll too fast: stay at least 5 seconds on each video.",
         "• Like only what you really like, from creators in your country, not the most famous ones all the time, never back to back.",
         "• At least 3 comments, 2 replies to comments, and several follows."
       ),
     hardPost: (account) =>
       block(
         account,
-        "Post.",
+        "Post the slideshow.",
         "• Get the slideshow and the caption ready before you record.",
-        "• Download it here.",
-        "• A trending TikTok sound.",
+        "• Download the photos here.",
+        "• Add a trending TikTok sound (Trending tab), audible volume. Never post with only the original sound.",
         "• Copy this caption, then paste it.",
         "• Tap Post. If it fails, try again right away, before you switch accounts.",
-        "• Show the video in the grid."
+        "• Show the post in the grid."
       ),
     videoPost: (account) =>
       block(
         account,
-        "Post.",
-        "• Get the video and the caption ready before you record.",
-        "• Download the video here.",
-        "• No music.",
+        "Post the slideshow.",
+        "• Get the slideshow and the caption ready before you record.",
+        "• Download the photos here.",
+        "• Add a trending TikTok sound (Trending tab), audible volume. Never post with only the original sound.",
         "• Copy this caption, then paste it.",
         "• Tap Post. If it fails, try again right away, before you switch accounts.",
-        "• Show the video in the grid."
+        "• Show the post in the grid."
       ),
     weekBefore: (account) =>
       block(
         account,
         "Engage before.",
-        "• Go to yesterday's post. If there are comments, reply to each one.",
-        "• Go to For You and watch each video for 5 to 10 seconds. Do not swipe every 2 seconds.",
-        "• Like only what you really like, from creators in your country, never back to back.",
-        "• At least 3 comments and 2 replies to comments."
+        "• Reply to comments on yesterday's post.",
+        "• For You: do not scroll too fast: stay at least 5 seconds on each video.",
+        "• Like what you enjoy, creators from your country, never back to back.",
+        "• At least 3 comments and 2 replies."
       ),
     weekPost: (account) =>
       block(
         account,
         "Post the slideshow.",
         "• Get the slideshow and the caption ready before you record.",
-        "• Download it here.",
-        "• Add a trending TikTok sound.",
+        "• Download the photos here.",
+        "• Add a trending TikTok sound (Trending tab), audible volume. Never post with only the original sound.",
         "• Copy this caption, then paste it.",
-        "• Tap Post. If it fails, try again right away, before you switch accounts.",
-        "• Show the video in the grid."
+        "• Tap Post. If it fails, try again before you switch accounts.",
+        "• Show the post in the grid."
       ),
     weekVideoPost: (account) =>
       block(
         account,
-        "Post the video.",
-        "• Get the video and the caption ready before you record.",
-        "• Download the video here.",
-        "• Add at least a trending TikTok sound. Never post with only the original sound.",
+        "Post the slideshow.",
+        "• Get the slideshow and the caption ready before you record.",
+        "• Download the photos here.",
+        "• Add a trending TikTok sound (Trending tab), audible volume. Never post with only the original sound.",
         "• Copy this caption, then paste it.",
-        "• Tap Post. If it fails, try again right away, before you switch accounts.",
-        "• Show the video in the grid."
+        "• Tap Post. If it fails, try again before you switch accounts.",
+        "• Show the post in the grid."
       ),
     weekAfter: (account, reply) =>
       block(
         account,
         "Engage after.",
-        "• Stay on For You for 7 minutes: watch, like what you enjoy, comment.",
-        "• At least 3 comments and 2 replies to comments.",
+        "• Stay on For You for 7 minutes: watch, like, comment.",
+        "• At least 3 comments and 2 replies.",
         reply ? "• Reply to comments on yesterday's post." : undefined
       ),
     hardAfter: (account, count, reply) =>
@@ -834,7 +834,7 @@ const phrases: Record<PostingLang, Phrases> = {
       block(
         account,
         "Warm-up before.",
-        "• Go to For You and watch each video for 5 to 10 seconds. Do not swipe every 2 seconds.",
+        "• Go to For You and watch each video for 5 to 10 seconds. Do not scroll too fast: stay at least 5 seconds on each video.",
         "• Like only what you really like, from creators in your country, not the most famous ones all the time, never back to back.",
         "• At least 3 comments, 2 replies to comments, and several follows."
       ),
@@ -1052,10 +1052,10 @@ export const slideCopy = {
     button: "Télécharger toutes les images",
     note: "Tu fais le diaporama avec ces images.",
     download: "Télécharger les images",
-    downloadLine: "Tu le télécharges ici.",
-    videoDownload: "Télécharger la vidéo",
-    videoDownloadLine: "Tu télécharges la vidéo ici.",
-    videoWaiting: "La vidéo n'est pas encore là.",
+    downloadLine: "Tu télécharges les photos ici.",
+    videoDownload: "Télécharger les images",
+    videoDownloadLine: "Tu télécharges les photos ici.",
+    videoWaiting: "Les photos ne sont pas encore là.",
     copy: "Copier",
     copyLine: "Copie cette description.",
     copied: "Copié.",
@@ -1065,10 +1065,10 @@ export const slideCopy = {
     button: "Descargar todas las imágenes",
     note: "Haces el carrusel con estas imágenes.",
     download: "Descargar las imágenes",
-    downloadLine: "Lo descargas aquí.",
-    videoDownload: "Descargar el vídeo",
-    videoDownloadLine: "Descargas el vídeo aquí.",
-    videoWaiting: "El vídeo todavía no está.",
+    downloadLine: "Descargas las fotos aquí.",
+    videoDownload: "Descargar las imágenes",
+    videoDownloadLine: "Descargas las fotos aquí.",
+    videoWaiting: "Las fotos todavía no están.",
     copy: "Copiar",
     copyLine: "Copia esta descripción.",
     copied: "Copiado.",
@@ -1078,10 +1078,10 @@ export const slideCopy = {
     button: "Download all the images",
     note: "You make the slideshow with these images.",
     download: "Download the images",
-    downloadLine: "Download it here.",
-    videoDownload: "Download the video",
-    videoDownloadLine: "Download the video here.",
-    videoWaiting: "The video is not here yet.",
+    downloadLine: "Download the photos here.",
+    videoDownload: "Download the images",
+    videoDownloadLine: "Download the photos here.",
+    videoWaiting: "The photos are not here yet.",
     copy: "Copy",
     copyLine: "Copy this caption.",
     copied: "Copied.",
@@ -1109,8 +1109,8 @@ export const adminCopy = {
   dayBrief: "Consignes du jour",
   deleteDay: "Supprimer ce jour",
   deleteDayFail: "Le jour n'a pas été supprimé. Réessaie.",
-  videoOnly: "Une vidéo, pas des photos. Pas de musique.",
-  videoTrending: "Une vidéo, pas des photos. Elle ajoute une musique tendance avant de poster.",
+  videoOnly: "",
+  videoTrending: "",
   remove: "Retirer",
   removeFile: (name: string) => `Retirer ${name}`,
   captionPlaceholder: "Description du jour",

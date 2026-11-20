@@ -704,18 +704,16 @@ export const PostingDashboard = ({
     const shared = board.files[plan.date]?.[storageId] ?? [];
     const names = shared.length > 0 ? shared.map((image) => image.name) : desk.taniaFiles[plan.date]?.[storageId] ?? [];
     const title = accountWord(index, "fr");
-    const video = account.id === "us" && plan.date >= ACTIVE_WEEK_START;
     return (
       <div key={storageId} className="rounded-2xl bg-gray-100 p-3">
         <label htmlFor={`upload-${plan.date}-${storageId}`} className="block font-title text-xl leading-none tracking-tight" style={{ color: ACCOUNT_TONE[index].ink }}>
           {title}
         </label>
-        {video ? <p className="mt-1 font-body text-sm leading-relaxed text-gray-700">{plan.date === ACTIVE_WEEK_START ? adminCopy.videoOnly : adminCopy.videoTrending}</p> : null}
         <input
           id={`upload-${plan.date}-${storageId}`}
           type="file"
-          accept={video ? "video/*" : "image/*,video/*"}
-          multiple={!video}
+          accept="image/*,video/*"
+          multiple
           aria-label={`${title} ${worker.label}`}
           onChange={(event) => void onSlides(plan.date, storageId, event.target.files)}
           className="mt-2 block w-full font-body text-sm"
@@ -796,11 +794,10 @@ export const PostingDashboard = ({
     const shared = slideshowOf(board, plan.date, storageId);
     const names = shared.length > 0 ? shared.map((image) => image.name) : desk.taniaFiles[plan.date]?.[storageId] ?? [];
     const zipKey = `${storageId}-${plan.date}`;
-    const video = accountId === "us" && plan.date >= ACTIVE_WEEK_START;
     return {
       date: zipKey,
-      downloadLabel: video ? slideCopy[lang].videoDownload : slideCopy[lang].download,
-      downloadLine: video ? slideCopy[lang].videoDownloadLine : slideCopy[lang].downloadLine,
+      downloadLabel: slideCopy[lang].download,
+      downloadLine: slideCopy[lang].downloadLine,
       namesCount: names.length,
       busy: zipping === zipKey,
       busyLabel: ui.downloadPreparing,
@@ -810,7 +807,7 @@ export const PostingDashboard = ({
       copyLine: slideCopy[lang].copyLine,
       caption: captionOf(plan.date, storageId),
       emptyCaption: slideCopy[lang].noCaption,
-      waiting: video ? slideCopy[lang].videoWaiting : ui.imagesMissing,
+      waiting: ui.imagesMissing,
     };
   };
 

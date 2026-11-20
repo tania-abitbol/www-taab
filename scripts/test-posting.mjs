@@ -169,13 +169,14 @@ assert.equal(PROFILE_SETUP_MINUTES + PROFILE_WARM_MINUTES + ACCOUNT_BLOCK_MINUTE
 
 assert.equal(accountRole(DAY_PLANS[3], "fr"), "échauffement");
 assert.equal(accountRole(DAY_PLANS[3], "es"), "échauffement");
-assert.equal(POST_WARM_BEFORE_MINUTES + POST_PUBLISH_MINUTES + POST_WARM_AFTER_MINUTES, ACCOUNT_BLOCK_MINUTES);
+assert.equal(POST_WARM_BEFORE_MINUTES + POST_PUBLISH_MINUTES + POST_WARM_AFTER_MINUTES, 18);
+assert.equal(POST_PUBLISH_MINUTES, 3);
 const tuesday = checksFor(DAY_PLANS[4]);
 assert.equal(tuesday[0].minutes, 8);
 assert.ok(tuesday[0].label.startsWith("Compte 1"));
 assert.ok(tuesday[0].label.includes("Échauffement précis."));
 assert.ok(tuesday[0].label.includes("5 comptes d'influenceurs"));
-assert.equal(tuesday[1].minutes, 5);
+assert.equal(tuesday[1].minutes, 3);
 assert.ok(tuesday[1].label.includes("diaporama du jour"));
 assert.ok(tuesday[1].label.includes("Tu le télécharges ici."));
 assert.ok(tuesday[1].label.includes("musique TikTok du moment"));
@@ -305,7 +306,7 @@ assert.equal(tuesdayEn.find((item) => item.id === "warm-us").label.includes("30"
 assert.ok(tuesdayEn.find((item) => item.id === "warm-us").goal.includes("30 or more follows"));
 assert.ok(tuesdayEn.find((item) => item.id === "warm-us").goal.includes("show me the profile"));
 assert.equal(tuesdayEn.find((item) => item.id === "warm-us").label.includes("Tap Post"), false);
-assert.equal(timedMinutes(tuesday), 60);
+assert.equal(timedMinutes(tuesday), 58);
 assert.equal(tuesday.some((item) => /\b(FR|ES|US)\b|16 min 40|seconde/.test(item.label)), false);
 assert.deepEqual(DAY_PLANS[2].publishers, []);
 assert.deepEqual(DAY_PLANS[3].publishers, []);
@@ -320,7 +321,7 @@ assert.equal(DAY_PLANS.slice(3).every((plan) => plan.repeatsDay7 === false), tru
 const wednesday = checksFor(DAY_PLANS[5]);
 assert.equal(wednesday[0].minutes, 8);
 assert.ok(wednesday[0].label.startsWith("Compte 1"));
-assert.equal(wednesday[1].minutes, 5);
+assert.equal(wednesday[1].minutes, 3);
 assert.ok(wednesday[1].label.includes("Appuie sur Publier"));
 assert.equal(wednesday[2].minutes, 7);
 assert.equal(wednesday[3].minutes, 8);
@@ -331,7 +332,7 @@ assert.ok(wednesday[3].label.includes("Va sur la page Pour toi."));
 assert.equal((wednesday[3].label.match(/•/g) || []).length, 1);
 assert.equal(wednesday[3].label.includes("Écris une bio"), false);
 assert.equal(wednesday[3].label.includes("40 abonnements"), false);
-assert.equal(wednesday[4].minutes, 5);
+assert.equal(wednesday[4].minutes, 3);
 assert.ok(wednesday[4].label.includes("Tu le télécharges ici."));
 assert.ok(wednesday[4].label.includes("musique TikTok du moment"));
 assert.ok(wednesday[4].label.includes("Copie cette description."));
@@ -359,7 +360,7 @@ assert.ok(wednesdayEn.find((item) => item.id === "before-es").label.includes("Pr
 assert.ok(wednesdayEn.find((item) => item.id === "post-es").label.includes("Download it here."));
 assert.ok(wednesdayEn.find((item) => item.id === "post-es").label.includes("Copy this caption."));
 assert.ok(wednesdayEn.find((item) => item.id === "after-es").label.includes("Interact in a natural way."));
-assert.equal(timedMinutes(wednesday), 60);
+assert.equal(timedMinutes(wednesday), 56);
 assert.equal(wednesday.some((item) => /\b(FR|ES|US)\b/.test(item.label)), false);
 const thursday = checksFor(DAY_PLANS[6]);
 const fridayNext = checksFor(DAY_PLANS[7]);
@@ -411,7 +412,7 @@ for (const plan of DAY_PLANS.filter((item) => item.date >= "2026-11-10" && item.
     assert.ok(post.label.includes("Tu le télécharges ici."), `${plan.date} ${id}`);
     assert.ok(post.label.includes("musique TikTok du moment"), `${plan.date} ${id}`);
     assert.ok(post.label.includes("Copie cette description."), `${plan.date} ${id}`);
-    assert.equal(post.minutes, 5, `${plan.date} ${id}`);
+    assert.equal(post.minutes, 3, `${plan.date} ${id}`);
     const before = checksFor(plan).find((item) => item.id === `before-${id}`);
     const after = checksFor(plan).find((item) => item.id === `after-${id}`);
     assert.equal(before.minutes, 8, `${plan.date} ${id}`);
@@ -434,7 +435,7 @@ assert.ok(checksFor(DAY_PLANS[6], "es").find((item) => item.id === "before-es").
 assert.equal(checksFor(DAY_PLANS[6], "es").find((item) => item.id === "before-es").label.includes("5 cuentas de influencers"), false);
 assert.ok(checksFor(DAY_PLANS[6], "es").find((item) => item.id === "after-es").label.includes("Cierre obligatorio"));
 assert.equal(checksFor(DAY_PLANS[6]).find((item) => item.id === "warm-us").label.includes("5 comptes d'influenceurs"), false);
-assert.ok(checksFor(DAY_PLANS[6], "es").find((item) => item.id === "post-es").label.includes("Lo descargas aquí."));
+assert.ok(checksFor(DAY_PLANS[6], "es").find((item) => item.id === "post-es").label.includes("Descargas las fotos aquí."));
 assert.ok(checksFor(DAY_PLANS[6], "es").find((item) => item.id === "post-es").label.includes("Copia esta descripción, luego pégala."));
 assert.equal(checksFor(DAY_PLANS[6], "es").find((item) => item.id === "post-us"), undefined);
 assert.ok(checksFor(DAY_PLANS[8], "en").find((item) => item.id === "before-us").label.includes("Go to For You"));
@@ -442,7 +443,7 @@ assert.equal(checksFor(DAY_PLANS[8], "en").find((item) => item.id === "before-us
 assert.equal(checksFor(DAY_PLANS[8], "en").find((item) => item.id === "before-us").label.includes("at least 70 accounts"), false);
 assert.equal(checksFor(DAY_PLANS[8], "en").find((item) => item.id === "after-us").goal, "You need 55 or more follows in total on the account.");
 assert.ok(checksFor(DAY_PLANS[8], "en").find((item) => item.id === "after-us").label.includes("Required ending"));
-assert.ok(checksFor(DAY_PLANS[8], "en").find((item) => item.id === "post-us").label.includes("Download it here."));
+assert.ok(checksFor(DAY_PLANS[8], "en").find((item) => item.id === "post-us").label.includes("Download the photos here."));
 assert.ok(checksFor(DAY_PLANS[8], "en").find((item) => item.id === "post-us").label.includes("Copy this caption, then paste it."));
 assert.equal(saturdayNext.find((item) => item.id === "after-us").label.includes("post d'hier"), false);
 assert.ok(sundayNext.find((item) => item.id === "after-us").label.includes("post d'hier"));
@@ -456,12 +457,12 @@ for (const plan of DAY_PLANS.filter((item) => item.date >= "2026-11-12" && item.
       assert.equal(post, undefined, `${plan.date} ${id}`);
       continue;
     }
-    assert.ok(post.label.includes("Tu le télécharges ici."), `${plan.date} ${id}`);
+    assert.ok(post.label.includes("Tu télécharges les photos ici."), `${plan.date} ${id}`);
     assert.ok(post.label.includes("Copie cette description, puis colle-la."), `${plan.date} ${id}`);
     assert.equal((post.label.match(/Copie cette description/g) || []).length, 1, `${plan.date} ${id}`);
     assert.ok(post.label.includes("Appuie sur Publier"), `${plan.date} ${id}`);
     assert.ok(post.label.includes("dans la grille"), `${plan.date} ${id}`);
-    assert.equal(post.minutes, 5, `${plan.date} ${id}`);
+    assert.equal(post.minutes, 3, `${plan.date} ${id}`);
     const before = fr.find((item) => item.id === `before-${id}`);
     const after = fr.find((item) => item.id === `after-${id}`);
     assert.equal(before.minutes, plan.date === "2026-11-15" ? (id === "us" ? 7 : 6) : 8, `${plan.date} ${id}`);
@@ -522,7 +523,7 @@ assert.equal(bilan.minutes, 5);
 assert.equal(sundayNext.find((item) => item.id === "before-fr").minutes, 6);
 assert.equal(sundayNext.find((item) => item.id === "before-es").minutes, 6);
 assert.equal(sundayNext.find((item) => item.id === "before-us").minutes, 7);
-assert.equal(timedMinutes(sundayNext.filter((item) => item.id !== "bilan")), 55);
+assert.equal(timedMinutes(sundayNext.filter((item) => item.id !== "bilan")), 49);
 assert.equal(bilan.banner, undefined);
 assert.ok(bilan.label.startsWith("Bilan fin de semaine"));
 assert.ok(bilan.label.includes("5 dernières minutes de la vidéo de preuves"));
@@ -548,11 +549,20 @@ for (const plan of DAY_PLANS) {
 assert.equal(checksFor(DAY_PLANS[9], "es").find((item) => item.id === "after-es").goal, "Tienes que tener 65 seguidos o más en total en la cuenta.");
 assert.equal(checksFor(DAY_PLANS[3]).some((item) => item.goal), false);
 assert.equal(checksFor(DAY_PLANS[3]).some((item) => item.label.includes("Focus objectif.")), false);
-assert.equal(timedMinutes(thursday) + timedMinutes(fridayNext) + timedMinutes(saturdayNext) + timedMinutes(sundayNext), 240);
+assert.equal(timedMinutes(thursday) + timedMinutes(fridayNext) + timedMinutes(saturdayNext) + timedMinutes(sundayNext), 220);
+const expectedDayMinutes = {
+  "2026-11-09": 60,
+  "2026-11-10": 58,
+  "2026-11-11": 56,
+  "2026-11-12": 56,
+  "2026-11-13": 56,
+  "2026-11-14": 54,
+  "2026-11-15": 54,
+};
 for (const plan of DAY_PLANS.filter((item) => item.date >= "2026-11-09" && item.date <= "2026-11-15")) {
   for (const lang of ["fr", "es", "en"]) {
     const checks = checksFor(plan, lang);
-    assert.equal(timedMinutes(checks), 60, `${plan.date} ${lang}`);
+    assert.equal(timedMinutes(checks), expectedDayMinutes[plan.date], `${plan.date} ${lang}`);
     assert.equal(checks.some((item) => /\b(FR|ES|US)\b/.test(item.label)), false);
   }
 }
@@ -601,12 +611,13 @@ for (const name of ["Ghada - FR", "Peches - ES", "Karol - US"]) {
   );
   for (const plan of workerVisiblePlans(name, mondayMorning)) {
     const checks = checksFor(plan, langFromName(name));
-    assert.equal(timedMinutes(checks), 60, `${name} ${plan.date}`);
+    assert.equal(timedMinutes(checks), 54, `${name} ${plan.date}`);
     assert.deepEqual(
       checks.map((item) => item.id),
       ["before-fr", "post-fr", "after-fr", "before-es", "post-es", "after-es", "before-us", "post-us", "after-us"],
       `${name} ${plan.date}`,
     );
+    assert.equal(checks.some((item) => /story|Story|historia|Historia/i.test(item.label)), false, `${name} ${plan.date}`);
     if (plan.date === "2026-11-16") continue;
     assert.equal(checks.some((item) => item.goal), false, `${name} ${plan.date}`);
     assert.equal(checks.some((item) => /abonnements ou plus|seguidos o más|follows or more/.test(item.label)), false, `${name} ${plan.date}`);
@@ -616,33 +627,34 @@ const mondayPlan = DAY_PLANS.find((plan) => plan.date === "2026-11-16");
 assert.deepEqual(mondayPlan.publishers, ["fr", "es", "us"]);
 for (const lang of ["fr", "es", "en"]) {
   const checks = checksFor(mondayPlan, lang);
-  assert.equal(timedMinutes(checks), 60, lang);
+  assert.equal(timedMinutes(checks), 54, lang);
   assert.equal(checks.some((item) => item.id === "bilan"), false);
   for (const id of ["fr", "es", "us"]) {
     assert.equal(checks.find((item) => item.id === `before-${id}`).minutes, 8);
-    assert.equal(checks.find((item) => item.id === `post-${id}`).minutes, 5);
+    assert.equal(checks.find((item) => item.id === `post-${id}`).minutes, 3);
     assert.equal(checks.find((item) => item.id === `after-${id}`).minutes, 7);
     assert.equal(checks.find((item) => item.id === `after-${id}`).goal.includes("65"), true);
   }
 }
 const mondayFr = checksFor(mondayPlan, "fr");
 assert.ok(mondayFr.find((item) => item.id === "before-fr").label.includes("Montre ton profil"));
-assert.ok(mondayFr.find((item) => item.id === "post-fr").label.includes("Tu le télécharges ici."));
-assert.ok(mondayFr.find((item) => item.id === "post-fr").label.includes("Musique TikTok tendance."));
+assert.ok(mondayFr.find((item) => item.id === "post-fr").label.includes("Tu télécharges les photos ici."));
+assert.ok(mondayFr.find((item) => item.id === "post-fr").label.includes("Ajoute une musique TikTok tendance (onglet Populaire), volume audible."));
 assert.ok(mondayFr.find((item) => item.id === "post-es").label.includes("diaporama"));
 const mondayUs = mondayFr.find((item) => item.id === "post-us");
-assert.ok(mondayUs.label.includes("Tu télécharges la vidéo ici."));
-assert.ok(mondayUs.label.includes("Pas de musique."));
-assert.equal(mondayUs.label.includes("Musique TikTok"), false);
-assert.equal(mondayUs.label.includes("diaporama"), false);
+assert.ok(mondayUs.label.includes("Tu télécharges les photos ici."));
+assert.ok(mondayUs.label.includes("Ne poste jamais avec seulement le son original."));
+assert.ok(mondayUs.label.includes("Publication du diaporama."));
+assert.equal(mondayUs.label.includes("Pas de musique."), false);
+assert.equal(mondayUs.label.includes("Tu télécharges la vidéo ici."), false);
 const mondayEs = checksFor(mondayPlan, "es");
-assert.ok(mondayEs.find((item) => item.id === "post-us").label.includes("Descargas el vídeo aquí."));
-assert.ok(mondayEs.find((item) => item.id === "post-us").label.includes("Sin música."));
-assert.ok(mondayEs.find((item) => item.id === "post-es").label.includes("Lo descargas aquí."));
+assert.ok(mondayEs.find((item) => item.id === "post-us").label.includes("Descargas las fotos aquí."));
+assert.ok(mondayEs.find((item) => item.id === "post-us").label.includes("sonido original"));
+assert.ok(mondayEs.find((item) => item.id === "post-es").label.includes("Descargas las fotos aquí."));
 const mondayEn = checksFor(mondayPlan, "en");
-assert.ok(mondayEn.find((item) => item.id === "post-us").label.includes("Download the video here."));
-assert.ok(mondayEn.find((item) => item.id === "post-us").label.includes("No music."));
-assert.ok(mondayEn.find((item) => item.id === "post-fr").label.includes("Download it here."));
+assert.ok(mondayEn.find((item) => item.id === "post-us").label.includes("Download the photos here."));
+assert.ok(mondayEn.find((item) => item.id === "post-us").label.includes("Never post with only the original sound."));
+assert.ok(mondayEn.find((item) => item.id === "post-fr").label.includes("Download the photos here."));
 assert.ok(mondayFr.find((item) => item.id === "after-fr").label.includes("Reste 7 minutes sur Pour toi"));
 assert.ok(mondayFr.find((item) => item.id === "after-us").label.includes("post d'hier"));
 assert.equal(checksFor(DAY_PLANS.find((plan) => plan.date === "2026-11-17")).length, 9);
@@ -830,17 +842,28 @@ assert.equal("weekValidated" in postingConfig.emptyDesk(), false);
 assert.equal("validateWeek" in postingUi("fr"), false);
 const { adminCopy, slideCopy, sundayCatchupCopy } = await import("../src/config/postingCopy.ts");
 assert.equal(adminCopy.dayValidated(2, 3), "2/3 validées");
-assert.equal(slideCopy.fr.videoDownload, "Télécharger la vidéo");
+assert.equal(slideCopy.fr.videoDownload, "Télécharger les images");
+assert.equal(slideCopy.fr.downloadLine, "Tu télécharges les photos ici.");
+assert.equal(adminCopy.videoOnly, "");
+assert.equal(adminCopy.videoTrending, "");
 assert.equal(sundayCatchupCopy.body.includes("10 GB"), false);
 const steadyDay = DAY_PLANS.find((plan) => plan.date === "2026-11-18");
 assert.deepEqual(steadyDay.publishers, ["fr", "es", "us"]);
 const steadyFr = checksFor(steadyDay, "fr");
-assert.ok(steadyFr.find((item) => item.id === "post-fr").label.includes("Tu le télécharges ici."));
-assert.ok(steadyFr.find((item) => item.id === "post-es").label.includes("musique TikTok tendance"));
-assert.ok(steadyFr.find((item) => item.id === "post-us").label.includes("Tu télécharges la vidéo ici."));
-assert.ok(steadyFr.find((item) => item.id === "post-us").label.includes("jamais avec seulement le son original"));
+const musicFr =
+  "Ajoute une musique TikTok tendance (onglet Populaire), volume audible. Ne poste jamais avec seulement le son original.";
+for (const id of ["fr", "es", "us"]) {
+  const post = steadyFr.find((item) => item.id === `post-${id}`);
+  assert.ok(post.label.includes("Tu télécharges les photos ici."), id);
+  assert.ok(post.label.includes(musicFr), id);
+  assert.ok(post.label.includes("Publication du diaporama."), id);
+  assert.equal(post.minutes, 3, id);
+  assert.equal(post.label.includes("Story"), false, id);
+}
 assert.ok(checksFor(steadyDay, "en").find((item) => item.id === "post-us").label.includes("Never post with only the original sound."));
+assert.ok(checksFor(steadyDay, "en").find((item) => item.id === "post-us").label.includes("Download the photos here."));
 assert.ok(checksFor(steadyDay, "es").find((item) => item.id === "post-us").label.includes("sonido original"));
+assert.ok(checksFor(steadyDay, "es").find((item) => item.id === "post-us").label.includes("Descargas las fotos aquí."));
 assert.equal(DAY_PLANS[DAY_PLANS.length - 1].date, "2026-11-22");
 assert.equal(checksFor(DAY_PLANS[DAY_PLANS.length - 1]).length, 9);
 const { slideDateOk } = await import("../src/config/slideBoard.ts");
@@ -850,9 +873,11 @@ for (const lang of ["fr", "es", "en"]) {
   for (const key of ["proofDrop", "proofDropHint", "proofDropReplace", "proofDropActive", "proofDropWrong"]) assert.ok(postingUi(lang)[key].length > 0, `${lang} ${key}`);
 }
 for (const plan of DAY_PLANS.filter((item) => item.date >= "2026-11-17")) {
-  assert.ok(checksFor(plan, "fr").find((item) => item.id === "before-fr").label.includes("Va sur ton post d'hier. S'il y a des commentaires, réponds à chacun."), plan.date);
-  assert.ok(checksFor(plan, "es").find((item) => item.id === "before-us").label.includes("responde a cada uno"), plan.date);
-  assert.ok(checksFor(plan, "en").find((item) => item.id === "before-es").label.includes("reply to each one"), plan.date);
-  assert.equal(timedMinutes(checksFor(plan)), 60, plan.date);
+  assert.ok(checksFor(plan, "fr").find((item) => item.id === "before-fr").label.includes("Réponds aux commentaires sous ton post d'hier."), plan.date);
+  assert.ok(checksFor(plan, "fr").find((item) => item.id === "before-fr").label.includes("Ne scrolle pas trop vite : reste au moins 5 secondes sur chaque vidéo."), plan.date);
+  assert.ok(checksFor(plan, "es").find((item) => item.id === "before-us").label.includes("Responde a los comentarios de tu publicación de ayer."), plan.date);
+  assert.ok(checksFor(plan, "en").find((item) => item.id === "before-es").label.includes("Reply to comments on yesterday's post."), plan.date);
+  assert.equal(timedMinutes(checksFor(plan)), 54, plan.date);
+  assert.equal(checksFor(plan).some((item) => item.id.startsWith("story-")), false, plan.date);
 }
 console.log("posting codes ok");
