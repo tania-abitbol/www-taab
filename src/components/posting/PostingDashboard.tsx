@@ -29,7 +29,6 @@ import {
   personMark,
   postingUi,
   showHoursVary,
-  missedProofDate,
   sundayCatchupFor,
   slotsFor,
   taskIsHers,
@@ -327,12 +326,9 @@ export const PostingDashboard = ({
 
   const person = isTania ? null : roster.find((item) => item.id === role) ?? null;
   const people = isTania ? roster : [];
-  const lateDate = person ? missedProofDate(girlName, clock) : null;
-  const lateProofName = lateDate && person ? desk.days[person.id]?.[lateDate]?.proofName ?? null : null;
   const catchupDate = person ? sundayCatchupFor(girlName) : null;
   const catchupProof = catchupDate && person ? desk.days[person.id]?.[catchupDate]?.proofName ?? null : null;
   const showCatchup = Boolean(person && catchupDate && !catchupProof);
-  const showLateProof = Boolean(person && lateDate && lateDate !== ACTIVE_WEEK_END && !lateProofName);
 
   const ownAccount = person ? accountForLang(lang) : "";
 
@@ -1074,30 +1070,6 @@ export const PostingDashboard = ({
               percent={proofNote?.date === catchupDate ? proofNote.percent : 0}
               text={proofNote?.date === catchupDate ? proofNote.text : ""}
               error={proofError?.date === catchupDate ? proofError.text : null}
-            />
-          </section>
-        )}
-
-        {showLateProof && lateDate && (
-          <section id="late-proof" className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
-            <h2 className="font-title text-2xl tracking-tight">{ui.lateProofTitle(formatDay(lateDate, lang))}</h2>
-            <p className="mt-2 font-body text-sm leading-relaxed text-gray-700">{ui.lateProofBody}</p>
-            <input
-              id={`late-proof-${lateDate}`}
-              type="file"
-              accept="video/*"
-              aria-label={ui.lateProofTitle(formatDay(lateDate, lang))}
-              onChange={(event) => void onProof(lateDate, event.target.files?.[0])}
-              className="mt-3 font-body text-sm"
-            />
-            {(proofNote?.date === lateDate && proofNote.name) && (
-              <p className="mt-2 font-body text-sm">{proofNote.name}</p>
-            )}
-            <ProofFeedback
-              active={proofNote?.date === lateDate}
-              percent={proofNote?.date === lateDate ? proofNote.percent : 0}
-              text={proofNote?.date === lateDate ? proofNote.text : ""}
-              error={proofError?.date === lateDate ? proofError.text : null}
             />
           </section>
         )}
