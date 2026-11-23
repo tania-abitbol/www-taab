@@ -3,7 +3,7 @@ export const SLIDE_MAX_BYTES = 25 * 1024 * 1024;
 export const SLIDE_PART_BYTES = 3 * 1024 * 1024;
 export const SLIDE_FROM = "2026-11-10";
 /** Last day of the active week. */
-export const SLIDE_UNTIL = "2026-11-22";
+export const SLIDE_UNTIL = "2026-11-29";
 
 export type SlideImage = { id: string; name: string; type: string };
 

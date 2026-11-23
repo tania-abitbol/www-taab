@@ -1,11 +1,11 @@
-/** Posting desk. The week of 16–22 Nov starts empty. Proof is the recording, never a link. */
+/** Posting desk. The week of 23–29 Nov is on the desk. Proof is the recording, never a link. */
 import { block, taskPhrases } from "~/config/postingCopy";
 
 export { postingUi, taskPhrases } from "~/config/postingCopy";
 
 export const CALENDAR_START = "2026-11-05";
-/** Monday 16 Nov. Days before this stay off the desk. Their tasks remain in the file. */
-export const ACTIVE_WEEK_START = "2026-11-16";
+/** Monday 23 Nov. Days before this stay off the desk. Their tasks remain in the file. */
+export const ACTIVE_WEEK_START = "2026-11-23";
 export const FRIDAY_CREATE_MINUTES = 30;
 export const FRIDAY_WARM_MINUTES = 10;
 export const SATURDAY_ACCOUNT_MINUTES = 20;
@@ -14,10 +14,12 @@ export const SUNDAY_WARM_MINUTES = 20;
 export const PROFILE_SETUP_MINUTES = 10;
 export const PROFILE_WARM_MINUTES = 10;
 export const ACCOUNT_BLOCK_MINUTES = 20;
-/** A posting account: engage, publish, engage. 8 + 3 + 7 = 18 minutes. */
+/** A posting account before 23 Nov: engage, publish, engage. 8 + 3 + 7 = 18 minutes. */
 export const POST_WARM_BEFORE_MINUTES = 8;
 export const POST_PUBLISH_MINUTES = 3;
 export const POST_WARM_AFTER_MINUTES = 7;
+/** Monday to Saturday on the desk. 10 + 3 + 7 = 20 minutes, three accounts = 60. */
+export const WEEK_WARM_BEFORE_MINUTES = 10;
 export const POST_ACCOUNT_MINUTES = POST_WARM_BEFORE_MINUTES + POST_PUBLISH_MINUTES + POST_WARM_AFTER_MINUTES;
 
 export const SLOTS = [
@@ -158,7 +160,21 @@ const WEEK_STEPS: Record<string, WeekStep[]> = {
     { account: 2, kind: "post" },
   ],
   ...Object.fromEntries(
-    ["2026-11-17", "2026-11-18", "2026-11-19", "2026-11-20", "2026-11-21", "2026-11-22"].map((date) => [
+    [
+      "2026-11-17",
+      "2026-11-18",
+      "2026-11-19",
+      "2026-11-20",
+      "2026-11-21",
+      "2026-11-22",
+      "2026-11-23",
+      "2026-11-24",
+      "2026-11-25",
+      "2026-11-26",
+      "2026-11-27",
+      "2026-11-28",
+      "2026-11-29",
+    ].map((date) => [
       date,
       [0, 1, 2].map((account) => ({ account, kind: "post" })) as WeekStep[],
     ]),
@@ -195,8 +211,8 @@ const post = (date: string, index: number): DayPlan => ({
 const addDays = (iso: string, days: number) => new Date(Date.parse(`${iso}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
 
 const FIRST_POST_DAY = "2026-11-09";
-/** The active week runs Monday to Sunday. */
-const ACTIVE_WEEK_END = addDays(ACTIVE_WEEK_START, 6);
+/** The active week runs Monday to Sunday. Sunday is the bilan day. */
+export const ACTIVE_WEEK_END = addDays(ACTIVE_WEEK_START, 6);
 
 export const DAY_PLANS: DayPlan[] = [
   { date: "2026-11-06", index: 1, kind: "friday", repeatsDay7: false, publishers: [] },
@@ -328,8 +344,16 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
       }
       if (step.kind === "post") {
         if (plan.date >= STEADY_FROM) {
+          const before =
+            plan.date === ACTIVE_WEEK_END
+              ? id === "es"
+                ? 9
+                : 8
+              : plan.date >= ACTIVE_WEEK_START
+                ? WEEK_WARM_BEFORE_MINUTES
+                : POST_WARM_BEFORE_MINUTES;
           return [
-            task(`before-${id}`, say.weekBefore(account), POST_WARM_BEFORE_MINUTES),
+            task(`before-${id}`, say.weekBefore(account), before),
             task(`post-${id}`, say.weekPost(account), POST_PUBLISH_MINUTES),
             task(`after-${id}`, say.weekAfter(account, publishersOn(previousIso(plan.date)).includes(id)), POST_WARM_AFTER_MINUTES),
           ];
@@ -346,7 +370,7 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
             ),
             task(
               `post-${id}`,
-              plan.date >= ACTIVE_WEEK_START ? say.weekPost(account) : say.hardPost(account),
+              plan.date >= "2026-11-16" ? say.weekPost(account) : say.hardPost(account),
               POST_PUBLISH_MINUTES,
             ),
             task(
@@ -393,7 +417,7 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
     }),
     ];
     const totals = SESSION_TOTALS[plan.date];
-    if (!totals) return checks;
+    if (!totals) return plan.date === ACTIVE_WEEK_END ? [...checks, task("bilan", say.bilan, 5)] : checks;
     const last = new Map<string, number>();
     checks.forEach((check, index) => {
       const owner = check.id.endsWith("-fr") ? "fr" : check.id.endsWith("-es") ? "es" : check.id.endsWith("-us") ? "us" : "";
@@ -493,7 +517,7 @@ export const calendarDate = (timeZone: string, now = new Date()) =>
     day: "2-digit",
   }).format(now);
 
-/** Days still on a girl's screen. This week stays from Monday 16 so the video can still be downloaded. */
+/** Days still on a girl's screen. This week stays from Monday 23 so the slideshow can still be downloaded. */
 export const workerVisiblePlans = (name: string, now = new Date()) => {
   const today = calendarDate(timeZoneForGirl(name), now);
   const from = today >= ACTIVE_WEEK_START && today <= WORKER_VISIBLE_THROUGH ? ACTIVE_WEEK_START : today;
@@ -537,12 +561,8 @@ export const marketLabel = (name: string) => {
 
 export const girlLabel = (name: string) => `${displayName(name)} · ${marketLabel(name)}`;
 
-/** Karol alone can still send Sunday 15 November after that day has left the desk. */
-export const sundayCatchupFor = (name: string) => {
-  const key = displayName(name).toLowerCase().split(/[\s-–—]/)[0];
-  if (key !== "karol") return null;
-  return BILAN_DATE;
-};
+/** The Sunday 15 Nov catch-up has left the desk. */
+export const sundayCatchupFor = (_name: string) => null;
 
 export const accountWord = (index: number, lang: PostingLang) => {
   const number = index + 1;

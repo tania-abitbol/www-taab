@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   ACCOUNTS,
+  ACTIVE_WEEK_END,
   ACTIVE_WEEK_START,
   CALENDAR_END,
   DAY_PLANS,
@@ -32,7 +33,6 @@ import {
   sundayCatchupFor,
   slotsFor,
   taskIsHers,
-  BILAN_DATE,
   calendarDate,
   timeZoneForGirl,
   girlLabel,
@@ -332,7 +332,7 @@ export const PostingDashboard = ({
   const catchupDate = person ? sundayCatchupFor(girlName) : null;
   const catchupProof = catchupDate && person ? desk.days[person.id]?.[catchupDate]?.proofName ?? null : null;
   const showCatchup = Boolean(person && catchupDate && !catchupProof);
-  const showLateProof = Boolean(person && lateDate && lateDate !== BILAN_DATE && !lateProofName);
+  const showLateProof = Boolean(person && lateDate && lateDate !== ACTIVE_WEEK_END && !lateProofName);
 
   const ownAccount = person ? accountForLang(lang) : "";
 
@@ -869,7 +869,7 @@ export const PostingDashboard = ({
             date={plan.date}
             done={state.checks}
             progressLabel={ui.progress}
-            clip={plan.date === BILAN_DATE && guide ? <BilanPlayer file={guide} /> : null}
+            clip={plan.date === ACTIVE_WEEK_END && guide ? <BilanPlayer file={guide} /> : null}
             banner={(check) => (
               <div className="rounded-2xl border-2 border-black bg-[#FFF3C4] px-3 py-3">
                 <TaskCopy label={check.label} large />
@@ -1143,7 +1143,7 @@ export const PostingDashboard = ({
                   </span>
                 </button>
                 <div id={`admin-day-body-${plan.date}`} hidden={!open} className="px-4 pb-4">
-                {plan.date === BILAN_DATE && (
+                {plan.date === ACTIVE_WEEK_END && (
                   <div className="mt-4 rounded-2xl border-2 border-black bg-[#FFF3C4] px-3 py-3">
                     <h3 className="font-title text-2xl leading-none tracking-tight">{adminCopy.bilanTitle}</h3>
                     <p className="mt-2 font-body text-sm leading-relaxed">

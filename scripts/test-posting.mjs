@@ -537,7 +537,7 @@ assert.ok(checksFor(DAY_PLANS[9], "en").find((item) => item.id === "bilan").labe
 assert.equal(checksFor(DAY_PLANS[9], "es").find((item) => item.id === "before-es").label.includes("80 seguidos"), false);
 for (const plan of DAY_PLANS) {
   const present = checksFor(plan).some((item) => item.id === "bilan");
-  assert.equal(present, plan.date === "2026-11-15", plan.date);
+  assert.equal(present, plan.date === "2026-11-15" || plan.date === "2026-11-29", plan.date);
   for (const lang of ["fr", "es", "en"]) {
     const text = checksFor(plan, lang).map((item) => item.label).join("\n");
     assert.equal(text.includes("préviens-moi tout de suite"), false, `${plan.date} ${lang}`);
@@ -594,33 +594,39 @@ for (const plan of DAY_PLANS.filter((item) => item.date >= "2026-11-09")) {
 const saturdayOpen = openDates("2026-11-07");
 assert.equal(saturdayOpen.includes("2026-11-06"), false);
 assert.equal(saturdayOpen[0], "2026-11-07");
-assert.equal(saturdayOpen[saturdayOpen.length - 1], "2026-11-22");
-assert.equal(WORKER_VISIBLE_THROUGH, "2026-11-22");
-assert.equal(ACTIVE_WEEK_START, "2026-11-16");
-const freshWeek = ["2026-11-16", "2026-11-17", "2026-11-18", "2026-11-19", "2026-11-20", "2026-11-21", "2026-11-22"];
+assert.equal(saturdayOpen[saturdayOpen.length - 1], "2026-11-29");
+assert.equal(WORKER_VISIBLE_THROUGH, "2026-11-29");
+assert.equal(ACTIVE_WEEK_START, "2026-11-23");
+const freshWeek = ["2026-11-23", "2026-11-24", "2026-11-25", "2026-11-26", "2026-11-27", "2026-11-28", "2026-11-29"];
 assert.deepEqual(
   DAY_PLANS.filter((plan) => plan.date >= ACTIVE_WEEK_START).map((plan) => plan.date),
   freshWeek,
 );
 const mondayMorning = new Date("2026-11-16T15:00:00Z");
+const weekMonday = new Date("2026-11-23T15:00:00Z");
 for (const name of ["Ghada - FR", "Peches - ES", "Karol - US"]) {
   assert.deepEqual(
-    workerVisiblePlans(name, mondayMorning).map((plan) => plan.date),
+    workerVisiblePlans(name, weekMonday).map((plan) => plan.date),
     freshWeek,
     name,
   );
-  for (const plan of workerVisiblePlans(name, mondayMorning)) {
+  for (const plan of workerVisiblePlans(name, weekMonday)) {
     const checks = checksFor(plan, langFromName(name));
-    assert.equal(timedMinutes(checks), 54, `${name} ${plan.date}`);
-    assert.deepEqual(
-      checks.map((item) => item.id),
-      ["before-fr", "post-fr", "after-fr", "before-es", "post-es", "after-es", "before-us", "post-us", "after-us"],
-      `${name} ${plan.date}`,
-    );
+    assert.equal(timedMinutes(checks), 60, `${name} ${plan.date}`);
+    const ids = ["before-fr", "post-fr", "after-fr", "before-es", "post-es", "after-es", "before-us", "post-us", "after-us"];
+    if (plan.date === "2026-11-29") ids.push("bilan");
+    assert.deepEqual(checks.map((item) => item.id), ids, `${name} ${plan.date}`);
     assert.equal(checks.some((item) => /story|Story|historia|Historia/i.test(item.label)), false, `${name} ${plan.date}`);
-    if (plan.date === "2026-11-16") continue;
+    assert.equal(checks.some((item) => /17h et 21h|entre 17/.test(item.label)), false, `${name} ${plan.date}`);
     assert.equal(checks.some((item) => item.goal), false, `${name} ${plan.date}`);
     assert.equal(checks.some((item) => /abonnements ou plus|seguidos o más|follows or more/.test(item.label)), false, `${name} ${plan.date}`);
+    for (const id of ["fr", "es", "us"]) {
+      const before = checks.find((item) => item.id === `before-${id}`);
+      const expectedBefore = plan.date === "2026-11-29" ? (id === "es" ? 9 : 8) : 10;
+      assert.equal(before.minutes, expectedBefore, `${name} ${plan.date} ${id}`);
+      assert.equal(checks.find((item) => item.id === `post-${id}`).minutes, 3, `${name} ${plan.date} ${id}`);
+      assert.equal(checks.find((item) => item.id === `after-${id}`).minutes, 7, `${name} ${plan.date} ${id}`);
+    }
   }
 }
 const mondayPlan = DAY_PLANS.find((plan) => plan.date === "2026-11-16");
@@ -658,10 +664,10 @@ assert.ok(mondayEn.find((item) => item.id === "post-fr").label.includes("Downloa
 assert.ok(mondayFr.find((item) => item.id === "after-fr").label.includes("Reste 7 minutes sur Pour toi"));
 assert.ok(mondayFr.find((item) => item.id === "after-us").label.includes("post d'hier"));
 assert.equal(checksFor(DAY_PLANS.find((plan) => plan.date === "2026-11-17")).length, 9);
-const tuesdayMorning = new Date("2026-11-17T09:00:00Z");
+const tuesdayMorning = new Date("2026-11-24T09:00:00Z");
 for (const name of ["Ghada - FR", "Peches - ES", "Karol - US"]) {
-  assert.equal(workerVisiblePlans(name, tuesdayMorning)[0].date, "2026-11-16", name);
-  const post = checksFor(DAY_PLANS.find((plan) => plan.date === "2026-11-16"), langFromName(name)).find((item) => item.id === "post-us");
+  assert.equal(workerVisiblePlans(name, tuesdayMorning)[0].date, "2026-11-23", name);
+  const post = checksFor(DAY_PLANS.find((plan) => plan.date === "2026-11-23"), langFromName(name)).find((item) => item.id === "post-us");
   assert.equal(missedProofDate(name, tuesdayMorning), null, name);
   assert.ok(post.label.length > 0, name);
 }
@@ -669,7 +675,7 @@ assert.equal(missedProofDate("Ghada - FR", mondayMorning), "2026-11-15");
 assert.equal(missedProofDate("Peches - ES", mondayMorning), "2026-11-15");
 assert.equal(sundayCatchupFor("Ghada - FR"), null);
 assert.equal(sundayCatchupFor("Peches - ES"), null);
-assert.equal(sundayCatchupFor("Karol - US"), "2026-11-15");
+assert.equal(sundayCatchupFor("Karol - US"), null);
 assert.deepEqual(suiviDates("2026-11-08"), ["2026-11-06", "2026-11-07", "2026-11-08"]);
 assert.deepEqual(CATCHUP_DATES, ["2026-11-06", "2026-11-07"]);
 assert.equal(postingUi("fr").catchupFriday, "Vidéo du vendredi 6 novembre");
@@ -683,7 +689,7 @@ assert.ok(postingUi("en").catchupTitle.includes("Videos"));
 assert.equal(openPlans("2026-11-06").some((plan) => plan.date === "2026-11-15"), true);
 assert.equal(openPlans("2026-11-09").some((plan) => plan.date < "2026-11-09"), false);
 assert.equal(openPlans("2026-11-09")[0].date, "2026-11-09");
-assert.equal(openPlans("2026-11-09").at(-1).date, "2026-11-22");
+assert.equal(openPlans("2026-11-09").at(-1).date, "2026-11-29");
 assert.deepEqual(suiviDates("2026-11-09"), ["2026-11-06", "2026-11-07", "2026-11-08", "2026-11-09"]);
 
 const state = emptyDayState();
@@ -727,8 +733,8 @@ assert.equal(missedProofDate("Peches - ES", wednesdayAfternoon), "2026-11-10");
 assert.equal(missedProofDate("Karol - US", stillMondayInNewYork), "2026-11-08");
 assert.equal(missedProofDate("Karol - US", tuesdayInNewYork), "2026-11-09");
 assert.equal(missedProofDate("Ghada - FR", new Date("2026-11-06T12:00:00Z")), null);
-assert.equal(sundayCatchupFor("Karol - US"), "2026-11-15");
-assert.equal(sundayCatchupFor("Karol - EN"), "2026-11-15");
+assert.equal(sundayCatchupFor("Karol - US"), null);
+assert.equal(sundayCatchupFor("Karol - EN"), null);
 assert.equal(sundayCatchupFor("Ghada - FR"), null);
 assert.equal(sundayCatchupFor("Peches - ES"), null);
 assert.ok(postingUi("en").lateProofTitle("Tuesday, November 10").includes("Yesterday"));
@@ -864,11 +870,12 @@ assert.ok(checksFor(steadyDay, "en").find((item) => item.id === "post-us").label
 assert.ok(checksFor(steadyDay, "en").find((item) => item.id === "post-us").label.includes("Download the photos here."));
 assert.ok(checksFor(steadyDay, "es").find((item) => item.id === "post-us").label.includes("sonido original"));
 assert.ok(checksFor(steadyDay, "es").find((item) => item.id === "post-us").label.includes("Descargas las fotos aquí."));
-assert.equal(DAY_PLANS[DAY_PLANS.length - 1].date, "2026-11-22");
-assert.equal(checksFor(DAY_PLANS[DAY_PLANS.length - 1]).length, 9);
+assert.equal(DAY_PLANS[DAY_PLANS.length - 1].date, "2026-11-29");
+assert.equal(checksFor(DAY_PLANS[DAY_PLANS.length - 1]).length, 10);
 const { slideDateOk } = await import("../src/config/slideBoard.ts");
 assert.equal(slideDateOk("2026-11-22"), true);
-assert.equal(slideDateOk("2026-11-23"), false);
+assert.equal(slideDateOk("2026-11-29"), true);
+assert.equal(slideDateOk("2026-11-30"), false);
 for (const lang of ["fr", "es", "en"]) {
   for (const key of ["proofDrop", "proofDropHint", "proofDropReplace", "proofDropActive", "proofDropWrong"]) assert.ok(postingUi(lang)[key].length > 0, `${lang} ${key}`);
 }
@@ -877,7 +884,7 @@ for (const plan of DAY_PLANS.filter((item) => item.date >= "2026-11-17")) {
   assert.ok(checksFor(plan, "fr").find((item) => item.id === "before-fr").label.includes("Ne scrolle pas trop vite : reste au moins 5 secondes sur chaque vidéo."), plan.date);
   assert.ok(checksFor(plan, "es").find((item) => item.id === "before-us").label.includes("Responde a los comentarios de tu publicación de ayer."), plan.date);
   assert.ok(checksFor(plan, "en").find((item) => item.id === "before-es").label.includes("Reply to comments on yesterday's post."), plan.date);
-  assert.equal(timedMinutes(checksFor(plan)), 54, plan.date);
+  assert.equal(timedMinutes(checksFor(plan)), plan.date >= "2026-11-23" ? 60 : 54, plan.date);
   assert.equal(checksFor(plan).some((item) => item.id.startsWith("story-")), false, plan.date);
 }
 console.log("posting codes ok");
