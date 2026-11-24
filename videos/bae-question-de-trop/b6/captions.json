@@ -1,87 +1,102 @@
 [
  {
   "start": 0.05,
-  "text": "Pose cette question",
-  "end": 0.784
+  "text": "Trois types de mecs",
+  "end": 0.749
  },
  {
-  "start": 0.784,
-  "text": "à ton mec.",
-  "end": 1.62
+  "start": 0.749,
+  "text": "quand tu lui demandes :",
+  "end": 1.806
  },
  {
-  "start": 1.62,
-  "text": "Qui de nous deux",
-  "end": 2.154
+  "start": 1.806,
+  "text": "qui de nous deux",
+  "end": 2.328
  },
  {
-  "start": 2.154,
+  "start": 2.328,
   "text": "ment le mieux ?",
-  "end": 2.851
+  "end": 2.979
  },
  {
-  "start": 2.851,
-  "text": "S'il répond « toi »",
-  "end": 4.36
+  "start": 2.979,
+  "text": "Un :",
+  "end": 3.397
  },
  {
-  "start": 4.36,
-  "text": "direct…",
-  "end": 5.231
+  "start": 3.397,
+  "text": "le politicien.",
+  "end": 4.581
  },
  {
-  "start": 5.231,
-  "text": "c'est un homme",
-  "end": 5.672
+  "start": 4.581,
+  "text": "« Ça dépend de ce",
+  "end": 5.324
  },
  {
-  "start": 5.672,
-  "text": "courageux.",
-  "end": 6.543
+  "start": 5.324,
+  "text": "qu'on appelle mentir. »",
+  "end": 6.763
  },
  {
-  "start": 6.543,
-  "text": "S'il répond « moi »…",
-  "end": 7.971
+  "start": 6.763,
+  "text": "Deux :",
+  "end": 7.193
  },
  {
-  "start": 7.971,
-  "text": "il vient d'avouer.",
-  "end": 9.051
+  "start": 7.193,
+  "text": "le fuyard.",
+  "end": 8.412
  },
  {
-  "start": 9.051,
-  "text": "Et s'il dit « aucun",
-  "end": 10.142
+  "start": 8.412,
+  "text": "« Attends, j'ai pas",
+  "end": 9.213
  },
  {
-  "start": 10.142,
-  "text": "des deux »…",
-  "end": 10.711
+  "start": 9.213,
+  "text": "un truc au four ? »",
+  "end": 10.363
  },
  {
-  "start": 10.711,
-  "text": "c'est lui.",
-  "end": 11.558
+  "start": 10.363,
+  "text": "Trois :",
+  "end": 10.839
  },
  {
-  "start": 11.558,
-  "text": "C'est lui qui",
-  "end": 11.988
+  "start": 10.839,
+  "text": "le kamikaze.",
+  "end": 11.733
  },
  {
-  "start": 11.988,
-  "text": "ment le mieux.",
-  "end": 12.87
+  "start": 11.733,
+  "text": "« Toi. Évidemment. »",
+  "end": 12.975
  },
  {
-  "start": 12.87,
-  "text": "Le mien a répondu",
-  "end": 13.822
+  "start": 12.975,
+  "text": "Le kamikaze dort",
+  "end": 13.765
  },
  {
-  "start": 13.822,
-  "text": "quoi, d'après vous ?",
-  "end": 14.921
+  "start": 13.765,
+  "text": "sur le canapé.",
+  "end": 14.798
+ },
+ {
+  "start": 14.798,
+  "text": "Mais au moins,",
+  "end": 15.262
+ },
+ {
+  "start": 15.262,
+  "text": "il a pas menti.",
+  "end": 16.052
+ },
+ {
+  "start": 16.052,
+  "text": "Le tien, c'est lequel ?",
+  "end": 17.29
  }
 ]

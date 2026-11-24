@@ -4,7 +4,7 @@
   "renderer": "b6-production-v1",
   "purpose": "production",
   "stage": "authored",
-  "duration": 15.2,
+  "duration": 17.6,
   "fps": 30,
   "scene": "scene.py",
   "story": "story.json",
@@ -15,7 +15,7 @@
   "voice": {
     "name": "ElevenLabs eleven_v3, narration en une prise, vitesse d’origine ; mix local voix + musique + effets",
     "path": "audio/mix.wav",
-    "sha256": "50d8b8813bfde23b408100f15f3d085fffff927432cc7722ff04589549732a52",
+    "sha256": "fe2bb401987cae43fca4d7755172f0796368384e36206f3c497eed74434763ca",
     "speed": 1,
     "source": "tools/make_video.py"
   },
@@ -48,11 +48,11 @@
     "art/room.png",
     "art/sofa_left.png",
     "art/sofa_right.png",
-    "art/txt_test_0.png",
-    "art/txt_test_1.png",
-    "art/txt_test_2.png",
-    "art/txt_test_3.png",
-    "art/txt_test_4.png"
+    "art/txt_types_0.png",
+    "art/txt_types_1.png",
+    "art/txt_types_2.png",
+    "art/txt_types_3.png",
+    "art/txt_types_4.png"
   ],
   "review": {
     "status": "pending",

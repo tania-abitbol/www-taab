@@ -7,9 +7,9 @@
   {
    "id": "p01",
    "start": 0.0,
-   "end": 1.6,
+   "end": 1.8,
    "composition": "Plan large natif 9:16, le couple sur le canapé, haut du cadre pour le gros texte ou la carte.",
-   "action": "Illustre la phrase : « Pose cette question à ton mec. »",
+   "action": "Illustre la phrase : « Trois types de mecs quand tu lui demandes : »",
    "camera": {
     "intent": "Coupe franche sur la phrase, légère poussée, secousse brève sur les impacts."
    },
@@ -17,10 +17,10 @@
   },
   {
    "id": "p02",
-   "start": 1.6,
-   "end": 2.8333333333333335,
+   "start": 1.8,
+   "end": 2.966666666666667,
    "composition": "Gros plan sur la carte rose, les deux têtes en bas du cadre.",
-   "action": "Illustre la phrase : « Qui de nous deux ment le mieux ? »",
+   "action": "Illustre la phrase : « qui de nous deux ment le mieux ? »",
    "camera": {
     "intent": "Coupe franche sur la phrase, légère poussée, secousse brève sur les impacts."
    },
@@ -28,10 +28,10 @@
   },
   {
    "id": "p03",
-   "start": 2.8333333333333335,
-   "end": 5.233333333333333,
+   "start": 2.966666666666667,
+   "end": 4.566666666666666,
    "composition": "Plan moyen serré sur les deux, visages au-dessus de la bande de sous-titres.",
-   "action": "Illustre la phrase : « S'il répond « toi » direct… »",
+   "action": "Illustre la phrase : « Un : le politicien. »",
    "camera": {
     "intent": "Coupe franche sur la phrase, légère poussée, secousse brève sur les impacts."
    },
@@ -39,10 +39,10 @@
   },
   {
    "id": "p04",
-   "start": 5.233333333333333,
-   "end": 6.533333333333333,
-   "composition": "Gros plan ELLE, visage au-dessus de la bande de sous-titres.",
-   "action": "Illustre la phrase : « c'est un homme courageux. »",
+   "start": 4.566666666666666,
+   "end": 6.766666666666667,
+   "composition": "Plan moyen serré sur les deux, visages au-dessus de la bande de sous-titres.",
+   "action": "Illustre la phrase : « « Ça dépend de ce qu'on appelle mentir. » »",
    "camera": {
     "intent": "Coupe franche sur la phrase, légère poussée, secousse brève sur les impacts."
    },
@@ -50,10 +50,10 @@
   },
   {
    "id": "p05",
-   "start": 6.533333333333333,
-   "end": 7.966666666666667,
+   "start": 6.766666666666667,
+   "end": 8.4,
    "composition": "Plan moyen serré sur les deux, visages au-dessus de la bande de sous-titres.",
-   "action": "Illustre la phrase : « S'il répond « moi »… »",
+   "action": "Illustre la phrase : « Deux : le fuyard. »",
    "camera": {
     "intent": "Coupe franche sur la phrase, légère poussée, secousse brève sur les impacts."
    },
@@ -61,10 +61,10 @@
   },
   {
    "id": "p06",
-   "start": 7.966666666666667,
-   "end": 9.033333333333333,
-   "composition": "Gros plan ELLE, visage au-dessus de la bande de sous-titres.",
-   "action": "Illustre la phrase : « il vient d'avouer. »",
+   "start": 8.4,
+   "end": 10.366666666666667,
+   "composition": "Plan large natif 9:16, le couple sur le canapé, haut du cadre pour le gros texte ou la carte.",
+   "action": "Illustre la phrase : « « Attends, j'ai pas un truc au four ? » »",
    "camera": {
     "intent": "Coupe franche sur la phrase, légère poussée, secousse brève sur les impacts."
    },
@@ -72,10 +72,10 @@
   },
   {
    "id": "p07",
-   "start": 9.033333333333333,
-   "end": 10.7,
+   "start": 10.366666666666667,
+   "end": 11.733333333333333,
    "composition": "Plan moyen serré sur les deux, visages au-dessus de la bande de sous-titres.",
-   "action": "Illustre la phrase : « Et s'il dit « aucun des deux »… »",
+   "action": "Illustre la phrase : « Trois : le kamikaze. »",
    "camera": {
     "intent": "Coupe franche sur la phrase, légère poussée, secousse brève sur les impacts."
    },
@@ -83,10 +83,10 @@
   },
   {
    "id": "p08",
-   "start": 10.7,
-   "end": 12.866666666666667,
+   "start": 11.733333333333333,
+   "end": 12.966666666666667,
    "composition": "Plan moyen serré sur les deux, visages au-dessus de la bande de sous-titres.",
-   "action": "Illustre la phrase : « c'est lui. C'est lui qui ment le mieux. »",
+   "action": "Illustre la phrase : « « Toi. Évidemment. » »",
    "camera": {
     "intent": "Coupe franche sur la phrase, légère poussée, secousse brève sur les impacts."
    },
@@ -94,10 +94,32 @@
   },
   {
    "id": "p09",
-   "start": 12.866666666666667,
-   "end": 15.2,
+   "start": 12.966666666666667,
+   "end": 14.8,
    "composition": "Plan large natif 9:16, le couple sur le canapé, haut du cadre pour le gros texte ou la carte.",
-   "action": "Illustre la phrase : « Le mien a répondu quoi, d'après vous ? »",
+   "action": "Illustre la phrase : « Le kamikaze dort sur le canapé. »",
+   "camera": {
+    "intent": "Coupe franche sur la phrase, légère poussée, secousse brève sur les impacts."
+   },
+   "transition": "Coupe franche sur la phrase suivante."
+  },
+  {
+   "id": "p10",
+   "start": 14.8,
+   "end": 16.033333333333335,
+   "composition": "Gros plan LUI, visage au-dessus de la bande de sous-titres.",
+   "action": "Illustre la phrase : « Mais au moins, il a pas menti. »",
+   "camera": {
+    "intent": "Coupe franche sur la phrase, légère poussée, secousse brève sur les impacts."
+   },
+   "transition": "Coupe franche sur la phrase suivante."
+  },
+  {
+   "id": "p11",
+   "start": 16.033333333333335,
+   "end": 17.6,
+   "composition": "Plan large natif 9:16, le couple sur le canapé, haut du cadre pour le gros texte ou la carte.",
+   "action": "Illustre la phrase : « Le tien, c'est lequel ? »",
    "camera": {
     "intent": "Coupe franche sur la phrase, légère poussée, secousse brève sur les impacts."
    },
@@ -117,7 +139,9 @@
     "p06",
     "p07",
     "p08",
-    "p09"
+    "p09",
+    "p10",
+    "p11"
    ]
   },
   {
@@ -132,7 +156,9 @@
     "p06",
     "p07",
     "p08",
-    "p09"
+    "p09",
+    "p10",
+    "p11"
    ]
   }
  ],
