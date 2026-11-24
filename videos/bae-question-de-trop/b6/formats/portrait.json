@@ -5,194 +5,103 @@
  "height": 1280,
  "shots": [
   {
-   "id": "accroche",
-   "start": 0,
-   "end": 1.9,
-   "composition": "Plan large natif 9:16 : déjà en pleine dispute, doigts pointés, éclair rouge entre eux ; accroche en gros en haut du cadre.",
-   "action": "Ouverture dans le conflit : ils crient en se pointant du doigt pendant la voix off d’accroche.",
+   "id": "p01",
+   "start": 0.0,
+   "end": 1.6,
+   "composition": "Plan large natif 9:16, le couple sur le canapé, haut du cadre pour le gros texte ou la carte.",
+   "action": "Illustre la phrase : « Pose cette question à ton mec. »",
    "camera": {
-    "intent": "Secousse à l’éclair puis rapprochement lent."
+    "intent": "Coupe franche sur la phrase, légère poussée, secousse brève sur les impacts."
    },
-   "transition": "Coupe sur la carte qui sort du téléphone.",
-   "asset_inputs": [
-    "art/room.png",
-    "art/sofa_left.png",
-    "art/sofa_right.png",
-    "art/phone.png",
-    "art/bolt.png",
-    "art/title_hook.png",
-    "art/card1.png"
-   ]
+   "transition": "Coupe franche sur la phrase suivante."
   },
   {
-   "id": "carte",
-   "start": 1.9,
-   "end": 3.1333333333333333,
+   "id": "p02",
+   "start": 1.6,
+   "end": 2.8333333333333335,
    "composition": "Gros plan sur la carte rose, les deux têtes en bas du cadre.",
-   "action": "La carte « Qui de vous deux ment le mieux ? » est lue.",
+   "action": "Illustre la phrase : « Qui de nous deux ment le mieux ? »",
    "camera": {
-    "intent": "Gros plan fixe avec très léger rapprochement, temps de lecture."
+    "intent": "Coupe franche sur la phrase, légère poussée, secousse brève sur les impacts."
    },
-   "transition": "Coupe sur la dispute.",
-   "asset_inputs": [
-    "art/room.png",
-    "art/sofa_left.png",
-    "art/sofa_right.png",
-    "art/phone.png",
-    "art/card1.png",
-    "art/bolt.png"
-   ]
+   "transition": "Coupe franche sur la phrase suivante."
   },
   {
-   "id": "dispute",
-   "start": 3.1333333333333333,
-   "end": 7.2,
-   "composition": "Plan moyen serré sur le couple, carte au-dessus.",
-   "action": "Répliques 2 et 3 avec gestes, puis le canapé se fend et les moitiés s’écartent, le téléphone tombe.",
+   "id": "p03",
+   "start": 2.8333333333333335,
+   "end": 5.233333333333333,
+   "composition": "Plan moyen serré sur les deux, visages au-dessus de la bande de sous-titres.",
+   "action": "Illustre la phrase : « S'il répond « toi » direct… »",
    "camera": {
-    "intent": "Recadrage sec vers celui qui parle, secousse à chaque attaque, recul brusque quand le canapé craque."
+    "intent": "Coupe franche sur la phrase, légère poussée, secousse brève sur les impacts."
    },
-   "transition": "Coupe gros plan ELLE.",
-   "asset_inputs": [
-    "art/room.png",
-    "art/sofa_left.png",
-    "art/sofa_right.png",
-    "art/phone.png",
-    "art/card1.png",
-    "art/bolt.png"
-   ]
+   "transition": "Coupe franche sur la phrase suivante."
   },
   {
-   "id": "preuve-elle",
-   "start": 7.2,
-   "end": 9.833333333333334,
-   "composition": "Gros plan ELLE avec sa bulle rouge (cadeau barré) au-dessus.",
-   "action": "Réplique 4, geste d’accusation.",
+   "id": "p04",
+   "start": 5.233333333333333,
+   "end": 6.533333333333333,
+   "composition": "Gros plan ELLE, visage au-dessus de la bande de sous-titres.",
+   "action": "Illustre la phrase : « c'est un homme courageux. »",
    "camera": {
-    "intent": "Gros plan avec légère poussée."
+    "intent": "Coupe franche sur la phrase, légère poussée, secousse brève sur les impacts."
    },
-   "transition": "Coupe gros plan LUI.",
-   "asset_inputs": [
-    "art/room.png",
-    "art/sofa_left.png",
-    "art/sofa_right.png",
-    "art/phone.png",
-    "art/bubble_gift.png"
-   ]
+   "transition": "Coupe franche sur la phrase suivante."
   },
   {
-   "id": "preuve-lui",
-   "start": 9.833333333333334,
-   "end": 11.866666666666667,
-   "composition": "Gros plan LUI avec sa bulle rouge (horloge affolée) au-dessus.",
-   "action": "Réplique 5, geste d’accusation.",
+   "id": "p05",
+   "start": 6.533333333333333,
+   "end": 7.966666666666667,
+   "composition": "Plan moyen serré sur les deux, visages au-dessus de la bande de sous-titres.",
+   "action": "Illustre la phrase : « S'il répond « moi »… »",
    "camera": {
-    "intent": "Gros plan avec légère poussée."
+    "intent": "Coupe franche sur la phrase, légère poussée, secousse brève sur les impacts."
    },
-   "transition": "Coupe franche (scratch) vers le mur.",
-   "asset_inputs": [
-    "art/room.png",
-    "art/sofa_left.png",
-    "art/sofa_right.png",
-    "art/phone.png",
-    "art/bubble_blank.png",
-    "art/clock.png"
-   ]
+   "transition": "Coupe franche sur la phrase suivante."
   },
   {
-   "id": "mur",
-   "start": 11.866666666666667,
-   "end": 13.266666666666667,
-   "composition": "Plan large : dos à dos, bras croisés, le mur rouge jaillit au centre.",
-   "action": "Le mur monte, le téléphone vibre, la nouvelle carte sort.",
+   "id": "p06",
+   "start": 7.966666666666667,
+   "end": 9.033333333333333,
+   "composition": "Gros plan ELLE, visage au-dessus de la bande de sous-titres.",
+   "action": "Illustre la phrase : « il vient d'avouer. »",
    "camera": {
-    "intent": "Secousse pendant la montée du mur, puis cadre posé."
+    "intent": "Coupe franche sur la phrase, légère poussée, secousse brève sur les impacts."
    },
-   "transition": "Coupe sur la carte.",
-   "asset_inputs": [
-    "art/room.png",
-    "art/sofa_left.png",
-    "art/sofa_right.png",
-    "art/phone.png",
-    "art/wall.png",
-    "art/card2.png"
-   ]
+   "transition": "Coupe franche sur la phrase suivante."
   },
   {
-   "id": "carte2",
-   "start": 13.266666666666667,
-   "end": 14.533333333333333,
-   "composition": "Gros plan sur la carte « Question suivante » devant le mur, têtes en bas du cadre.",
-   "action": "Lecture de la carte ; ils se figent.",
+   "id": "p07",
+   "start": 9.033333333333333,
+   "end": 10.7,
+   "composition": "Plan moyen serré sur les deux, visages au-dessus de la bande de sous-titres.",
+   "action": "Illustre la phrase : « Et s'il dit « aucun des deux »… »",
    "camera": {
-    "intent": "Gros plan fixe, temps de lecture."
+    "intent": "Coupe franche sur la phrase, légère poussée, secousse brève sur les impacts."
    },
-   "transition": "Coupe vers LUI et le mur.",
-   "asset_inputs": [
-    "art/room.png",
-    "art/sofa_left.png",
-    "art/sofa_right.png",
-    "art/phone.png",
-    "art/wall.png",
-    "art/card2.png"
-   ]
+   "transition": "Coupe franche sur la phrase suivante."
   },
   {
-   "id": "fissure",
-   "start": 14.533333333333333,
-   "end": 15.966666666666667,
-   "composition": "Plan rapproché sur LUI tourné vers le mur ; main et fissure au-dessus de la bande de sous-titres.",
-   "action": "Il pose la main sur le mur, la fissure dorée se propage ; « …Ton rire. »",
+   "id": "p08",
+   "start": 10.7,
+   "end": 12.866666666666667,
+   "composition": "Plan moyen serré sur les deux, visages au-dessus de la bande de sous-titres.",
+   "action": "Illustre la phrase : « c'est lui. C'est lui qui ment le mieux. »",
    "camera": {
-    "intent": "Plan presque fixe, très léger rapprochement, silence."
+    "intent": "Coupe franche sur la phrase, légère poussée, secousse brève sur les impacts."
    },
-   "transition": "Coupe sur la réaction d’ELLE.",
-   "asset_inputs": [
-    "art/room.png",
-    "art/sofa_left.png",
-    "art/sofa_right.png",
-    "art/phone.png",
-    "art/wall.png",
-    "art/card2.png"
-   ]
+   "transition": "Coupe franche sur la phrase suivante."
   },
   {
-   "id": "reaction",
-   "start": 15.966666666666667,
-   "end": 16.866666666666667,
-   "composition": "Gros plan ELLE qui se retourne vers le mur, visage adouci.",
-   "action": "Réaction silencieuse.",
+   "id": "p09",
+   "start": 12.866666666666667,
+   "end": 15.2,
+   "composition": "Plan large natif 9:16, le couple sur le canapé, haut du cadre pour le gros texte ou la carte.",
+   "action": "Illustre la phrase : « Le mien a répondu quoi, d'après vous ? »",
    "camera": {
-    "intent": "Gros plan fixe."
+    "intent": "Coupe franche sur la phrase, légère poussée, secousse brève sur les impacts."
    },
-   "transition": "Coupe sur l’explosion du mur.",
-   "asset_inputs": [
-    "art/room.png",
-    "art/sofa_left.png",
-    "art/sofa_right.png",
-    "art/phone.png",
-    "art/wall.png"
-   ],
-   "short_cut_reason": "Plan de réaction bref et motivé (regard, puis explosion du mur) ; 0.90 s"
-  },
-  {
-   "id": "chute",
-   "start": 16.866666666666667,
-   "end": 22.966666666666665,
-   "composition": "Plan large : confettis dorés, canapé recollé, les deux rapprochés ; cœur doré et carton de fin en haut.",
-   "action": "Le mur éclate, le canapé se recolle, elle pose la tête contre lui, cœur doré, carton « Bae – jeu de couple ».",
-   "camera": {
-    "intent": "Secousse à l’explosion puis rapprochement lent sur le couple réconcilié."
-   },
-   "transition": "Fin.",
-   "asset_inputs": [
-    "art/room.png",
-    "art/sofa_left.png",
-    "art/sofa_right.png",
-    "art/phone.png",
-    "art/heart_gold.png",
-    "art/title_end.png"
-   ]
+   "transition": "Fin (boucle sur la question)."
   }
  ],
  "cast_inventory": [
@@ -200,32 +109,30 @@
    "id": "elle",
    "role": "ELLE, toujours à gauche (sweat rose)",
    "shot_ids": [
-    "accroche",
-    "carte",
-    "dispute",
-    "preuve-elle",
-    "preuve-lui",
-    "mur",
-    "carte2",
-    "fissure",
-    "reaction",
-    "chute"
+    "p01",
+    "p02",
+    "p03",
+    "p04",
+    "p05",
+    "p06",
+    "p07",
+    "p08",
+    "p09"
    ]
   },
   {
    "id": "lui",
    "role": "LUI, toujours à droite (t-shirt bleu canard)",
    "shot_ids": [
-    "accroche",
-    "carte",
-    "dispute",
-    "preuve-elle",
-    "preuve-lui",
-    "mur",
-    "carte2",
-    "fissure",
-    "reaction",
-    "chute"
+    "p01",
+    "p02",
+    "p03",
+    "p04",
+    "p05",
+    "p06",
+    "p07",
+    "p08",
+    "p09"
    ]
   }
  ],

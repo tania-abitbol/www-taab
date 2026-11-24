@@ -1,0 +1,319 @@
+{
+  "schema_version": 1,
+  "purpose": "project_selected_audio",
+  "catalog_sha256": "83e5eae2452b5010e8b62eceeacefddfd28aba5fc85f976f788ddb9d3497fdf6",
+  "assets": [
+    {
+      "id": "bgm-sneaky-snitch",
+      "title": "Sneaky Snitch",
+      "kind": "music",
+      "category": "comedy",
+      "tags": [
+        "comedy",
+        "sneaking",
+        "mysterious"
+      ],
+      "recommended_use_zh": "鬼祟计划、偷看、调查中的笑点",
+      "author": "Kevin MacLeod",
+      "source_id": "bgm-sneaky-snitch",
+      "source_url": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100772",
+      "path": "audio/music/bgm-sneaky-snitch.mp3",
+      "sha256": "db1710333d68a215277f77e4e17e1a64bf4ed38f87c70f8d0f56b16b6aa4f884",
+      "original_sha256": "db1710333d68a215277f77e4e17e1a64bf4ed38f87c70f8d0f56b16b6aa4f884",
+      "original_filename": "Sneaky Snitch.mp3",
+      "bytes": 5466943,
+      "duration": 136.620425,
+      "sample_rate": 44100,
+      "channels": 2,
+      "license": {
+        "id": "CC-BY-4.0",
+        "url": "https://creativecommons.org/licenses/by/4.0/",
+        "evidence_paths": [
+          "licenses/CC-BY-4.0.txt",
+          "evidence/bgm-sneaky-snitch/official-record.json",
+          "evidence/bgm-sneaky-snitch/acquisition.json"
+        ],
+        "attribution_required": true,
+        "attribution": "\"Sneaky Snitch\" Kevin MacLeod (incompetech.com)\nLicensed under Creative Commons: By Attribution 4.0 License\nhttp://creativecommons.org/licenses/by/4.0/\nSource: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100772\nLibrary copy: original MP3 unchanged. In a finished video, disclose actual edits/synchronization.",
+        "commercial_use": true,
+        "redistribution": true,
+        "modifications_allowed": true
+      },
+      "modifications": [],
+      "verified_at": "2026-11-14",
+      "qa": {
+        "decode": "pass"
+      },
+      "official_metadata": {
+        "length": "00:02:17",
+        "bpm": "87",
+        "instruments": "Oboe, Strings, Snare Drum",
+        "feel": "Bouncy, Dark, Humorous, Mysterious",
+        "uploaded": "2010-11-25"
+      },
+      "roles": [
+        "caper-bed",
+        "comic-bed",
+        "meme-bed"
+      ],
+      "style_hints": [
+        "B5",
+        "B6"
+      ]
+    },
+    {
+      "id": "bgm-fluffing-a-duck",
+      "title": "Fluffing a Duck",
+      "kind": "music",
+      "category": "cartoon",
+      "tags": [
+        "cartoon",
+        "comedy",
+        "bouncy"
+      ],
+      "recommended_use_zh": "卡通失误、快速动作喜剧；原文件含两个小版本",
+      "author": "Kevin MacLeod",
+      "source_id": "bgm-fluffing-a-duck",
+      "source_url": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100768",
+      "path": "audio/music/bgm-fluffing-a-duck.mp3",
+      "sha256": "cb23b1833c35e391de10d998d6a40cfc760565ce31d23014c86025523ca8239b",
+      "original_sha256": "cb23b1833c35e391de10d998d6a40cfc760565ce31d23014c86025523ca8239b",
+      "original_filename": "Fluffing a Duck.mp3",
+      "bytes": 2696840,
+      "duration": 67.368,
+      "sample_rate": 48000,
+      "channels": 2,
+      "license": {
+        "id": "CC-BY-4.0",
+        "url": "https://creativecommons.org/licenses/by/4.0/",
+        "evidence_paths": [
+          "licenses/CC-BY-4.0.txt",
+          "evidence/bgm-fluffing-a-duck/official-record.json",
+          "evidence/bgm-fluffing-a-duck/acquisition.json"
+        ],
+        "attribution_required": true,
+        "attribution": "\"Fluffing a Duck\" Kevin MacLeod (incompetech.com)\nLicensed under Creative Commons: By Attribution 4.0 License\nhttp://creativecommons.org/licenses/by/4.0/\nSource: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100768\nLibrary copy: original MP3 unchanged. In a finished video, disclose actual edits/synchronization.",
+        "commercial_use": true,
+        "redistribution": true,
+        "modifications_allowed": true
+      },
+      "modifications": [],
+      "verified_at": "2026-11-14",
+      "qa": {
+        "decode": "pass"
+      },
+      "official_metadata": {
+        "length": "00:01:07",
+        "bpm": "122",
+        "instruments": "Tuba, Flute, Trombones, Bass Clarinet, Clarinet, Percussion",
+        "feel": "Bouncy, Bright, Humorous",
+        "uploaded": "2010-10-31"
+      },
+      "roles": [
+        "comic-bed",
+        "meme-bed"
+      ],
+      "style_hints": [
+        "B5",
+        "B6"
+      ]
+    },
+    {
+      "id": "bgm-monkeys-spinning-monkeys",
+      "title": "Monkeys Spinning Monkeys",
+      "kind": "music",
+      "category": "meme",
+      "tags": [
+        "meme",
+        "comedy",
+        "bouncy"
+      ],
+      "recommended_use_zh": "荒诞日常、轻喜剧动作、轻松反转",
+      "author": "Kevin MacLeod",
+      "source_id": "bgm-monkeys-spinning-monkeys",
+      "source_url": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1400011",
+      "path": "audio/music/bgm-monkeys-spinning-monkeys.mp3",
+      "sha256": "a5bb345c23849ad0786aa0bc5157a9f2d4039660fe00282e55754d475f36dc14",
+      "original_sha256": "a5bb345c23849ad0786aa0bc5157a9f2d4039660fe00282e55754d475f36dc14",
+      "original_filename": "Monkeys Spinning Monkeys.mp3",
+      "bytes": 5005207,
+      "duration": 125.0743,
+      "sample_rate": 44100,
+      "channels": 2,
+      "license": {
+        "id": "CC-BY-4.0",
+        "url": "https://creativecommons.org/licenses/by/4.0/",
+        "evidence_paths": [
+          "licenses/CC-BY-4.0.txt",
+          "evidence/bgm-monkeys-spinning-monkeys/official-record.json",
+          "evidence/bgm-monkeys-spinning-monkeys/acquisition.json"
+        ],
+        "attribution_required": true,
+        "attribution": "\"Monkeys Spinning Monkeys\" Kevin MacLeod (incompetech.com)\nLicensed under Creative Commons: By Attribution 4.0 License\nhttp://creativecommons.org/licenses/by/4.0/\nSource: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1400011\nLibrary copy: original MP3 unchanged. In a finished video, disclose actual edits/synchronization.",
+        "commercial_use": true,
+        "redistribution": true,
+        "modifications_allowed": true
+      },
+      "modifications": [],
+      "verified_at": "2026-11-14",
+      "qa": {
+        "decode": "pass"
+      },
+      "official_metadata": {
+        "length": "00:02:05",
+        "bpm": "144",
+        "instruments": "Flutes, Violin, Viola, Cello",
+        "feel": "Bouncy, Bright, Humorous, Uplifting",
+        "uploaded": "2014-02-03"
+      },
+      "roles": [
+        "comic-bed",
+        "meme-bed"
+      ],
+      "style_hints": [
+        "B5",
+        "B6"
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "bgm-sneaky-snitch",
+      "title": "Sneaky Snitch",
+      "author": "Kevin MacLeod",
+      "source_url": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100772",
+      "download_url": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Sneaky%20Snitch.mp3",
+      "license_id": "CC-BY-4.0",
+      "evidence_paths": [
+        "licenses/CC-BY-4.0.txt",
+        "evidence/bgm-sneaky-snitch/official-record.json",
+        "evidence/bgm-sneaky-snitch/acquisition.json"
+      ]
+    },
+    {
+      "id": "bgm-fluffing-a-duck",
+      "title": "Fluffing a Duck",
+      "author": "Kevin MacLeod",
+      "source_url": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100768",
+      "download_url": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Fluffing%20a%20Duck.mp3",
+      "license_id": "CC-BY-4.0",
+      "evidence_paths": [
+        "licenses/CC-BY-4.0.txt",
+        "evidence/bgm-fluffing-a-duck/official-record.json",
+        "evidence/bgm-fluffing-a-duck/acquisition.json"
+      ]
+    },
+    {
+      "id": "bgm-monkeys-spinning-monkeys",
+      "title": "Monkeys Spinning Monkeys",
+      "author": "Kevin MacLeod",
+      "source_url": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1400011",
+      "download_url": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Monkeys%20Spinning%20Monkeys.mp3",
+      "license_id": "CC-BY-4.0",
+      "evidence_paths": [
+        "licenses/CC-BY-4.0.txt",
+        "evidence/bgm-monkeys-spinning-monkeys/official-record.json",
+        "evidence/bgm-monkeys-spinning-monkeys/acquisition.json"
+      ]
+    }
+  ],
+  "evidence_files": [
+    {
+      "path": "licenses/CC-BY-4.0.txt",
+      "sha256": "9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411"
+    },
+    {
+      "path": "evidence/bgm-sneaky-snitch/official-record.json",
+      "sha256": "ab2bd76a42efd7a2476d42c6e805b64a1d83333f6ccd991f2c7d9756f27bb11a"
+    },
+    {
+      "path": "evidence/bgm-sneaky-snitch/acquisition.json",
+      "sha256": "cf352fd8a73ed2239deaa7cb78043584f396ba6f5bb47da05a543b9556558a93"
+    },
+    {
+      "path": "evidence/bgm-fluffing-a-duck/official-record.json",
+      "sha256": "0d746dbca33f91db0bed687f707ca001f6e9d33da3e76405d4882945dd4af3f8"
+    },
+    {
+      "path": "evidence/bgm-fluffing-a-duck/acquisition.json",
+      "sha256": "902ac8491a3baf49bcf2c4ffe1c52d4e59ed271ad66aa2fe2a4d5fb53c3cc6bd"
+    },
+    {
+      "path": "evidence/bgm-monkeys-spinning-monkeys/official-record.json",
+      "sha256": "3fac56ef4603fef314df945b1e91956f951ab1eec99d6473b27f13f86a1892bb"
+    },
+    {
+      "path": "evidence/bgm-monkeys-spinning-monkeys/acquisition.json",
+      "sha256": "0e1a97472b50da99d4ae4ec869b97634a9cfa721a03ea519a856438577e1e481"
+    }
+  ],
+  "required_credits_path": "CREDITS.md",
+  "files": [
+    {
+      "path": "audio/music/bgm-sneaky-snitch.mp3",
+      "sha256": "db1710333d68a215277f77e4e17e1a64bf4ed38f87c70f8d0f56b16b6aa4f884",
+      "bytes": 5466943,
+      "role": "audio"
+    },
+    {
+      "path": "licenses/CC-BY-4.0.txt",
+      "sha256": "9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411",
+      "bytes": 18657,
+      "role": "license_evidence"
+    },
+    {
+      "path": "evidence/bgm-sneaky-snitch/official-record.json",
+      "sha256": "ab2bd76a42efd7a2476d42c6e805b64a1d83333f6ccd991f2c7d9756f27bb11a",
+      "bytes": 1002,
+      "role": "license_evidence"
+    },
+    {
+      "path": "evidence/bgm-sneaky-snitch/acquisition.json",
+      "sha256": "cf352fd8a73ed2239deaa7cb78043584f396ba6f5bb47da05a543b9556558a93",
+      "bytes": 1100,
+      "role": "license_evidence"
+    },
+    {
+      "path": "audio/music/bgm-fluffing-a-duck.mp3",
+      "sha256": "cb23b1833c35e391de10d998d6a40cfc760565ce31d23014c86025523ca8239b",
+      "bytes": 2696840,
+      "role": "audio"
+    },
+    {
+      "path": "evidence/bgm-fluffing-a-duck/official-record.json",
+      "sha256": "0d746dbca33f91db0bed687f707ca001f6e9d33da3e76405d4882945dd4af3f8",
+      "bytes": 848,
+      "role": "license_evidence"
+    },
+    {
+      "path": "evidence/bgm-fluffing-a-duck/acquisition.json",
+      "sha256": "902ac8491a3baf49bcf2c4ffe1c52d4e59ed271ad66aa2fe2a4d5fb53c3cc6bd",
+      "bytes": 1137,
+      "role": "license_evidence"
+    },
+    {
+      "path": "audio/music/bgm-monkeys-spinning-monkeys.mp3",
+      "sha256": "a5bb345c23849ad0786aa0bc5157a9f2d4039660fe00282e55754d475f36dc14",
+      "bytes": 5005207,
+      "role": "audio"
+    },
+    {
+      "path": "evidence/bgm-monkeys-spinning-monkeys/official-record.json",
+      "sha256": "3fac56ef4603fef314df945b1e91956f951ab1eec99d6473b27f13f86a1892bb",
+      "bytes": 694,
+      "role": "license_evidence"
+    },
+    {
+      "path": "evidence/bgm-monkeys-spinning-monkeys/acquisition.json",
+      "sha256": "0e1a97472b50da99d4ae4ec869b97634a9cfa721a03ea519a856438577e1e481",
+      "bytes": 1162,
+      "role": "license_evidence"
+    },
+    {
+      "path": "CREDITS.md",
+      "sha256": "39ec7211fb23e436ad595a02c0d4c193020b4fc9e5339b25f72d9c7ba697f097",
+      "bytes": 1805,
+      "role": "credits"
+    }
+  ]
+}

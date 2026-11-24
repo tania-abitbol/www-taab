@@ -1,31 +1,52 @@
 {
- "narration": "Ce jeu de couple… a failli nous séparer. Attends, pourquoi tu me montres du doigt ?! Parce que c'est évident ! Et le cadeau « perdu par la poste » ?! Et toi ! « J'arrive dans cinq minutes » ?! …Ton rire. Ok… Question suivante. Et vous, quelle question a lancé la guerre ?",
+ "narration": "Pose cette question à ton mec. Qui de nous deux ment le mieux ? S'il répond « toi » direct… c'est un homme courageux. S'il répond « moi »… il vient d'avouer. Et s'il dit « aucun des deux »… c'est lui. C'est lui qui ment le mieux. Le mien a répondu quoi, d'après vous ?",
  "language": "fr",
  "status": "authored",
  "beats": [
   {
-   "id": "etincelle",
-   "start": 0,
-   "end": 6.7,
-   "action": "La carte rose sort du téléphone ; ils se pointent du doigt en même temps, éclair rouge."
+   "start": 0.0,
+   "end": 1.6,
+   "action": "Pose cette question à ton mec."
   },
   {
-   "id": "escalade",
-   "start": 6.7,
-   "end": 11.866666666666667,
-   "action": "Le canapé se fend, bulles rouges de preuves (cadeau barré, horloge affolée)."
+   "start": 1.6,
+   "end": 2.8333333333333335,
+   "action": "Qui de nous deux ment le mieux ?"
   },
   {
-   "id": "rupture",
-   "start": 11.866666666666667,
-   "end": 16.866666666666667,
-   "action": "Mur rouge, dos à dos ; nouvelle carte ; il pose la main sur le mur, fissure dorée."
+   "start": 2.8333333333333335,
+   "end": 5.233333333333333,
+   "action": "S'il répond « toi » direct…"
   },
   {
-   "id": "chute",
-   "start": 16.866666666666667,
-   "end": 22.966666666666665,
-   "action": "Le mur éclate en confettis dorés, le canapé se recolle, tête contre lui, cœur doré."
+   "start": 5.233333333333333,
+   "end": 6.533333333333333,
+   "action": "c'est un homme courageux."
+  },
+  {
+   "start": 6.533333333333333,
+   "end": 7.966666666666667,
+   "action": "S'il répond « moi »…"
+  },
+  {
+   "start": 7.966666666666667,
+   "end": 9.033333333333333,
+   "action": "il vient d'avouer."
+  },
+  {
+   "start": 9.033333333333333,
+   "end": 10.7,
+   "action": "Et s'il dit « aucun des deux »…"
+  },
+  {
+   "start": 10.7,
+   "end": 12.866666666666667,
+   "action": "c'est lui. C'est lui qui ment le mieux."
+  },
+  {
+   "start": 12.866666666666667,
+   "end": 15.2,
+   "action": "Le mien a répondu quoi, d'après vous ?"
   }
  ]
 }

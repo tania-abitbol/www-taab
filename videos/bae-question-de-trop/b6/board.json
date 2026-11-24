@@ -1,0 +1,197 @@
+{
+ "id": "test",
+ "duration": 15.2,
+ "art": [
+  "bolt",
+  "bubble_blank",
+  "bubble_gift",
+  "card1",
+  "clock",
+  "heart_gold",
+  "phone",
+  "room",
+  "sofa_left",
+  "sofa_right",
+  "txt_test_0",
+  "txt_test_1",
+  "txt_test_2",
+  "txt_test_3",
+  "txt_test_4"
+ ],
+ "beats": [
+  {
+   "cam": "wide",
+   "card": "card1",
+   "elle": {
+    "h": "smug",
+    "arms": "rest"
+   },
+   "lui": {
+    "h": "soft",
+    "arms": "rest"
+   },
+   "shake": 6,
+   "t0": 0.0,
+   "t1": 1.6,
+   "say": "Pose cette question à ton mec.",
+   "label": "txt_test_0"
+  },
+  {
+   "cam": "card",
+   "card": "card1",
+   "elle": {
+    "h": "smug",
+    "arms": "rest"
+   },
+   "lui": {
+    "h": "soft",
+    "arms": "rest"
+   },
+   "t0": 1.6,
+   "t1": 2.8333333333333335,
+   "say": "Qui de nous deux ment le mieux ?"
+  },
+  {
+   "cam": "two",
+   "card": "card1",
+   "bolt": 1,
+   "flash": [
+    225,
+    40,
+    50
+   ],
+   "elle": {
+    "h": "shock",
+    "arms": "rest",
+    "hop": 1
+   },
+   "lui": {
+    "h": [
+     "smug",
+     "tender"
+    ],
+    "arms": "point"
+   },
+   "shake": 9,
+   "t0": 2.8333333333333335,
+   "t1": 5.233333333333333,
+   "say": "S'il répond « toi » direct…",
+   "label": "txt_test_1"
+  },
+  {
+   "cam": "elle",
+   "elle": {
+    "h": "angry",
+    "arms": "fold",
+    "tilt": -4
+   },
+   "lui": {
+    "h": "smug",
+    "arms": "point"
+   },
+   "t0": 5.233333333333333,
+   "t1": 6.533333333333333,
+   "say": "c'est un homme courageux."
+  },
+  {
+   "cam": "two",
+   "card": "card1",
+   "elle": {
+    "h": "soft",
+    "arms": "rest"
+   },
+   "lui": {
+    "h": [
+     "smug",
+     "tender"
+    ],
+    "arms": "up"
+   },
+   "t0": 6.533333333333333,
+   "t1": 7.966666666666667,
+   "say": "S'il répond « moi »…",
+   "label": "txt_test_2"
+  },
+  {
+   "cam": "elle",
+   "elle": {
+    "h": "smug",
+    "arms": "point",
+    "tilt": 5
+   },
+   "lui": {
+    "h": "smug",
+    "arms": "up"
+   },
+   "t0": 7.966666666666667,
+   "t1": 9.033333333333333,
+   "say": "il vient d'avouer."
+  },
+  {
+   "cam": "two",
+   "card": "card1",
+   "elle": {
+    "h": "sulk",
+    "arms": "rest"
+   },
+   "lui": {
+    "h": [
+     "tender",
+     "smug"
+    ],
+    "arms": "shrug"
+   },
+   "t0": 9.033333333333333,
+   "t1": 10.7,
+   "say": "Et s'il dit « aucun des deux »…",
+   "label": "txt_test_3"
+  },
+  {
+   "cam": "two",
+   "card": "card1",
+   "bolt": 1,
+   "flash": [
+    225,
+    40,
+    50
+   ],
+   "elle": {
+    "h": [
+     "shout",
+     "angry"
+    ],
+    "arms": "jab",
+    "yell": 1
+   },
+   "lui": {
+    "h": "soft",
+    "arms": "rest",
+    "hop": 1
+   },
+   "shake": 9,
+   "t0": 10.7,
+   "t1": 12.866666666666667,
+   "say": "c'est lui. C'est lui qui ment le mieux."
+  },
+  {
+   "cam": "wide",
+   "gap": 1,
+   "gap_from": 0,
+   "elle": {
+    "h": "sulk",
+    "arms": "fold",
+    "away": 1
+   },
+   "lui": {
+    "h": "sulk",
+    "arms": "fold",
+    "away": 1
+   },
+   "shake": 11,
+   "t0": 12.866666666666667,
+   "t1": 15.2,
+   "say": "Le mien a répondu quoi, d'après vous ?",
+   "label": "txt_test_4"
+  }
+ ]
+}

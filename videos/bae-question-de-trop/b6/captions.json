@@ -1,97 +1,87 @@
 [
  {
-  "start": 0.269,
-  "end": 1.66,
-  "text": "Ce jeu de couple…"
+  "start": 0.05,
+  "text": "Pose cette question",
+  "end": 0.784
  },
  {
-  "start": 1.66,
-  "end": 3.026,
-  "text": "a failli nous séparer."
+  "start": 0.784,
+  "text": "à ton mec.",
+  "end": 1.62
  },
  {
-  "start": 3.297,
-  "end": 3.64,
-  "text": "Attends,"
+  "start": 1.62,
+  "text": "Qui de nous deux",
+  "end": 2.154
  },
  {
-  "start": 3.64,
-  "end": 4.125,
-  "text": "pourquoi tu me"
+  "start": 2.154,
+  "text": "ment le mieux ?",
+  "end": 2.851
  },
  {
-  "start": 4.125,
-  "end": 5.102,
-  "text": "montres du doigt ?!"
+  "start": 2.851,
+  "text": "S'il répond « toi »",
+  "end": 4.36
  },
  {
-  "start": 5.227,
-  "end": 5.507,
-  "text": "Parce que"
+  "start": 4.36,
+  "text": "direct…",
+  "end": 5.231
  },
  {
-  "start": 5.507,
-  "end": 6.634,
-  "text": "c'est évident !"
+  "start": 5.231,
+  "text": "c'est un homme",
+  "end": 5.672
  },
  {
-  "start": 7.292,
-  "end": 8.46,
-  "text": "Et le cadeau"
+  "start": 5.672,
+  "text": "courageux.",
+  "end": 6.543
  },
  {
-  "start": 8.46,
-  "end": 9.067,
-  "text": "« perdu par"
+  "start": 6.543,
+  "text": "S'il répond « moi »…",
+  "end": 7.971
  },
  {
-  "start": 9.067,
-  "end": 9.786,
-  "text": "la poste » ?!"
+  "start": 7.971,
+  "text": "il vient d'avouer.",
+  "end": 9.051
  },
  {
-  "start": 9.856,
-  "end": 10.593,
-  "text": "Et toi !"
+  "start": 9.051,
+  "text": "Et s'il dit « aucun",
+  "end": 10.142
  },
  {
-  "start": 10.593,
-  "end": 11.033,
-  "text": "« J'arrive dans"
+  "start": 10.142,
+  "text": "des deux »…",
+  "end": 10.711
  },
  {
-  "start": 11.033,
-  "end": 11.714,
-  "text": "cinq minutes » ?!"
+  "start": 10.711,
+  "text": "c'est lui.",
+  "end": 11.558
  },
  {
-  "start": 15.09,
-  "end": 15.756,
-  "text": "…Ton rire."
+  "start": 11.558,
+  "text": "C'est lui qui",
+  "end": 11.988
  },
  {
-  "start": 18.023,
-  "end": 18.58,
-  "text": "Ok…"
+  "start": 11.988,
+  "text": "ment le mieux.",
+  "end": 12.87
  },
  {
-  "start": 18.58,
-  "end": 19.973,
-  "text": "Question suivante."
+  "start": 12.87,
+  "text": "Le mien a répondu",
+  "end": 13.822
  },
  {
-  "start": 20.1,
-  "end": 20.843,
-  "text": "Et vous,"
- },
- {
-  "start": 20.843,
-  "end": 21.62,
-  "text": "quelle question"
- },
- {
-  "start": 21.62,
-  "end": 22.608,
-  "text": "a lancé la guerre ?"
+  "start": 13.822,
+  "text": "quoi, d'après vous ?",
+  "end": 14.921
  }
 ]
