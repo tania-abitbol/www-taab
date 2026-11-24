@@ -1,0 +1,152 @@
+{
+ "ratio": "9:16",
+ "native_design": "9:16",
+ "width": 720,
+ "height": 1280,
+ "shots": [
+  {
+   "id": "etincelle",
+   "start": 0,
+   "end": 8.95,
+   "composition": "Plan large natif 9:16 : ELLE à gauche, LUI à droite sur le canapé, téléphone entre eux ; haut du cadre libre pour l’accroche puis la carte rose ; bande de sous-titres sur les jambes.",
+   "action": "Accroche, la carte sort du téléphone, lecture, doigts pointés en même temps, éclair rouge, répliques 2 et 3.",
+   "camera": {
+    "intent": "Lent rapprochement puis recadrage motivé au moment où ils se pointent du doigt ; léger recul avant la rupture."
+   },
+   "transition": "Coupe sur l’action : le canapé craque.",
+   "asset_inputs": [
+    "art/room.png",
+    "art/sofa_left.png",
+    "art/sofa_right.png",
+    "art/phone.png",
+    "art/card1.png",
+    "art/bolt.png",
+    "art/title_hook.png"
+   ]
+  },
+  {
+   "id": "escalade",
+   "start": 8.95,
+   "end": 16.0,
+   "composition": "Même axe, le canapé s’ouvre : un vide central se crée, les bulles rouges occupent le haut de chaque côté.",
+   "action": "Le canapé se fend et les moitiés s’écartent, le téléphone tombe sur le tapis ; répliques 4 et 5 avec bulles de preuves.",
+   "camera": {
+    "intent": "Secousse brève méritée au craquement, puis cadre posé pour lire les bulles."
+   },
+   "transition": "Coupe franche (scratch) vers le mur.",
+   "asset_inputs": [
+    "art/room.png",
+    "art/sofa_left.png",
+    "art/sofa_right.png",
+    "art/phone.png",
+    "art/bubble_gift.png",
+    "art/bubble_blank.png",
+    "art/clock.png"
+   ]
+  },
+  {
+   "id": "mur",
+   "start": 16.0,
+   "end": 20.9,
+   "composition": "Dos à dos de part et d’autre du mur rouge qui monte au centre ; la nouvelle carte s’élève devant le mur.",
+   "action": "Le mur monte, bras croisés ; le téléphone vibre ; la carte « Question suivante » apparaît ; ils se figent.",
+   "camera": {
+    "intent": "Légère secousse pendant la montée du mur, puis rapprochement lent vers la carte."
+   },
+   "transition": "Coupe vers LUI et le mur.",
+   "asset_inputs": [
+    "art/room.png",
+    "art/sofa_left.png",
+    "art/sofa_right.png",
+    "art/phone.png",
+    "art/wall.png",
+    "art/card2.png"
+   ]
+  },
+  {
+   "id": "fissure",
+   "start": 20.9,
+   "end": 22.8,
+   "composition": "Plan rapproché sur LUI tourné vers le mur ; main et fissure au-dessus de la bande de sous-titres.",
+   "action": "Il pose la main sur le mur, la fissure dorée se propage ; « …Ton rire. »",
+   "camera": {
+    "intent": "Plan rapproché presque fixe, très léger rapprochement pour laisser lire le geste."
+   },
+   "transition": "Coupe sur l’explosion du mur.",
+   "asset_inputs": [
+    "art/room.png",
+    "art/sofa_left.png",
+    "art/sofa_right.png",
+    "art/phone.png",
+    "art/wall.png",
+    "art/card2.png"
+   ]
+  },
+  {
+   "id": "chute",
+   "start": 22.8,
+   "end": 30.0,
+   "composition": "Retour au plan large : confettis dorés, canapé recollé, les deux rapprochés ; cœur doré et carton de fin en haut.",
+   "action": "Le mur éclate, le canapé se recolle, elle pose la tête contre lui, cœur doré, carton « Bae – jeu de couple ».",
+   "camera": {
+    "intent": "Secousse à l’explosion puis rapprochement lent sur le couple réconcilié."
+   },
+   "transition": "Fin.",
+   "asset_inputs": [
+    "art/room.png",
+    "art/sofa_left.png",
+    "art/sofa_right.png",
+    "art/phone.png",
+    "art/heart_gold.png",
+    "art/title_end.png"
+   ]
+  }
+ ],
+ "cast_inventory": [
+  {
+   "id": "elle",
+   "role": "ELLE, toujours à gauche (sweat rose)",
+   "shot_ids": [
+    "etincelle",
+    "escalade",
+    "mur",
+    "fissure",
+    "chute"
+   ]
+  },
+  {
+   "id": "lui",
+   "role": "LUI, toujours à droite (t-shirt bleu canard)",
+   "shot_ids": [
+    "etincelle",
+    "escalade",
+    "mur",
+    "fissure",
+    "chute"
+   ]
+  }
+ ],
+ "caption": {
+  "profile": "eiffel-v44-portrait-archivo-black-v1",
+  "native_design": "9:16",
+  "font_family": "Archivo Black",
+  "font_file": "fonts/ArchivoBlack.ttf",
+  "font_sha256": "dd9a89a019b4849f66ab75455fe7bdf931311042cbb0f0f97acc061539703180",
+  "font_size": 47,
+  "stroke": 4,
+  "fill": "#ffffff",
+  "stroke_fill": "#171319",
+  "supersampling": 3,
+  "resample": "lanczos",
+  "anchor": "ms",
+  "side": 44,
+  "switch": "hard_cut",
+  "autoshrink": false,
+  "pop": false,
+  "baseline": 914,
+  "band": [
+   864,
+   951
+  ]
+ }
+}

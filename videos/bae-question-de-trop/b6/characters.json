@@ -1,0 +1,20 @@
+{
+ "schema": "b6-character-registry/1",
+ "actors": [
+  {
+   "id": "elle",
+   "package": "characters/elle",
+   "views": [
+    "tq"
+   ]
+  },
+  {
+   "id": "lui",
+   "package": "characters/lui",
+   "views": [
+    "tq"
+   ]
+  }
+ ],
+ "rigid_cast": []
+}

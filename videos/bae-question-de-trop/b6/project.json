@@ -1,0 +1,63 @@
+{
+  "version": 2,
+  "style": "B6",
+  "renderer": "b6-production-v1",
+  "purpose": "production",
+  "stage": "authored",
+  "duration": 30.0,
+  "fps": 30,
+  "scene": "scene.py",
+  "story": "story.json",
+  "captions": "captions.json",
+  "formats": {
+    "9:16": "formats/portrait.json"
+  },
+  "voice": {
+    "name": "ElevenLabs — Mylene (ELLE) et Maxime (LUI), eleven_v3, vitesse d’origine ; mix local voix + musique + effets",
+    "path": "audio/mix.wav",
+    "sha256": "94e46d43b229a08cc48fab7382302cf7d8823b6deafce1c34ae0e3fb0fdb375c",
+    "speed": 1,
+    "source": "tools/tts.py puis tools/mix_audio.py"
+  },
+  "bindings": null,
+  "character_system": {
+    "schema": "b6-character-system/1",
+    "registry": "characters.json"
+  },
+  "quality_target": "quality-target.json",
+  "caption_font_variant": "archivo-black",
+  "inputs": [
+    "motion_review.py",
+    "b6_space.py",
+    "caption_renderer.py",
+    "b6_puppet.py",
+    "b6_asset_roles.py",
+    "b6_actions.py",
+    "b6_iteration.py",
+    "b6_character_preflight.py",
+    "fonts/ArchivoBlack.ttf",
+    "fonts/OFL-ArchivoBlack.txt",
+    "timing.json",
+    "art/bolt.png",
+    "art/bubble_blank.png",
+    "art/bubble_gift.png",
+    "art/card1.png",
+    "art/card2.png",
+    "art/clock.png",
+    "art/heart_gold.png",
+    "art/phone.png",
+    "art/room.png",
+    "art/sofa_left.png",
+    "art/sofa_right.png",
+    "art/title_end.png",
+    "art/title_hook.png",
+    "art/wall.png"
+  ],
+  "review": {
+    "status": "pending",
+    "art": null,
+    "acting": null,
+    "sound": null
+  },
+  "language": "fr"
+}

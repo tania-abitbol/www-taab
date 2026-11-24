@@ -1,0 +1,1013 @@
+{
+  "schema_version": 1,
+  "purpose": "project_selected_audio",
+  "catalog_sha256": "83e5eae2452b5010e8b62eceeacefddfd28aba5fc85f976f788ddb9d3497fdf6",
+  "assets": [
+    {
+      "id": "bgm-monkeys-spinning-monkeys",
+      "title": "Monkeys Spinning Monkeys",
+      "kind": "music",
+      "category": "meme",
+      "tags": [
+        "meme",
+        "comedy",
+        "bouncy"
+      ],
+      "recommended_use_zh": "荒诞日常、轻喜剧动作、轻松反转",
+      "author": "Kevin MacLeod",
+      "source_id": "bgm-monkeys-spinning-monkeys",
+      "source_url": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1400011",
+      "path": "audio/music/bgm-monkeys-spinning-monkeys.mp3",
+      "sha256": "a5bb345c23849ad0786aa0bc5157a9f2d4039660fe00282e55754d475f36dc14",
+      "original_sha256": "a5bb345c23849ad0786aa0bc5157a9f2d4039660fe00282e55754d475f36dc14",
+      "original_filename": "Monkeys Spinning Monkeys.mp3",
+      "bytes": 5005207,
+      "duration": 125.0743,
+      "sample_rate": 44100,
+      "channels": 2,
+      "license": {
+        "id": "CC-BY-4.0",
+        "url": "https://creativecommons.org/licenses/by/4.0/",
+        "evidence_paths": [
+          "licenses/CC-BY-4.0.txt",
+          "evidence/bgm-monkeys-spinning-monkeys/official-record.json",
+          "evidence/bgm-monkeys-spinning-monkeys/acquisition.json"
+        ],
+        "attribution_required": true,
+        "attribution": "\"Monkeys Spinning Monkeys\" Kevin MacLeod (incompetech.com)\nLicensed under Creative Commons: By Attribution 4.0 License\nhttp://creativecommons.org/licenses/by/4.0/\nSource: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1400011\nLibrary copy: original MP3 unchanged. In a finished video, disclose actual edits/synchronization.",
+        "commercial_use": true,
+        "redistribution": true,
+        "modifications_allowed": true
+      },
+      "modifications": [],
+      "verified_at": "2026-11-14",
+      "qa": {
+        "decode": "pass"
+      },
+      "official_metadata": {
+        "length": "00:02:05",
+        "bpm": "144",
+        "instruments": "Flutes, Violin, Viola, Cello",
+        "feel": "Bouncy, Bright, Humorous, Uplifting",
+        "uploaded": "2014-02-03"
+      },
+      "roles": [
+        "comic-bed",
+        "meme-bed"
+      ],
+      "style_hints": [
+        "B5",
+        "B6"
+      ]
+    },
+    {
+      "id": "bgm-morning",
+      "title": "Morning",
+      "kind": "music",
+      "category": "warm",
+      "tags": [
+        "warm",
+        "calm",
+        "hopeful"
+      ],
+      "recommended_use_zh": "温暖落点、平静叙述、安静晨间",
+      "author": "Kevin MacLeod",
+      "source_id": "bgm-morning",
+      "source_url": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN2300003",
+      "path": "audio/music/bgm-morning.mp3",
+      "sha256": "25a18be2e8b47ee75c336d9e27ac709bf71f0409806d696ab49ea2bddc113d80",
+      "original_sha256": "25a18be2e8b47ee75c336d9e27ac709bf71f0409806d696ab49ea2bddc113d80",
+      "original_filename": "Morning.mp3",
+      "bytes": 3068475,
+      "duration": 153.31265,
+      "sample_rate": 44100,
+      "channels": 2,
+      "license": {
+        "id": "CC-BY-4.0",
+        "url": "https://creativecommons.org/licenses/by/4.0/",
+        "evidence_paths": [
+          "licenses/CC-BY-4.0.txt",
+          "evidence/bgm-morning/official-record.json",
+          "evidence/bgm-morning/acquisition.json"
+        ],
+        "attribution_required": true,
+        "attribution": "\"Morning\" Kevin MacLeod (incompetech.com)\nLicensed under Creative Commons: By Attribution 4.0 License\nhttp://creativecommons.org/licenses/by/4.0/\nSource: https://incompetech.com/music/royalty-free/index.html?isrc=USUAN2300003\nLibrary copy: original MP3 unchanged. In a finished video, disclose actual edits/synchronization.",
+        "commercial_use": true,
+        "redistribution": true,
+        "modifications_allowed": true
+      },
+      "modifications": [],
+      "verified_at": "2026-11-14",
+      "qa": {
+        "decode": "pass"
+      },
+      "official_metadata": {
+        "length": "00:02:33",
+        "bpm": "60",
+        "instruments": "Classical Guitar, Harp, Flutes",
+        "feel": "Bright, Calming, Relaxed",
+        "uploaded": "2023-08-15"
+      },
+      "roles": [
+        "warm-bed"
+      ],
+      "style_hints": [
+        "B1",
+        "B2",
+        "B3",
+        "B5",
+        "B9"
+      ]
+    },
+    {
+      "id": "rubberduck-water-40-bubble-02",
+      "title": "bubble 02",
+      "kind": "sfx",
+      "category": "bubble-pop",
+      "tags": [
+        "bubble-pop",
+        "one-shot"
+      ],
+      "author": "rubberduck",
+      "source_id": "rubberduck-water-40",
+      "source_url": "https://opengameart.org/content/40-cc0-water-splash-slime-sfx",
+      "original_filename": "bubble_02.ogg",
+      "original_sha256": "7992a1a4637ea727b177b3edbc086ec280167d67a8fad010bb8fb58893b2e2f2",
+      "sha256": "7992a1a4637ea727b177b3edbc086ec280167d67a8fad010bb8fb58893b2e2f2",
+      "canonical_pcm_sha256": "f94824f41dbb93ce17ca79b2e19038a37dc8f960a96b264a1491a57dc4d4b430",
+      "duration": 0.360354,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bytes": 16017,
+      "path": "audio/rubberduck-water-40/bubble_02.ogg",
+      "roles": [],
+      "loopable_from_source": false,
+      "source_role": "one-shot",
+      "modifications": [],
+      "verified_at": "2026-11-14",
+      "qa": {
+        "decode": "pass"
+      },
+      "review_note": "Source-description and source-filename category only; no invented detailed action labels. Level and timing must be auditioned in the destination shot.",
+      "license": {
+        "id": "CC0-1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "evidence_paths": [
+          "licenses/CC0-1.0-legalcode.html.txt",
+          "evidence/rubberduck-water-40/acquisition.json"
+        ],
+        "attribution_required": false,
+        "attribution": "40 CC0 water / splash / slime SFX - rubberduck (https://opengameart.org/content/40-cc0-water-splash-slime-sfx), CC0-1.0 (https://creativecommons.org/publicdomain/zero/1.0/). Original audio unchanged.",
+        "commercial_use": true,
+        "redistribution": true,
+        "modifications_allowed": true
+      },
+      "style_hints": []
+    },
+    {
+      "id": "artisticdude-swishes-swish-1",
+      "title": "Swish 1",
+      "kind": "transition",
+      "category": "whoosh",
+      "tags": [
+        "swing",
+        "swish",
+        "whip",
+        "whoosh",
+        "掠过",
+        "转场"
+      ],
+      "author": "artisticdude",
+      "source_id": "artisticdude-swishes",
+      "source_url": "https://opengameart.org/content/swishes-sound-pack",
+      "path": "audio/artisticdude-swishes/swish-1.wav",
+      "sha256": "9a15c881345c1ce1c39cc31f52f081c8c4dc81fa41111e0079400f39d3ba0e45",
+      "original_sha256": "9a15c881345c1ce1c39cc31f52f081c8c4dc81fa41111e0079400f39d3ba0e45",
+      "original_filename": "swish-1.wav",
+      "canonical_pcm_sha256": "09781fc9af8c1e99bee9405a47860e94aae35d0ef060878cc5316de0924475aa",
+      "duration": 0.126032,
+      "sample_rate": 44100,
+      "channels": 2,
+      "bytes": 34138,
+      "license": {
+        "id": "CC0-1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "evidence_paths": [
+          "licenses/CC0-1.0-legalcode.html.txt",
+          "evidence/artisticdude-swishes/acquisition.json"
+        ],
+        "attribution_required": false,
+        "attribution": "Swishes Sound Pack — artisticdude (CC0 1.0)",
+        "commercial_use": true,
+        "redistribution": true,
+        "modifications_allowed": true
+      },
+      "modifications": [],
+      "verified_at": "2026-11-14",
+      "qa": {
+        "decode": "pass",
+        "peak_dbfs": 2.73,
+        "rms_dbfs": -12.03,
+        "near_full_scale_samples": 94
+      },
+      "roles": [
+        "motion-transition"
+      ],
+      "style_hints": []
+    },
+    {
+      "id": "kenney-digital-zap1",
+      "title": "Zap1",
+      "kind": "sfx",
+      "category": "digital-game",
+      "tags": [
+        "digital",
+        "electronic",
+        "game",
+        "sci-fi",
+        "zap1"
+      ],
+      "author": "Kenney",
+      "source_id": "kenney-digital",
+      "source_url": "https://kenney.nl/assets/digital-audio",
+      "path": "audio/kenney-digital/zap1.ogg",
+      "sha256": "4e4bf11c671a4be0723022a7177f8e122329fa32a0c59555581f4193ed111585",
+      "original_sha256": "4e4bf11c671a4be0723022a7177f8e122329fa32a0c59555581f4193ed111585",
+      "original_filename": "zap1.ogg",
+      "canonical_pcm_sha256": "c3946dc815635c9bc62bc08665a49ab323e7fc15ed98c30f4931aba6e8bb0cde",
+      "duration": 1.018776,
+      "sample_rate": 44100,
+      "channels": 1,
+      "bytes": 8126,
+      "license": {
+        "id": "CC0-1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "evidence_paths": [
+          "licenses/CC0-1.0-legalcode.html.txt",
+          "evidence/kenney-digital/original-license-1.txt",
+          "evidence/kenney-digital/acquisition.json"
+        ],
+        "attribution_required": false,
+        "attribution": "Digital Audio — Kenney (CC0 1.0)",
+        "commercial_use": true,
+        "redistribution": true,
+        "modifications_allowed": true
+      },
+      "modifications": [],
+      "verified_at": "2026-11-14",
+      "qa": {
+        "decode": "pass",
+        "peak_dbfs": 0.13696430308786836,
+        "rms_dbfs": -12.189100562166441
+      },
+      "roles": [
+        "pixel-action"
+      ],
+      "style_hints": [
+        "B1",
+        "B3",
+        "B7",
+        "B9"
+      ]
+    },
+    {
+      "id": "rubberduck-general-100-2-sfx100v2-wood-hit-03",
+      "title": "sfx100v2 wood hit 03",
+      "kind": "sfx",
+      "category": "wood-foley",
+      "tags": [
+        "wood-foley",
+        "one-shot"
+      ],
+      "author": "rubberduck",
+      "source_id": "rubberduck-general-100-2",
+      "source_url": "https://opengameart.org/content/100-cc0-sfx-2",
+      "original_filename": "sfx100v2_wood_hit_03.ogg",
+      "original_sha256": "268dddd7bee1961ef6ea0ab41972be6eaa45c2449aca6e53dab57ecd04c7de2a",
+      "sha256": "268dddd7bee1961ef6ea0ab41972be6eaa45c2449aca6e53dab57ecd04c7de2a",
+      "canonical_pcm_sha256": "85fccac59f0605774aaf346075417eb8e829a0be433f28ede043c862b3dae8c5",
+      "duration": 0.469271,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bytes": 8113,
+      "path": "audio/rubberduck-general-100-2/sfx100v2_wood_hit_03.ogg",
+      "roles": [],
+      "loopable_from_source": false,
+      "source_role": "one-shot",
+      "modifications": [],
+      "verified_at": "2026-11-14",
+      "qa": {
+        "decode": "pass"
+      },
+      "review_note": "Source-description and source-filename category only; no invented detailed action labels. Level and timing must be auditioned in the destination shot.",
+      "license": {
+        "id": "CC0-1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "evidence_paths": [
+          "licenses/CC0-1.0-legalcode.html.txt",
+          "evidence/rubberduck-general-100-2/acquisition.json"
+        ],
+        "attribution_required": false,
+        "attribution": "100 CC0 SFX #2 - rubberduck (https://opengameart.org/content/100-cc0-sfx-2), CC0-1.0 (https://creativecommons.org/publicdomain/zero/1.0/). Original audio unchanged.",
+        "commercial_use": true,
+        "redistribution": true,
+        "modifications_allowed": true
+      },
+      "style_hints": []
+    },
+    {
+      "id": "rubberduck-general-100-2-sfx100v2-stones-01",
+      "title": "sfx100v2 stones 01",
+      "kind": "sfx",
+      "category": "stone-foley",
+      "tags": [
+        "stone-foley",
+        "one-shot"
+      ],
+      "author": "rubberduck",
+      "source_id": "rubberduck-general-100-2",
+      "source_url": "https://opengameart.org/content/100-cc0-sfx-2",
+      "original_filename": "sfx100v2_stones_01.ogg",
+      "original_sha256": "20d293a892e1fa6330da2569065aa260a822198bddce2b183f8c11642e7deb4d",
+      "sha256": "20d293a892e1fa6330da2569065aa260a822198bddce2b183f8c11642e7deb4d",
+      "canonical_pcm_sha256": "4c623e0d65176ae1b6c50fcf1d253db809798d3d349189f20c6aba59a53cd8d8",
+      "duration": 0.489042,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bytes": 12669,
+      "path": "audio/rubberduck-general-100-2/sfx100v2_stones_01.ogg",
+      "roles": [],
+      "loopable_from_source": false,
+      "source_role": "one-shot",
+      "modifications": [],
+      "verified_at": "2026-11-14",
+      "qa": {
+        "decode": "pass"
+      },
+      "review_note": "Source-description and source-filename category only; no invented detailed action labels. Level and timing must be auditioned in the destination shot.",
+      "license": {
+        "id": "CC0-1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "evidence_paths": [
+          "licenses/CC0-1.0-legalcode.html.txt",
+          "evidence/rubberduck-general-100-2/acquisition.json"
+        ],
+        "attribution_required": false,
+        "attribution": "100 CC0 SFX #2 - rubberduck (https://opengameart.org/content/100-cc0-sfx-2), CC0-1.0 (https://creativecommons.org/publicdomain/zero/1.0/). Original audio unchanged.",
+        "commercial_use": true,
+        "redistribution": true,
+        "modifications_allowed": true
+      },
+      "style_hints": []
+    },
+    {
+      "id": "rubberduck-general-100-2-sfx100v2-stones-02",
+      "title": "sfx100v2 stones 02",
+      "kind": "sfx",
+      "category": "stone-foley",
+      "tags": [
+        "stone-foley",
+        "one-shot"
+      ],
+      "author": "rubberduck",
+      "source_id": "rubberduck-general-100-2",
+      "source_url": "https://opengameart.org/content/100-cc0-sfx-2",
+      "original_filename": "sfx100v2_stones_02.ogg",
+      "original_sha256": "23f8c7335eb656ea759899946ed665712ec41f4572656f421f7f5652bea66279",
+      "sha256": "23f8c7335eb656ea759899946ed665712ec41f4572656f421f7f5652bea66279",
+      "canonical_pcm_sha256": "2b3cfee25543566aa27ad45cfdc64c8b5993a555e95b000a6d00f1650bdba733",
+      "duration": 0.555375,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bytes": 12558,
+      "path": "audio/rubberduck-general-100-2/sfx100v2_stones_02.ogg",
+      "roles": [],
+      "loopable_from_source": false,
+      "source_role": "one-shot",
+      "modifications": [],
+      "verified_at": "2026-11-14",
+      "qa": {
+        "decode": "pass"
+      },
+      "review_note": "Source-description and source-filename category only; no invented detailed action labels. Level and timing must be auditioned in the destination shot.",
+      "license": {
+        "id": "CC0-1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "evidence_paths": [
+          "licenses/CC0-1.0-legalcode.html.txt",
+          "evidence/rubberduck-general-100-2/acquisition.json"
+        ],
+        "attribution_required": false,
+        "attribution": "100 CC0 SFX #2 - rubberduck (https://opengameart.org/content/100-cc0-sfx-2), CC0-1.0 (https://creativecommons.org/publicdomain/zero/1.0/). Original audio unchanged.",
+        "commercial_use": true,
+        "redistribution": true,
+        "modifications_allowed": true
+      },
+      "style_hints": []
+    },
+    {
+      "id": "record-scratch-160909-raccoonanimator-scratch-speed",
+      "title": "160909  raccoonanimator  scratch-speed",
+      "kind": "sfx",
+      "category": "record-scratch",
+      "tags": [
+        "record-scratch",
+        "one-shot"
+      ],
+      "author": "Racche (formerly Raccoonanimator)",
+      "source_id": "record-scratch",
+      "source_url": "https://opengameart.org/content/scratch-speed",
+      "original_filename": "160909__raccoonanimator__scratch-speed.wav",
+      "original_sha256": "37cececf082f70009e37c1b84ccfffd27c38875f1df754441ad66252df006a2e",
+      "sha256": "37cececf082f70009e37c1b84ccfffd27c38875f1df754441ad66252df006a2e",
+      "canonical_pcm_sha256": "a6373c53d7ad7472267eeec8573df48ebc22cceb141f354be75cfd2e7affad9d",
+      "duration": 0.377846,
+      "sample_rate": 44100,
+      "channels": 2,
+      "bytes": 133386,
+      "path": "audio/record-scratch/160909__raccoonanimator__scratch-speed.wav",
+      "roles": [
+        "comic-punctuation",
+        "comic-reaction"
+      ],
+      "loopable_from_source": false,
+      "source_role": "one-shot",
+      "modifications": [],
+      "verified_at": "2026-11-14",
+      "qa": {
+        "decode": "pass"
+      },
+      "review_note": "Complete-stream decode passed. Choose level and timing by listening in the destination shot. Original author account is now Racche; historic credited name Raccoonanimator retained. Not a branded film/meme sample.",
+      "license": {
+        "id": "CC-BY-3.0",
+        "url": "https://creativecommons.org/licenses/by/3.0/",
+        "evidence_paths": [
+          "licenses/CC-BY-3.0-legalcode.html.txt",
+          "evidence/record-scratch/acquisition.json"
+        ],
+        "attribution_required": true,
+        "attribution": "Scratch Speed.wav — Racche (formerly Raccoonanimator) (https://opengameart.org/content/scratch-speed), CC-BY-3.0 (https://creativecommons.org/licenses/by/3.0/). Downloaded original unchanged.",
+        "commercial_use": true,
+        "redistribution": true,
+        "modifications_allowed": true
+      },
+      "style_hints": [
+        "B5",
+        "B6",
+        "B7"
+      ]
+    },
+    {
+      "id": "kenney-interface-glass-004",
+      "title": "Glass 004",
+      "kind": "sfx",
+      "category": "ui-feedback",
+      "tags": [
+        "diagram",
+        "glass",
+        "interface",
+        "反馈",
+        "提示音"
+      ],
+      "author": "Kenney",
+      "source_id": "kenney-interface",
+      "source_url": "https://kenney.nl/assets/interface-sounds",
+      "path": "audio/kenney-interface/glass_004.ogg",
+      "sha256": "2379b58f953e3d86982aa8cddcae763022c6258e9820171bf905ce58b4e97766",
+      "original_sha256": "2379b58f953e3d86982aa8cddcae763022c6258e9820171bf905ce58b4e97766",
+      "original_filename": "glass_004.ogg",
+      "canonical_pcm_sha256": "082aa89b021e1ae444f13d7dcb80faae75177746d31361c1914f244cd288b436",
+      "duration": 0.692268,
+      "sample_rate": 44100,
+      "channels": 1,
+      "bytes": 8323,
+      "license": {
+        "id": "CC0-1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "evidence_paths": [
+          "licenses/CC0-1.0-legalcode.html.txt",
+          "evidence/kenney-interface/original-license-1.txt",
+          "evidence/kenney-interface/acquisition.json"
+        ],
+        "attribution_required": false,
+        "attribution": "Interface Sounds — Kenney (CC0 1.0)",
+        "commercial_use": true,
+        "redistribution": true,
+        "modifications_allowed": true
+      },
+      "modifications": [],
+      "verified_at": "2026-11-14",
+      "qa": {
+        "decode": "pass",
+        "peak_dbfs": -0.35,
+        "rms_dbfs": -17.97,
+        "near_full_scale_samples": 0
+      },
+      "roles": [
+        "diagram-feedback"
+      ],
+      "style_hints": [
+        "B1",
+        "B3",
+        "B7",
+        "B9"
+      ]
+    },
+    {
+      "id": "kenney-rpg-handle-coins2",
+      "title": "Handle Coins2",
+      "kind": "sfx",
+      "category": "money",
+      "tags": [
+        "coin",
+        "money",
+        "钱币"
+      ],
+      "author": "Kenney",
+      "source_id": "kenney-rpg",
+      "source_url": "https://kenney.nl/assets/rpg-audio",
+      "path": "audio/kenney-rpg/handleCoins2.ogg",
+      "sha256": "4b857968d64f9ac9336a10ffac6694d7547e1f01566ad6857b30bc8db3ee6c32",
+      "original_sha256": "4b857968d64f9ac9336a10ffac6694d7547e1f01566ad6857b30bc8db3ee6c32",
+      "original_filename": "handleCoins2.ogg",
+      "canonical_pcm_sha256": "9e32572b240cb7af6c54aa58432c4abe9e92d19d3f0e2d702036b5ae1a5b8eff",
+      "duration": 0.338208,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bytes": 13094,
+      "license": {
+        "id": "CC0-1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "evidence_paths": [
+          "licenses/CC0-1.0-legalcode.html.txt",
+          "evidence/kenney-rpg/original-license-1.txt",
+          "evidence/kenney-rpg/acquisition.json"
+        ],
+        "attribution_required": false,
+        "attribution": "RPG Audio — Kenney (CC0 1.0)",
+        "commercial_use": true,
+        "redistribution": true,
+        "modifications_allowed": true
+      },
+      "modifications": [],
+      "verified_at": "2026-11-14",
+      "qa": {
+        "decode": "pass",
+        "peak_dbfs": -9.17,
+        "rms_dbfs": -31.42,
+        "near_full_scale_samples": 0
+      },
+      "roles": [
+        "money-contact",
+        "prop-contact"
+      ],
+      "style_hints": [
+        "B1",
+        "B2",
+        "B3",
+        "B4",
+        "B5",
+        "B6",
+        "B8"
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "bgm-monkeys-spinning-monkeys",
+      "title": "Monkeys Spinning Monkeys",
+      "author": "Kevin MacLeod",
+      "source_url": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1400011",
+      "download_url": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Monkeys%20Spinning%20Monkeys.mp3",
+      "license_id": "CC-BY-4.0",
+      "evidence_paths": [
+        "licenses/CC-BY-4.0.txt",
+        "evidence/bgm-monkeys-spinning-monkeys/official-record.json",
+        "evidence/bgm-monkeys-spinning-monkeys/acquisition.json"
+      ]
+    },
+    {
+      "id": "bgm-morning",
+      "title": "Morning",
+      "author": "Kevin MacLeod",
+      "source_url": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN2300003",
+      "download_url": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Morning.mp3",
+      "license_id": "CC-BY-4.0",
+      "evidence_paths": [
+        "licenses/CC-BY-4.0.txt",
+        "evidence/bgm-morning/official-record.json",
+        "evidence/bgm-morning/acquisition.json"
+      ]
+    },
+    {
+      "id": "rubberduck-water-40",
+      "title": "40 CC0 water / splash / slime SFX",
+      "author": "rubberduck",
+      "source_url": "https://opengameart.org/content/40-cc0-water-splash-slime-sfx",
+      "license_id": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_declaration_urls": [
+        "http://creativecommons.org/publicdomain/zero/1.0/"
+      ],
+      "retrieved_at": "2026-11-14T07:06:32.243062+00:00",
+      "description": "I created some water, splash and slime sounds: 3x bubble 6x loop sounds (bubbles, rain, water) 16x slime (partly recorded from real slime) 15x splash The loop sounds are also a bit longer as in the preview.",
+      "attribution_notice": "",
+      "license_declaration": "License(s): CC0",
+      "downloads": [
+        {
+          "url": "https://opengameart.org/sites/default/files/water-splash-slime-sfx.zip",
+          "filename": "water-splash-slime-sfx.zip",
+          "sha256": "7cd39abb49d4362a37ba18dc0e454c7dc1d08029d4e5b683149046bc237b2eba",
+          "bytes": 2259262
+        }
+      ],
+      "download_url": "https://opengameart.org/sites/default/files/water-splash-slime-sfx.zip",
+      "source_page_sha256": "2e7e47024f8a944abc40417e8a1ac7b51bf5660a401e2e0ea260a1354cf0ad63",
+      "evidence_paths": [
+        "licenses/CC0-1.0-legalcode.html.txt",
+        "evidence/rubberduck-water-40/acquisition.json"
+      ]
+    },
+    {
+      "id": "artisticdude-swishes",
+      "title": "Swishes Sound Pack",
+      "author": "artisticdude",
+      "source_url": "https://opengameart.org/content/swishes-sound-pack",
+      "download_url": "https://lpc.opengameart.org/sites/default/files/swishes.zip",
+      "license_spdx": "CC0-1.0",
+      "verified_at": "2026-11-14",
+      "archive_sha256": "7980215241b739a787dcf26f660ce510bb237900968789395a86911619795693",
+      "archive_bytes": 385150,
+      "source_page_sha256": "c339326fbbcbecf4f631c22129a9aab1a577a6fe8a34439bbcbaea3962485f55",
+      "note": "Download signatures may expire; use the source page. Original audio bytes retained. Web snapshots are inert text.",
+      "license_id": "CC0-1.0",
+      "evidence_paths": [
+        "licenses/CC0-1.0-legalcode.html.txt",
+        "evidence/artisticdude-swishes/acquisition.json"
+      ]
+    },
+    {
+      "id": "kenney-digital",
+      "title": "Digital Audio",
+      "author": "Kenney",
+      "source_url": "https://kenney.nl/assets/digital-audio",
+      "download_url": "https://kenney.nl/download-link/6173736574732f6469676974616c2d617564696f",
+      "license_spdx": "CC0-1.0",
+      "verified_at": "2026-11-14",
+      "archive_sha256": "24e6ce28b76a6d8c89cff4d331e0965ff5c3de8a73c612028e9d363cc64e4f06",
+      "archive_bytes": 990367,
+      "source_page_sha256": "efa6a6f6a67b26a5204c570d36ad52afc350e85c91e46d576e3e7ae6fb5c5f32",
+      "note": "Use the official source page or download-resolution endpoint; expiring signed URLs are kept only in local acquisition records. Original audio unchanged.",
+      "license_id": "CC0-1.0",
+      "evidence_paths": [
+        "licenses/CC0-1.0-legalcode.html.txt",
+        "evidence/kenney-digital/original-license-1.txt",
+        "evidence/kenney-digital/acquisition.json"
+      ]
+    },
+    {
+      "id": "rubberduck-general-100-2",
+      "title": "100 CC0 SFX #2",
+      "author": "rubberduck",
+      "source_url": "https://opengameart.org/content/100-cc0-sfx-2",
+      "license_id": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "license_declaration_urls": [
+        "http://creativecommons.org/publicdomain/zero/1.0/"
+      ],
+      "retrieved_at": "2026-11-14T07:07:36.173537+00:00",
+      "description": "another pack with 100 CC0 sfx Note: the preview does not contain all sounds, it also contains loopable sfx which are shorter in the preview. Included are: air flowing, door, various footstep, glass, hit, item, loops (ambient, machine, construction site, highway / street, flowing water), metal / metal hit, misc, stones, switch, thunder and wood / wood hit - sounds",
+      "attribution_notice": "",
+      "license_declaration": "License(s): CC0",
+      "downloads": [
+        {
+          "url": "https://opengameart.org/sites/default/files/sfx_100_v2.zip",
+          "filename": "sfx_100_v2.zip",
+          "sha256": "0fc61b4494e2e893c0c015ced4877b3f689c7d84a48cb61daecd7ddb52db797b",
+          "bytes": 2367871
+        }
+      ],
+      "download_url": "https://opengameart.org/sites/default/files/sfx_100_v2.zip",
+      "source_page_sha256": "15a1e167aa334a903c7f973234de3848cd5641b189e9dae215ad8eb0f93ddf47",
+      "evidence_paths": [
+        "licenses/CC0-1.0-legalcode.html.txt",
+        "evidence/rubberduck-general-100-2/acquisition.json"
+      ]
+    },
+    {
+      "id": "record-scratch",
+      "title": "Scratch Speed.wav",
+      "author": "Racche (formerly Raccoonanimator)",
+      "source_url": "https://opengameart.org/content/scratch-speed",
+      "license_id": "CC-BY-3.0",
+      "license_url": "https://creativecommons.org/licenses/by/3.0/",
+      "license_declaration_urls": [
+        "https://opengameart.org/content/scratch-speed"
+      ],
+      "retrieved_at": "2026-11-14",
+      "description": "Original Scratch Speed.wav mirrored unchanged by OpenGameArt. Original author has renamed account from Raccoonanimator to Racche; original sound ID, title, duration and licence match.",
+      "attribution_notice": "",
+      "license_declaration": "CC BY 3.0 on both OpenGameArt mirror and original Freesound author page.",
+      "downloads": [
+        {
+          "url": "https://opengameart.org/sites/default/files/160909__raccoonanimator__scratch-speed.wav",
+          "filename": "160909__raccoonanimator__scratch-speed.wav",
+          "sha256": "37cececf082f70009e37c1b84ccfffd27c38875f1df754441ad66252df006a2e",
+          "bytes": 133386
+        }
+      ],
+      "download_url": "https://opengameart.org/sites/default/files/160909__raccoonanimator__scratch-speed.wav",
+      "original_author_source_url": "https://freesound.org/people/Racche/sounds/160909/",
+      "source_page_sha256": "aeb12509098d3c83bf76ab4ef46d81fc00bf2a9b891d17fbefbb17fcc45c160d",
+      "evidence_paths": [
+        "licenses/CC-BY-3.0-legalcode.html.txt",
+        "evidence/record-scratch/acquisition.json"
+      ]
+    },
+    {
+      "id": "kenney-interface",
+      "title": "Interface Sounds",
+      "author": "Kenney",
+      "source_url": "https://kenney.nl/assets/interface-sounds",
+      "download_url": "https://kenney.nl/download/6173736574732f696e746572666163652d736f756e6473/84873ce76aebba253661deaa156b7d1c3a7b035fece19a90c4eaab0f0e8e5b47?expires=1794639049",
+      "license_spdx": "CC0-1.0",
+      "verified_at": "2026-11-14",
+      "archive_sha256": "f2193d072726d6758a5f7871b2dcc54dcce0d5c35c6f0a62f92549b327c81232",
+      "archive_bytes": 834536,
+      "source_page_sha256": "e7cc3dfbaa28b3d2563a4ce9c24e862a959015905ae24b3e5cc1c4c08ed54382",
+      "note": "Download signatures may expire; use the source page. Original audio bytes retained. Web snapshots are inert text.",
+      "license_id": "CC0-1.0",
+      "evidence_paths": [
+        "licenses/CC0-1.0-legalcode.html.txt",
+        "evidence/kenney-interface/original-license-1.txt",
+        "evidence/kenney-interface/acquisition.json"
+      ]
+    },
+    {
+      "id": "kenney-rpg",
+      "title": "RPG Audio",
+      "author": "Kenney",
+      "source_url": "https://kenney.nl/assets/rpg-audio",
+      "download_url": "https://kenney.nl/download/6173736574732f7270672d617564696f/078b3986e98a32f978d652ae77c61e7662e5630299251160188db11db33e5eff?expires=1794639049",
+      "license_spdx": "CC0-1.0",
+      "verified_at": "2026-11-14",
+      "archive_sha256": "6dbeaf8544da958d8f2adcb4a4a4b76c1ade34a05f8ab9edccd327da7375f38b",
+      "archive_bytes": 964837,
+      "source_page_sha256": "f7dab478d045be8d5083c514d63860e9dd3c37db08d3a99baf1114381cd87ecf",
+      "note": "Download signatures may expire; use the source page. Original audio bytes retained. Web snapshots are inert text.",
+      "license_id": "CC0-1.0",
+      "evidence_paths": [
+        "licenses/CC0-1.0-legalcode.html.txt",
+        "evidence/kenney-rpg/original-license-1.txt",
+        "evidence/kenney-rpg/acquisition.json"
+      ]
+    }
+  ],
+  "evidence_files": [
+    {
+      "path": "licenses/CC-BY-4.0.txt",
+      "sha256": "9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411"
+    },
+    {
+      "path": "evidence/bgm-monkeys-spinning-monkeys/official-record.json",
+      "sha256": "3fac56ef4603fef314df945b1e91956f951ab1eec99d6473b27f13f86a1892bb"
+    },
+    {
+      "path": "evidence/bgm-monkeys-spinning-monkeys/acquisition.json",
+      "sha256": "0e1a97472b50da99d4ae4ec869b97634a9cfa721a03ea519a856438577e1e481"
+    },
+    {
+      "path": "evidence/bgm-morning/official-record.json",
+      "sha256": "5fc5b47c85fd56f51e07555d4ada9f5354696bf60dbac9be643580f2724530c9"
+    },
+    {
+      "path": "evidence/bgm-morning/acquisition.json",
+      "sha256": "a3218e87824dd2b1c367f35cb4970f002e221bb20b9a460a39ba3be53da74869"
+    },
+    {
+      "path": "licenses/CC0-1.0-legalcode.html.txt",
+      "sha256": "b43732f4c1463b087cf10d4daf8d8766514b2bf8f21bc5ef50905f95be227726"
+    },
+    {
+      "path": "evidence/rubberduck-water-40/acquisition.json",
+      "sha256": "17882f53f501f988f58ccbd5f74db47228185bf99a8b443b6cc0ba76b6f3e312"
+    },
+    {
+      "path": "evidence/artisticdude-swishes/acquisition.json",
+      "sha256": "37ddc32b5d8c014953b5f5076a226f0ab0e3cb2b629425540eea608c7a79b377"
+    },
+    {
+      "path": "evidence/kenney-digital/original-license-1.txt",
+      "sha256": "654d24e000d1c3b2a1d2264151f49e273e8a26d24e26e9bffc2aeb48cea93815"
+    },
+    {
+      "path": "evidence/kenney-digital/acquisition.json",
+      "sha256": "f59eaa120c6628fcf372105d639e96a90d08a5cc25d15b39e4edf13ef25fb1e2"
+    },
+    {
+      "path": "evidence/rubberduck-general-100-2/acquisition.json",
+      "sha256": "d43b1df356a81be0b8437da6ee4c40f6e6fd8aed8a06b5940c39a4c1e2912b3f"
+    },
+    {
+      "path": "licenses/CC-BY-3.0-legalcode.html.txt",
+      "sha256": "967a3670bcbfdc50614e71062b18effed899007a0e364541328ebdb863520132"
+    },
+    {
+      "path": "evidence/record-scratch/acquisition.json",
+      "sha256": "cfe0c4617f99c5c5f04c2a9535e3d85e913bf5d656a693e688412f84a0bcacfe"
+    },
+    {
+      "path": "evidence/kenney-interface/original-license-1.txt",
+      "sha256": "f7966c773bbed0eca6a9c75081c44a178b38eae112724dbb5fdfbd4192d118a9"
+    },
+    {
+      "path": "evidence/kenney-interface/acquisition.json",
+      "sha256": "8d194a2b1223cd00c62b564861a31fb92594bd9437b7f070d16237ffdbb41499"
+    },
+    {
+      "path": "evidence/kenney-rpg/original-license-1.txt",
+      "sha256": "5735dfd72cb64cbbceda4ebc00c380c41ca680edb82ff153aa7c9ab97614c539"
+    },
+    {
+      "path": "evidence/kenney-rpg/acquisition.json",
+      "sha256": "df97ca5836684f7dd9fc1274aecfde86bb158f409969e21a9a0f644c29bef6f2"
+    }
+  ],
+  "required_credits_path": "CREDITS.md",
+  "files": [
+    {
+      "path": "audio/music/bgm-monkeys-spinning-monkeys.mp3",
+      "sha256": "a5bb345c23849ad0786aa0bc5157a9f2d4039660fe00282e55754d475f36dc14",
+      "bytes": 5005207,
+      "role": "audio"
+    },
+    {
+      "path": "licenses/CC-BY-4.0.txt",
+      "sha256": "9ba9550ad48438d0836ddab3da480b3b69ffa0aac7b7878b5a0039e7ab429411",
+      "bytes": 18657,
+      "role": "license_evidence"
+    },
+    {
+      "path": "evidence/bgm-monkeys-spinning-monkeys/official-record.json",
+      "sha256": "3fac56ef4603fef314df945b1e91956f951ab1eec99d6473b27f13f86a1892bb",
+      "bytes": 694,
+      "role": "license_evidence"
+    },
+    {
+      "path": "evidence/bgm-monkeys-spinning-monkeys/acquisition.json",
+      "sha256": "0e1a97472b50da99d4ae4ec869b97634a9cfa721a03ea519a856438577e1e481",
+      "bytes": 1162,
+      "role": "license_evidence"
+    },
+    {
+      "path": "audio/music/bgm-morning.mp3",
+      "sha256": "25a18be2e8b47ee75c336d9e27ac709bf71f0409806d696ab49ea2bddc113d80",
+      "bytes": 3068475,
+      "role": "audio"
+    },
+    {
+      "path": "evidence/bgm-morning/official-record.json",
+      "sha256": "5fc5b47c85fd56f51e07555d4ada9f5354696bf60dbac9be643580f2724530c9",
+      "bytes": 1052,
+      "role": "license_evidence"
+    },
+    {
+      "path": "evidence/bgm-morning/acquisition.json",
+      "sha256": "a3218e87824dd2b1c367f35cb4970f002e221bb20b9a460a39ba3be53da74869",
+      "bytes": 1063,
+      "role": "license_evidence"
+    },
+    {
+      "path": "audio/rubberduck-water-40/bubble_02.ogg",
+      "sha256": "7992a1a4637ea727b177b3edbc086ec280167d67a8fad010bb8fb58893b2e2f2",
+      "bytes": 16017,
+      "role": "audio"
+    },
+    {
+      "path": "licenses/CC0-1.0-legalcode.html.txt",
+      "sha256": "b43732f4c1463b087cf10d4daf8d8766514b2bf8f21bc5ef50905f95be227726",
+      "bytes": 32223,
+      "role": "license_evidence"
+    },
+    {
+      "path": "evidence/rubberduck-water-40/acquisition.json",
+      "sha256": "17882f53f501f988f58ccbd5f74db47228185bf99a8b443b6cc0ba76b6f3e312",
+      "bytes": 1193,
+      "role": "license_evidence"
+    },
+    {
+      "path": "audio/artisticdude-swishes/swish-1.wav",
+      "sha256": "9a15c881345c1ce1c39cc31f52f081c8c4dc81fa41111e0079400f39d3ba0e45",
+      "bytes": 34138,
+      "role": "audio"
+    },
+    {
+      "path": "evidence/artisticdude-swishes/acquisition.json",
+      "sha256": "37ddc32b5d8c014953b5f5076a226f0ab0e3cb2b629425540eea608c7a79b377",
+      "bytes": 641,
+      "role": "license_evidence"
+    },
+    {
+      "path": "audio/kenney-digital/zap1.ogg",
+      "sha256": "4e4bf11c671a4be0723022a7177f8e122329fa32a0c59555581f4193ed111585",
+      "bytes": 8126,
+      "role": "audio"
+    },
+    {
+      "path": "evidence/kenney-digital/original-license-1.txt",
+      "sha256": "654d24e000d1c3b2a1d2264151f49e273e8a26d24e26e9bffc2aeb48cea93815",
+      "bytes": 482,
+      "role": "license_evidence"
+    },
+    {
+      "path": "evidence/kenney-digital/acquisition.json",
+      "sha256": "f59eaa120c6628fcf372105d639e96a90d08a5cc25d15b39e4edf13ef25fb1e2",
+      "bytes": 664,
+      "role": "license_evidence"
+    },
+    {
+      "path": "audio/rubberduck-general-100-2/sfx100v2_wood_hit_03.ogg",
+      "sha256": "268dddd7bee1961ef6ea0ab41972be6eaa45c2449aca6e53dab57ecd04c7de2a",
+      "bytes": 8113,
+      "role": "audio"
+    },
+    {
+      "path": "evidence/rubberduck-general-100-2/acquisition.json",
+      "sha256": "d43b1df356a81be0b8437da6ee4c40f6e6fd8aed8a06b5940c39a4c1e2912b3f",
+      "bytes": 1286,
+      "role": "license_evidence"
+    },
+    {
+      "path": "audio/rubberduck-general-100-2/sfx100v2_stones_01.ogg",
+      "sha256": "20d293a892e1fa6330da2569065aa260a822198bddce2b183f8c11642e7deb4d",
+      "bytes": 12669,
+      "role": "audio"
+    },
+    {
+      "path": "audio/rubberduck-general-100-2/sfx100v2_stones_02.ogg",
+      "sha256": "23f8c7335eb656ea759899946ed665712ec41f4572656f421f7f5652bea66279",
+      "bytes": 12558,
+      "role": "audio"
+    },
+    {
+      "path": "audio/record-scratch/160909__raccoonanimator__scratch-speed.wav",
+      "sha256": "37cececf082f70009e37c1b84ccfffd27c38875f1df754441ad66252df006a2e",
+      "bytes": 133386,
+      "role": "audio"
+    },
+    {
+      "path": "licenses/CC-BY-3.0-legalcode.html.txt",
+      "sha256": "967a3670bcbfdc50614e71062b18effed899007a0e364541328ebdb863520132",
+      "bytes": 51105,
+      "role": "license_evidence"
+    },
+    {
+      "path": "evidence/record-scratch/acquisition.json",
+      "sha256": "cfe0c4617f99c5c5f04c2a9535e3d85e913bf5d656a693e688412f84a0bcacfe",
+      "bytes": 1316,
+      "role": "license_evidence"
+    },
+    {
+      "path": "audio/kenney-interface/glass_004.ogg",
+      "sha256": "2379b58f953e3d86982aa8cddcae763022c6258e9820171bf905ce58b4e97766",
+      "bytes": 8323,
+      "role": "audio"
+    },
+    {
+      "path": "evidence/kenney-interface/original-license-1.txt",
+      "sha256": "f7966c773bbed0eca6a9c75081c44a178b38eae112724dbb5fdfbd4192d118a9",
+      "bytes": 574,
+      "role": "license_evidence"
+    },
+    {
+      "path": "evidence/kenney-interface/acquisition.json",
+      "sha256": "8d194a2b1223cd00c62b564861a31fb92594bd9437b7f070d16237ffdbb41499",
+      "bytes": 718,
+      "role": "license_evidence"
+    },
+    {
+      "path": "audio/kenney-rpg/handleCoins2.ogg",
+      "sha256": "4b857968d64f9ac9336a10ffac6694d7547e1f01566ad6857b30bc8db3ee6c32",
+      "bytes": 13094,
+      "role": "audio"
+    },
+    {
+      "path": "evidence/kenney-rpg/original-license-1.txt",
+      "sha256": "5735dfd72cb64cbbceda4ebc00c380c41ca680edb82ff153aa7c9ab97614c539",
+      "bytes": 478,
+      "role": "license_evidence"
+    },
+    {
+      "path": "evidence/kenney-rpg/acquisition.json",
+      "sha256": "df97ca5836684f7dd9fc1274aecfde86bb158f409969e21a9a0f644c29bef6f2",
+      "bytes": 684,
+      "role": "license_evidence"
+    },
+    {
+      "path": "CREDITS.md",
+      "sha256": "cde5c1b2a42615199aceacefcee5a8045d09479190e0559ff65c61211802ecf2",
+      "bytes": 3706,
+      "role": "credits"
+    }
+  ]
+}

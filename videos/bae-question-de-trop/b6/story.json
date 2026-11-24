@@ -1,0 +1,31 @@
+{
+ "narration": "Ce jeu de couple a failli nous séparer. Attends… pourquoi tu me montres du doigt ? Parce que c'est évident ! Et le cadeau perdu par la poste ? Et toi, « j'arrive dans cinq minutes » ?! …Ton rire. …Ok. Question suivante. Et vous, quelle question a lancé la guerre ?",
+ "language": "fr",
+ "status": "authored",
+ "beats": [
+  {
+   "id": "etincelle",
+   "start": 0,
+   "end": 8.95,
+   "action": "La carte rose sort du téléphone ; ils se pointent du doigt en même temps, éclair rouge."
+  },
+  {
+   "id": "escalade",
+   "start": 8.95,
+   "end": 16.0,
+   "action": "Le canapé se fend, bulles rouges de preuves (cadeau barré, horloge affolée)."
+  },
+  {
+   "id": "rupture",
+   "start": 16.0,
+   "end": 22.8,
+   "action": "Mur rouge, dos à dos ; nouvelle carte ; il pose la main sur le mur, fissure dorée."
+  },
+  {
+   "id": "chute",
+   "start": 22.8,
+   "end": 30.0,
+   "action": "Le mur éclate en confettis dorés, le canapé se recolle, tête contre lui, cœur doré."
+  }
+ ]
+}

@@ -1,0 +1,455 @@
+{
+ "schema": "b6-puppet/1",
+ "binding_version": 2,
+ "character_id": "elle",
+ "display_name": "ELLE",
+ "views": {
+  "tq": {
+   "facing": "right",
+   "sprites": {
+    "body": {
+     "path": "tq/body.png",
+     "sha256": "c5cdd79974a87699c1f2dcc848e839a6d6abfdbd0a4ce171356a37623d4607df",
+     "image_to_local": [
+      [
+       0.42,
+       0,
+       -77.49
+      ],
+      [
+       0,
+       0.42,
+       -207.76
+      ],
+      [
+       0,
+       0,
+       1
+      ]
+     ]
+    },
+    "head": {
+     "path": "tq/head_smug.png",
+     "sha256": "1704aec62dc32570fd010b30af9dd5e3c4bf3c393c2037552d8ee56f5d8f61d6",
+     "image_to_local": [
+      [
+       0.82,
+       0,
+       -102.14999999999999
+      ],
+      [
+       0,
+       0.82,
+       -381.79999999999995
+      ],
+      [
+       0,
+       0,
+       1
+      ]
+     ]
+    },
+    "heads": {
+     "smug": {
+      "path": "tq/head_smug.png",
+      "sha256": "1704aec62dc32570fd010b30af9dd5e3c4bf3c393c2037552d8ee56f5d8f61d6",
+      "image_to_local": [
+       [
+        0.82,
+        0,
+        -102.14999999999999
+       ],
+       [
+        0,
+        0.82,
+        -381.79999999999995
+       ],
+       [
+        0,
+        0,
+        1
+       ]
+      ]
+     },
+     "shock": {
+      "path": "tq/head_shock.png",
+      "sha256": "1482b6bf5184a540b6cb0969467cfbc9a1621fd4a346ee57e22ed3a6af0bbc58",
+      "image_to_local": [
+       [
+        0.82,
+        0,
+        -101.74
+       ],
+       [
+        0,
+        0.82,
+        -382.62
+       ],
+       [
+        0,
+        0,
+        1
+       ]
+      ]
+     },
+     "angry": {
+      "path": "tq/head_angry.png",
+      "sha256": "b5806abfd90db1c1acb78b7823e87fd095cd05ac2aaa0600eb3070e113bb9f86",
+      "image_to_local": [
+       [
+        0.82,
+        0,
+        -102.14999999999999
+       ],
+       [
+        0,
+        0.82,
+        -381.79999999999995
+       ],
+       [
+        0,
+        0,
+        1
+       ]
+      ]
+     },
+     "shout": {
+      "path": "tq/head_shout.png",
+      "sha256": "5d5fc3133d847248937c1215c77f44c3968d1af401b4dcd0f4c230813db86e64",
+      "image_to_local": [
+       [
+        0.82,
+        0,
+        -102.55999999999999
+       ],
+       [
+        0,
+        0.82,
+        -381.79999999999995
+       ],
+       [
+        0,
+        0,
+        1
+       ]
+      ]
+     },
+     "sulk": {
+      "path": "tq/head_sulk.png",
+      "sha256": "4bcf28985b1ac540c4f085eda5f72a9fda6a9e84140a0b763ee660328fe11cd0",
+      "image_to_local": [
+       [
+        0.82,
+        0,
+        -102.14999999999999
+       ],
+       [
+        0,
+        0.82,
+        -381.79999999999995
+       ],
+       [
+        0,
+        0,
+        1
+       ]
+      ]
+     },
+     "soft": {
+      "path": "tq/head_soft.png",
+      "sha256": "f426245b247b2cdd270045ed44230db2f8f569e0a56b383c477ed02eb44d810f",
+      "image_to_local": [
+       [
+        0.82,
+        0,
+        -101.74
+       ],
+       [
+        0,
+        0.82,
+        -381.79999999999995
+       ],
+       [
+        0,
+        0,
+        1
+       ]
+      ]
+     },
+     "wink": {
+      "path": "tq/head_wink.png",
+      "sha256": "b18cbbf6984468889d901f1e37fbe57955984385d96cc122bc948925bda2a55c",
+      "image_to_local": [
+       [
+        0.82,
+        0,
+        -102.14999999999999
+       ],
+       [
+        0,
+        0.82,
+        -380.98
+       ],
+       [
+        0,
+        0,
+        1
+       ]
+      ]
+     },
+     "laugh": {
+      "path": "tq/head_laugh.png",
+      "sha256": "d005198d16bcdfed47dcbed6e9818ccff872d9170bf8893044999ab95432dbb3",
+      "image_to_local": [
+       [
+        0.82,
+        0,
+        -102.55999999999999
+       ],
+       [
+        0,
+        0.82,
+        -380.98
+       ],
+       [
+        0,
+        0,
+        1
+       ]
+      ]
+     }
+    }
+   },
+   "arms": {
+    "right": {
+     "socket": [
+      64.47,
+      -135.52
+     ],
+     "exit_normal": [
+      0.996195,
+      0.087156
+     ],
+     "exit_center": [
+      65.31,
+      -137.2
+     ],
+     "outlet_segment": [
+      [
+       57.75,
+       -129.64
+      ],
+      [
+       72.87,
+       -144.76
+      ]
+     ],
+     "lengths": [
+      50,
+      48
+     ],
+     "pole": -1,
+     "upper_angle_range_deg": [
+      -85,
+      110
+     ],
+     "elbow_bend_range_deg": [
+      4,
+      120
+     ],
+     "max_ik_offset": 90,
+     "ink_width": 6.2,
+     "hand_radius": 8.5,
+     "layer": "front",
+     "cuff": {
+      "path": "tq/cuff-right.png",
+      "sha256": "7fd74b5cd80ab1ac609003c26eb17b61bc2c7aaa206f24732bbdec37ae6e9fb2",
+      "image_to_local": [
+       [
+        0.42,
+        0,
+        -77.49
+       ],
+       [
+        0,
+        0.42,
+        -207.76
+       ],
+       [
+        0,
+        0,
+        1
+       ]
+      ]
+     },
+     "poses": {
+      "rest": [
+       85,
+       8
+      ],
+      "reach": [
+       -80,
+       45
+      ],
+      "offer": [
+       -70,
+       25
+      ],
+      "receive": [
+       90,
+       95
+      ],
+      "retract": [
+       10,
+       30
+      ]
+     }
+    },
+    "left": {
+     "socket": [
+      -57.33,
+      -127.96
+     ],
+     "exit_normal": [
+      -0.906308,
+      0.422618
+     ],
+     "exit_center": [
+      -56.489999999999995,
+      -127.54
+     ],
+     "outlet_segment": [
+      [
+       -71.19,
+       -136.36
+      ],
+      [
+       -41.79,
+       -118.72
+      ]
+     ],
+     "lengths": [
+      50,
+      48
+     ],
+     "pole": -1,
+     "upper_angle_range_deg": [
+      85,
+      225
+     ],
+     "elbow_bend_range_deg": [
+      4,
+      120
+     ],
+     "max_ik_offset": 90,
+     "ink_width": 6.2,
+     "hand_radius": 8.5,
+     "layer": "front",
+     "cuff": {
+      "path": "tq/cuff-left.png",
+      "sha256": "204151878c073cb6f2d6ccf09d56c2bfc8e7d93431774ee51b75f4a947013297",
+      "image_to_local": [
+       [
+        0.42,
+        0,
+        -77.49
+       ],
+       [
+        0,
+        0.42,
+        -207.76
+       ],
+       [
+        0,
+        0,
+        1
+       ]
+      ]
+     },
+     "poses": {
+      "rest": [
+       95,
+       8
+      ],
+      "reach": [
+       150,
+       30
+      ],
+      "offer": [
+       215,
+       50
+      ],
+      "receive": [
+       100,
+       40
+      ],
+      "retract": [
+       150,
+       30
+      ]
+     }
+    }
+   },
+   "legs": {
+    "left": {
+     "hip": [
+      -20,
+      -76
+     ],
+     "ankle": [
+      -22,
+      -8
+     ],
+     "ink_width": 6.2,
+     "foot_size": [
+      18,
+      7
+     ],
+     "foot_forward": 1,
+     "plant_y": 0
+    },
+    "right": {
+     "hip": [
+      22,
+      -76
+     ],
+     "ankle": [
+      24,
+      -8
+     ],
+     "ink_width": 6.2,
+     "foot_size": [
+      18,
+      7
+     ],
+     "foot_forward": 1,
+     "plant_y": 0
+    }
+   },
+   "ink_color": "#3a2622",
+   "neck_attachment": {
+    "mount_polygon": [
+     [
+      -15.0,
+      -202.0
+     ],
+     [
+      29.75,
+      -202.0
+     ],
+     [
+      29.75,
+      -197.0
+     ],
+     [
+      -15.0,
+      -197.0
+     ]
+    ],
+    "min_overlap_fraction": 0.7,
+    "min_overlap_thickness": 2.0
+   }
+  }
+ },
+ "provenance": "Planches Gemini 2.5 Flash Image générées pour ce projet (art/src), détourées par tools/prep_assets.py"
+}
