@@ -681,7 +681,9 @@ assert.deepEqual(CATCHUP_DATES, ["2026-11-06", "2026-11-07"]);
 assert.equal(postingUi("fr").catchupFriday, "Vidéo du vendredi 6 novembre");
 for (const lang of ["fr", "es", "en"]) {
   const copy = postingUi(lang);
-  for (const text of [copy.catchupBody, copy.lateProofBody, copy.proofTooBig, copy.proofDropHint]) assert.equal(/10 G/.test(text), false, `${lang} ${text}`);
+  for (const text of [copy.catchupBody, copy.lateProofBody, copy.proofTooBig, copy.proofDropHint, copy.proofCompressFail, copy.proofCompressing(12)]) {
+    assert.equal(/10 G/.test(text), false, `${lang} ${text}`);
+  }
   assert.equal("proofUpload" in copy, false, lang);
 }
 assert.ok(postingUi("es").catchupSaturday.includes("sábado"));
@@ -780,6 +782,26 @@ assert.equal(cleanDayWork({ slot: "19-20", checks: { create: true, nope: false }
 assert.equal(cleanDayWork({ slot: "bad" })?.slot, null);
 assert.equal(proofObjectKey("p1", "2026-11-08"), "file-p1-2026-11-08");
 assert.equal(PROOF_MAX_BYTES, 10 * 1024 * 1024 * 1024);
+assert.equal(postingUi("fr").proofCompressing(40), "Compression… 40 %");
+assert.equal(postingUi("es").proofCompressing(40), "Comprimiendo… 40 %");
+assert.equal(postingUi("en").proofCompressing(40), "Compressing… 40%");
+assert.equal(postingUi("fr").proofCompressFail, "La compression a échoué. Réessaie.");
+assert.equal(postingUi("es").proofCompressFail, "La compresión ha fallado. Vuelve a intentarlo.");
+assert.equal(postingUi("en").proofCompressFail, "Compression failed. Try again.");
+const { PROOF_AUDIO_BPS, PROOF_MAX_HEIGHT, PROOF_VIDEO_BPS, proofEncodedBytes, proofMp4Name, proofNeedsCompress } = await import("../src/config/proofCompress.ts");
+assert.equal(PROOF_MAX_HEIGHT, 720);
+assert.equal(proofNeedsCompress(720), false);
+assert.equal(proofNeedsCompress(480), false);
+assert.equal(proofNeedsCompress(721), true);
+assert.equal(proofNeedsCompress(1080), true);
+assert.equal(proofNeedsCompress(1920), true);
+assert.equal(proofNeedsCompress(Number.NaN), false);
+const hourBytes = proofEncodedBytes(3600);
+assert.equal(hourBytes, Math.ceil(((PROOF_VIDEO_BPS + PROOF_AUDIO_BPS) * 3600) / 8));
+assert.ok(hourBytes < 1_000_000_000, String(hourBytes));
+assert.ok(hourBytes < 1024 * 1024 * 1024, String(hourBytes));
+assert.equal(proofMp4Name("session.mov"), "session.mp4");
+assert.equal(proofMp4Name("session.mp4"), "session.mp4");
 assert.equal(proofAllowed("p1", "2026-11-08", PROOF_MAX_BYTES), true);
 assert.equal(proofAllowed("p1", "2026-11-08", PROOF_MAX_BYTES + 1), false);
 assert.equal(proofAllowed("tania", "2026-11-08", 10), false);

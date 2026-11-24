@@ -57,6 +57,7 @@ import { deleteBlob, loadBlob, readDesk, saveBlob, writeDesk } from "~/component
 import { ProfileEditor, fieldClass, type ManagedProfile } from "~/components/posting/ProfileEditor";
 import { AccountChecks, TaskCopy, TaskFace, type SlideLineActions } from "~/components/posting/TaskParts";
 import { BilanPlayer, ProofFeedback } from "~/components/posting/UploadFeedback";
+import { compressProof } from "~/components/posting/compressProof";
 import { readSharedFile, saveDownload, uploadBilan, uploadProof, uploadSlideFile } from "~/components/posting/uploads";
 import { adminCopy, slideCopy, sundayCatchupCopy } from "~/config/postingCopy";
 
@@ -423,26 +424,45 @@ export const PostingDashboard = ({
     sending.current.add(date);
     setFileError("");
     setProofError(null);
-    setProofNote({ date, percent: 0, text: ui.proofSending(0), name: file.name });
+    setProofNote({ date, percent: 0, text: ui.proofCompressing(0), name: file.name });
     const fail = (text: string) => {
       setProofNote(null);
       setProofError({ date, text });
     };
+    let release = async () => {};
+    let uploadFile = file;
     try {
-      const prepared = await prepareProofUpload(date, file.name, file.size);
+      const compressed = await compressProof(file, (percent) => {
+        setProofNote({ date, percent, text: ui.proofCompressing(percent), name: file.name });
+      });
+      release = compressed.release;
+      uploadFile = compressed.file;
+    } catch {
+      await release();
+      fail(ui.proofCompressFail);
+      sending.current.delete(date);
+      return;
+    }
+    try {
+      const prepared = await prepareProofUpload(date, uploadFile.name, uploadFile.size);
       if (!prepared.ok) {
+        await release();
         fail(prepared.error === "size" ? ui.proofTooBig : ui.proofFail);
         return;
       }
-      if (prepared.local) await saveBlob(proofKey(person.id, date), file);
-      await uploadProof(file, date, (percent) => setProofNote({ date, percent, text: ui.proofSending(percent), name: prepared.name }));
+      if (prepared.local) await saveBlob(proofKey(person.id, date), uploadFile);
+      await uploadProof(uploadFile, date, (percent) =>
+        setProofNote({ date, percent, text: ui.proofSending(percent), name: prepared.name }),
+      );
       const saved = await commitProof(date, prepared.name);
       if (!saved.ok && prepared.local) throw new Error("commit");
-      setUrls((current) => ({ ...current, [proofKey(person.id, date)]: URL.createObjectURL(file) }));
+      setUrls((current) => ({ ...current, [proofKey(person.id, date)]: URL.createObjectURL(uploadFile) }));
       patchDay(date, (day) => ({ ...day, proofName: prepared.name }));
       setProofNote(null);
       setProofError(null);
+      release = async () => {};
     } catch (error) {
+      await release();
       fail(error instanceof Error && error.message === "413" ? ui.proofTooBig : ui.proofFail);
     } finally {
       sending.current.delete(date);
