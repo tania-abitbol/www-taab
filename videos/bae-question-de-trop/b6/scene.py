@@ -108,9 +108,9 @@ def camera(T, t, ex, lx):
         for t0, amp in ((L['02_elle'], 6), (L['03_lui'], 7), (T['split'], 12)):
             a, b = shake(t0, amp, .35); shx += a; shy += b
     elif t < T['cut_lui1']:
-        z, fx, fy = 1.40+.06*ramp(t, T['cut_elle1'], T['cut_lui1']), 160, 485; shx, shy = shake(T['cut_elle1'], 6)
+        z, fx, fy = 1.40+.06*ramp(t, T['cut_elle1'], T['cut_lui1']), 160, 603; shx, shy = shake(T['cut_elle1'], 6)
     elif t < T['cut_wall']:
-        z, fx, fy = 1.40+.06*ramp(t, T['cut_lui1'], T['cut_wall']), 560, 485; shx, shy = shake(T['cut_lui1'], 6)
+        z, fx, fy = 1.40+.06*ramp(t, T['cut_lui1'], T['cut_wall']), 560, 603; shx, shy = shake(T['cut_lui1'], 6)
     elif t < T['cut_close']:
         u = float(t >= T['cut_card2'])
         z, fx, fy = lerp(1.0, 1.4, u), 360, lerp(640, 325, u); shx, shy = shake(T['cut_wall'], 10, .55)
