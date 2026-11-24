@@ -1,11 +1,12 @@
 /** Tallest displayed frame kept as-is. Taller proof videos are scaled down before upload. */
-export const PROOF_MAX_HEIGHT = 720;
+export const PROOF_MAX_HEIGHT = 480;
 
 /**
- * Constant rates so one hour of proof stays under about 1 GB:
- * (2_000_000 + 128_000) * 3600 / 8 = 957_600_000 bytes.
+ * Constant rates so one hour of proof lands around 400 MB:
+ * (800_000 + 128_000) * 3600 / 8 = 417_600_000 bytes.
+ * Width follows the source aspect ratio; only height is capped.
  */
-export const PROOF_VIDEO_BPS = 2_000_000;
+export const PROOF_VIDEO_BPS = 800_000;
 export const PROOF_AUDIO_BPS = 128_000;
 
 export const proofNeedsCompress = (displayHeight: number) =>

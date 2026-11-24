@@ -79,8 +79,8 @@ const sweepStale = async () => {
 };
 
 /**
- * Scales a proof video to at most 720p on the phone, before any upload.
- * A frame that is already 720 tall or shorter is returned unchanged.
+ * Scales a proof video to at most 480p on the phone, before any upload.
+ * Width follows the source aspect ratio. A frame already 480 tall or shorter is returned unchanged.
  * Throws when the file cannot be made smaller — the caller must not send the original.
  */
 export const compressProof = async (file: File, onProgress: (percent: number) => void): Promise<CompressedProof> => {
