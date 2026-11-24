@@ -56,22 +56,19 @@ def setup(c):
         segs.append(A.ArmSegment(cur[0], t, 99., cur[1], cur[1]))
         return A.ArmTrack(rt, arm, segs)
     ea = ch['elle'].views['tq'].arms; la = ch['lui'].views['tq'].arms
-    cw, cc, cz = T['cut_wall'], T['cut_close'], T['cut_wide']; L = T['lines']
+    cw, cc, cz = T['cut_wall'], T['cut_close'], T['cut_wide']; L = T['lines']; D = T['dur']; sp = T['split']
+    E2, E3, E4, E5 = (L[k]+D[k] for k in ('02_elle', '03_lui', '04_elle', '05_lui')); L2, L3, L4, L5 = L['02_elle'], L['03_lui'], L['04_elle'], L['05_lui']
+    pre = [(-.9, -.3, 'reach', 0, 1)]; fold = [(-3, -2.4, 'reach', 0, 1), (-2.4, -1.7, 'receive', 0, 1)]
     tracks = {
-     'a': {'elle': {'right': track(ea['right'], [(T['point'], T['point']+.55, 'reach', 0, 1), (6.7, 7.3, 'reach', 1, 0),
-                                                 (L['04_elle']-.15, L['04_elle']+.45, 'reach', 0, 1), (L['04_elle']+.45, L['04_elle']+.7, 'offer', 0, 1),
-                                                 (11.3, 11.55, 'offer', 1, 0), (12.3, 12.9, 'reach', 1, 0)]),
-                    'left': track(ea['left'], [(L['02_elle'], L['02_elle']+.25, 'reach', 0, 1), (6.9, 7.2, 'reach', 1, 0),
-                                               (L['04_elle']+.1, L['04_elle']+.35, 'reach', 0, 1), (L['04_elle']+.35, L['04_elle']+.65, 'offer', 0, 1), (12.3, 12.9, 'retract', 0, 1)])},
-           'lui': {'left': track(la['left'], [(T['point']+.25, T['point']+.85, 'reach', 0, 1), (L['03_lui'], L['03_lui']+.2, 'offer', 0, 1), (8.1, 8.3, 'offer', 1, 0), (8.3, 8.92, 'reach', 1, 0),
-                                              (L['05_lui']-.1, L['05_lui']+.5, 'reach', 0, 1), (L['05_lui']+.5, L['05_lui']+.7, 'offer', 0, 1), (14.2, 14.4, 'offer', 1, 0), (14.4, 15.02, 'reach', 1, 0)]),
-                   'right': track(la['right'], [(L['03_lui']+.05, L['03_lui']+.3, 'reach', 0, 1), (L['03_lui']+.3, L['03_lui']+.6, 'offer', 0, 1), (8.3, 8.9, 'retract', 0, 1),
-                                                (L['05_lui']+.1, L['05_lui']+.35, 'reach', 0, 1), (14.2, 14.6, 'reach', 1, 0)])}},
-     'b': {'elle': {'right': track(ea['right'], [(cw-2, cw-1.4, 'reach', 0, 1), (cw-1.4, cw-.7, 'receive', 0, 1)]), 'left': track(ea['left'], [])},
-           'lui': {'left': track(la['left'], [(cw-2, cw-1.4, 'reach', 0, 1), (cw-1.4, cw-.7, 'receive', 0, 1)]), 'right': track(la['right'], [])}},
-     'c': {'elle': {'right': track(ea['right'], [(cc-2, cc-1.5, 'reach', 0, 1), (cc-1.5, cc-.8, 'receive', 0, 1)]), 'left': track(ea['left'], [])},
-           'lui': {'left': track(la['left'], [(cc-2, cc-1.4, 'reach', 0, 1)]), 'right': track(la['right'], [])}},
-     'd': {'elle': {'right': track(ea['right'], []), 'left': track(ea['left'], [])}, 'lui': {'left': track(la['left'], []), 'right': track(la['right'], [])}},
+     'elle': {'a': {'right': track(ea['right'], pre+[(L2+.15, L2+.4, 'offer', 0, 1), (E2-.3, E2-.05, 'offer', 1, 0), (L4+.2, L4+.45, 'offer', 0, 1), (E4-.25, E4, 'offer', 1, 0)]),
+                    'left': track(ea['left'], [(L2, L2+.25, 'reach', 0, 1), (E2-.35, E2-.05, 'reach', 1, 0), (L4+.1, L4+.35, 'reach', 0, 1), (L4+.35, L4+.65, 'offer', 0, 1), (E4-.1, E4+.5, 'retract', 0, 1)])},
+              'b': {'right': track(ea['right'], fold), 'left': track(ea['left'], [])},
+              'd': {'right': track(ea['right'], []), 'left': track(ea['left'], [])}},
+     'lui': {'a': {'left': track(la['left'], pre+[(L3, L3+.2, 'offer', 0, 1), (E3-.25, E3-.05, 'offer', 1, 0), (sp+.05, sp+.65, 'reach', 1, 0), (L5-.15, L5+.45, 'reach', 0, 1), (L5+.45, L5+.65, 'offer', 0, 1), (E5-.2, E5, 'offer', 1, 0)]),
+                   'right': track(la['right'], [(L3+.05, L3+.3, 'reach', 0, 1), (L3+.3, L3+.6, 'offer', 0, 1), (sp, sp+.55, 'retract', 0, 1), (L5+.1, L5+.35, 'reach', 0, 1), (E5-.3, E5, 'reach', 1, 0)])},
+             'b': {'left': track(la['left'], fold), 'right': track(la['right'], [])},
+             'c': {'left': track(la['left'], pre), 'right': track(la['right'], [])},
+             'd': {'left': track(la['left'], []), 'right': track(la['right'], [])}},
     }
     rnd = random.Random(11)
     conf = [dict(x=360+rnd.uniform(-45, 45), y=rnd.uniform(380, 980), vx=rnd.uniform(-520, 520), vy=rnd.uniform(-900, -150), w=rnd.uniform(9, 20), h=rnd.uniform(6, 12),
@@ -81,58 +78,72 @@ def setup(c):
     branches = [[crack[3], (crack[3][0]-16, crack[3][1]-52), (crack[3][0]-30, crack[3][1]-88)], [crack[5], (crack[5][0]-12, crack[5][1]+58), (crack[5][0]-26, crack[5][1]+104)],
                 [crack[2], (crack[2][0]-6, crack[2][1]+44)], [crack[7], (crack[7][0]-9, crack[7][1]-60)]]
     return dict(T=T, art=art, rt=rt, tracks=tracks, conf=conf, crack=crack, branches=branches,
-                elle=rt.Puppet(ch['elle'], 'tq', 'elle'), lui=rt.Puppet(ch['lui'], 'tq', 'lui'), last=None)
+                elle=rt.Puppet(ch['elle'], 'tq', 'elle'), lui=rt.Puppet(ch['lui'], 'tq', 'lui'), last={})
 
-def shot(T, t):
-    return 'a' if t < T['cut_wall'] else ('b' if t < T['cut_close'] else ('c' if t < T['cut_wide'] else 'd'))
+def phases(T, t):
+    e = 'a' if t < T['cut_wall'] else ('b' if t < T['cut_elle2'] else 'd')
+    l = 'a' if t < T['cut_wall'] else ('b' if t < T['cut_close'] else ('c' if t < T['cut_wide'] else 'd'))
+    return e, l
 
-def camera(T, t):
-    """Similitude monde → cadre natif : zoom z autour du point (fx,fy) ramené au centre (360,640)."""
-    cw, cc, cz = T['cut_wall'], T['cut_close'], T['cut_wide']; shx = shy = 0.
-    if t < T['split']:
-        z = 1.0+.025*ramp(t, 0, 4.2)+.035*ramp(t, T['point']-.05, T['point']+.3)-.03*ramp(t, 7.9, 8.8); fx, fy = 360, 640
-    elif t < cw:
-        z, fx, fy = 1.0+.03*ramp(t, 10.2, 15.5), 360, 640
-        k = max(0., 1-(t-T['split'])/.45)
-        shx, shy = 9*k*math.sin(t*90), 7*k*math.cos(t*77)
-    elif t < cc:
-        z, fx, fy = 1.02+.05*ramp(t, cw, cc), 360, lerp(650, 620, ramp(t, cw+1.5, cc))
-        k = max(0., 1-(t-cw)/1.3)*.6
-        shx, shy = 5*k*math.sin(t*80), 4*k*math.cos(t*71)
-    elif t < cz:
-        z, fx, fy = 1.30+.06*ramp(t, cc, cz), 455, 690
+def speak(T, t, ids, pad=.0):
+    """Enveloppe 0..1 pendant les répliques données."""
+    for i in ids:
+        a = T['lines'][i]; b = a+T['dur'][i]-.12
+        if a-pad <= t <= b: return min(1., (t-a+pad)/.12+.001, (b-t)/.12+.001)
+    return 0.
+
+def camera(T, t, ex, lx):
+    """Similitude monde → cadre natif : zoom z autour de (fx,fy) ramené au centre (360,640)."""
+    L = T['lines']; shx = shy = 0.
+    def shake(t0, amp, d=.3):
+        k = max(0., 1-(t-t0)/d) if t >= t0 else 0.
+        return amp*k*math.sin(t*93), amp*.8*k*math.cos(t*81)
+    if t < T['cut_card']:
+        z, fx, fy = 1.02+.05*ramp(t, 0, 1.9), 360, 650; shx, shy = shake(0, 9, .45)
+    elif t < T['cut_dispute']:
+        z, fx, fy = 1.40+.07*ramp(t, T['cut_card'], T['cut_dispute']), 360, 330
+    elif t < T['cut_elle1']:
+        w = ramp(t, L['03_lui']-.06, L['03_lui']+.08); o = ramp(t, T['split'], T['split']+.12)
+        z, fx, fy = lerp(1.16, 1.0, o), lerp(lerp(322, 398, w), 360, o), lerp(630, 640, o)
+        for t0, amp in ((L['02_elle'], 6), (L['03_lui'], 7), (T['split'], 12)):
+            a, b = shake(t0, amp, .35); shx += a; shy += b
+    elif t < T['cut_lui1']:
+        z, fx, fy = 1.40+.06*ramp(t, T['cut_elle1'], T['cut_lui1']), 160, 485; shx, shy = shake(T['cut_elle1'], 6)
+    elif t < T['cut_wall']:
+        z, fx, fy = 1.40+.06*ramp(t, T['cut_lui1'], T['cut_wall']), 560, 485; shx, shy = shake(T['cut_lui1'], 6)
+    elif t < T['cut_close']:
+        u = float(t >= T['cut_card2'])
+        z, fx, fy = lerp(1.0, 1.4, u), 360, lerp(640, 325, u); shx, shy = shake(T['cut_wall'], 10, .55)
+    elif t < T['cut_elle2']:
+        z, fx, fy = 1.30+.07*ramp(t, T['cut_close'], T['cut_elle2']), 455, 690
+    elif t < T['cut_wide']:
+        z, fx, fy = 1.46+.05*ramp(t, T['cut_elle2'], T['cut_wide']), 158, 610
     else:
-        z = 1.0+.04*ramp(t, T['lean']-.2, 27.0); fx, fy = 362, lerp(640, 630, ramp(t, T['lean']-.2, 27.0))
-        k = max(0., 1-(t-cz)/.35)
-        shx, shy = 8*k*math.sin(t*95), 6*k*math.cos(t*83)
+        z = 1.0+.06*ramp(t, T['lean'], T['endcard']); fx, fy = 362, lerp(640, 628, ramp(t, T['lean'], T['endcard'])); shx, shy = shake(T['burst'], 10, .4)
     return np.array([[z, 0, 360-z*fx+shx], [0, z, 640-z*fy+shy], [0, 0, 1.]])
 
 def xs(T, t):
     """Positions monde des deux personnages et écart du canapé."""
     d = 62*ramp(t, T['split'], T['split_end']) if t < T['cut_wide'] else 62*(1-ramp(t, T['rejoin'], T['rejoin_end']))
-    close = ramp(t, T['rejoin']+.2, T['rejoin_end']+.15) if t >= T['cut_wide'] else 0.
+    close = ramp(t, T['rejoin']+.15, T['rejoin_end']+.12) if t >= T['cut_wide'] else 0.
     return 190-d+close*72, 530+d-close*32, d
 
 def heads(T, t):
-    L = T['lines']; cw, cz = T['cut_wall'], T['cut_wide']
-    e = [(0, 'smug'), (T['card1_pop']+.25, 'soft'), (T['point']-.05, 'smug'), (L['02_elle'], 'shock'), (7.3, 'angry'), (T['split'], 'shock'), (L['04_elle'], 'shout'),
-         (12.65, 'angry'), (15.1, 'sulk'), (T['freeze'], 'soft'), (cz, 'wink'), (L['07_elle'], 'laugh'), (27.2, 'wink')]
-    l = [(0, 'smug'), (T['card1_pop']+.35, 'soft'), (T['point']-.05, 'smug'), (L['03_lui'], 'shout'), (T['split'], 'soft'), (L['04_elle']+.2, 'shout2'), (L['05_lui'], 'shout'),
-         (14.75, 'sulk'), (T['freeze']+.15, 'soft'), (L['06_lui']-.1, 'tender')]
-    pick = lambda seq: [v for a, v in seq if t >= a][-1]
-    return pick(e), pick(l)
-
-def talk(T, t, ids, amp=3.2):
-    """Petit accent de tête pendant la réplique (sans dépasser 7°/image)."""
-    D = {'01_elle_vo': 2.3, '02_elle': 1.9, '03_lui': 1.4, '04_elle': 2.2, '05_lui': 1.8, '06_lui': .9, '07_elle': 2.4, '08_elle_vo': 2.4}
-    for i in ids:
-        a = T['lines'][i]
-        if a <= t <= a+D[i]:
-            env = min(1., (t-a)/.15, (a+D[i]-t)/.15); return amp*env*math.sin((t-a)*2*math.pi*3.3)
-    return 0.
+    L = T['lines']; D = T['dur']; f = int(t*7.5) % 2 == 0; fl = lambda a, b: a if f else b
+    def during(k, pad=0.): return L[k] <= t < L[k]+D[k]-pad
+    if t < T['cut_card']: e, l = fl('shout', 'angry'), fl('shout2', 'shout')
+    elif t < T['cut_dispute']: e, l = 'angry', 'smug'
+    elif t < T['split']: e = fl('shout', 'shock') if during('02_elle', .1) else 'angry'; l = fl('shout', 'shout2') if during('03_lui', .1) else 'smug'
+    elif t < T['cut_elle1']: e, l = 'shock', 'soft'
+    elif t < T['cut_wall']: e = fl('shout', 'angry') if during('04_elle', .1) else 'angry'; l = fl('shout', 'shout2') if during('05_lui', .1) else 'shout2'
+    elif t < T['cut_wide']:
+        e = 'sulk' if t < T['freeze'] else 'soft'; l = 'sulk' if t < T['freeze']+.15 else ('soft' if t < L['06_lui']-.1 else 'tender')
+    else:
+        e = 'wink' if t < L['07_elle'] else ('laugh' if t < T['endcard']+.35 else 'wink'); l = 'tender'
+    return e, l
 
 def world(st, t):
-    T = st['T']; art = st['art']; cv = art['room'].copy(); ex, lx, d = xs(T, t); cw, cc, cz = T['cut_wall'], T['cut_close'], T['cut_wide']
+    T = st['T']; art = st['art']; cv = art['room'].copy(); ex, lx, d = xs(T, t); cw, cc, cz = T['cut_wall'], T['cut_elle2'], T['cut_wide']
     # ombres douces au sol
     sh = np.zeros(cv.shape[:2], np.float32)
     for x in (ex, lx): cv2.ellipse(sh, (int(x+OX), int(FEET+8+OY)), (95, 15), 0, 0, 360, .30, -1)
@@ -159,15 +170,15 @@ def world(st, t):
     if T['buzz'] <= t < T['buzz']+.75: px += 4*math.sin(t*170); pr += 5*math.sin(t*140)
     paste(cv, art['phone'], px, py, 1., pr)
     # carte 1
-    if T['card1_pop'] <= t < T['card1_out']+.3:
-        u = pop(t, T['card1_pop'], .45); o = ramp(t, T['card1_out'], T['card1_out']+.3)
+    if T['card1_pop'] <= t < T['split']+.2:
+        u = pop(t, T['card1_pop'], .3); o = ramp(t, T['split']-.1, T['split']+.2)
         paste(cv, art['card1'], 360, lerp(800, 252, min(1., u))+5*math.sin(t*2.1)-560*o*o, (.15+.85*u)*.92, 3*math.sin(t*1.3)+18*o)
     # carte 2 (sort du téléphone au sol, monte devant le mur)
     if T['card2_pop'] <= t < cz:
         u = pop(t, T['card2_pop'], .5); paste(cv, art['card2'], 360, lerp(1060, 222, min(1., u))+5*math.sin(t*2.3), (.15+.85*u)*.95, 3*math.sin(t*1.5))
     # éclair rouge entre eux
-    if T['bolt'] <= t < T['bolt_end']:
-        u = pop(t, T['bolt'], .22); f = .82+.18*math.sin(t*38); o = 1-ramp(t, T['bolt_end']-.25, T['bolt_end'])
+    if t < T['split']+.1:
+        u = 1.; f = .82+.18*math.sin(t*38); o = 1-ramp(t, T['split']-.15, T['split']+.1)
         paste(cv, art['bolt'], 362, 566, u*(.92+.08*math.sin(t*23)), 6*math.sin(t*17), f*o, flip=int(t*7) % 2 == 0)
     # bulles de « preuves »
     o = 1-ramp(t, T['bubbles_out'], T['bubbles_out']+.22)
@@ -179,7 +190,7 @@ def world(st, t):
         if u*o > .6:  # aiguille qui s'affole
             a = t*19; c0 = (int(bx+OX+6*math.sin(t*41)), int(by-10+OY)); cv2.line(cv, c0, (int(c0[0]+34*math.cos(a)), int(c0[1]+34*math.sin(a))), (150, 30, 40, 255), 5, cv2.LINE_AA)
     # éclat rouge à l'étincelle
-    if T['bolt'] <= t < T['bolt']+.14: cv[..., :3] = (cv[..., :3]*.78+np.array([225, 40, 50])*.22).astype(np.uint8)
+    if t < .14 or T['split'] <= t < T['split']+.1: cv[..., :3] = (cv[..., :3]*.78+np.array([225, 40, 50])*.22).astype(np.uint8)
     # confettis dorés
     if t >= T['burst']:
         dt = t-T['burst']
@@ -193,8 +204,8 @@ def world(st, t):
     if t >= T['heart']:
         u = pop(t, T['heart'], .7); paste(cv, art['heart_gold'], 372, lerp(1060, 352, min(1., u))+6*math.sin(t*2.4), (.2+.8*u)*(1+.07*math.sin(t*7)), 5*math.sin(t*1.7))
     # accroche et carton de fin
-    if .2 <= t < T['card1_pop']+.1:
-        u = pop(t, .2, .35); o = 1-ramp(t, T['card1_pop']-.15, T['card1_pop']+.1); paste(cv, art['title_hook'], 360, 205, u*(1-.4*(1-o)), -2, o)
+    if t < T['card1_pop']+.08:
+        u = .9+.1*pop(t, 0, .25); o = 1-ramp(t, T['card1_pop']-.12, T['card1_pop']+.08); paste(cv, art['title_hook'], 360, 215, u*(1-.4*(1-o))*(1+.02*math.sin(t*9)), -3, o)
     if t >= T['endcard']:
         u = pop(t, T['endcard'], .45); paste(cv, art['title_end'], 360, 196, u*.8, -2)
     return cv
@@ -202,39 +213,40 @@ def world(st, t):
 def draw(t, c, size, k):
     key = (str(c.base), c.fingerprint)
     if key not in _C: _C[key] = setup(c)
-    st = _C[key]; T = st['T']; rt = st['rt']; i = round(t*30); sh = shot(T, t); cut = st['last'] != sh; st['last'] = sh
+    st = _C[key]; T = st['T']; rt = st['rt']; i = round(t*30); pe_, pl_ = phases(T, t)
+    cute = st['last'].get('e') != pe_; cutl = st['last'].get('l') != pl_; st['last'] = {'e': pe_, 'l': pl_}
     cw, cc, cz = T['cut_wall'], T['cut_close'], T['cut_wide']
-    CAM = camera(T, t); K = np.diag([k, k, 1.])
+    ex, lx, d = xs(T, t); he, hl = heads(T, t); CAM = camera(T, t, ex, lx); K = np.diag([k, k, 1.])
     bgw = world(st, t); Mb = (K@CAM@np.array([[1, 0, -OX], [0, 1, -OY], [0, 0, 1.]]))[:2]
     bg = Image.fromarray(cv2.warpAffine(bgw, Mb, size, flags=cv2.INTER_AREA if k < 1 else cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE), 'RGBA')
-    ex, lx, d = xs(T, t); he, hl = heads(T, t)
-    hop = lambda t0: -14*math.sin(min(1., max(0., (t-t0)/.3))*math.pi)
-    ey = FEET+hop(T['split'])*(T['split'] <= t < T['split']+.3)+hop(T['point'])*.5*(T['point'] <= t < T['point']+.3); ly = FEET+hop(T['split']+.04)*(T['split']+.04 <= t < T['split']+.34)+hop(T['point'])*.5*(T['point'] <= t < T['point']+.3)
-    em = cw <= t < cz; lm = cw <= t < cc    # dos tournés (miroir) pendant le mur
-    lean = math.radians(9.5*ramp(t, T['lean'], T['lean_end'])) if t >= cz else 0.
+    hop = lambda t0: -16*math.sin(min(1., max(0., (t-t0)/.3))*math.pi) if t0 <= t < t0+.3 else 0.
+    ey = FEET+hop(T['split']); ly = FEET+hop(T['split']+.05)
+    em = cw <= t < T['cut_elle2']; lm = cw <= t < cc    # dos tournés (miroir) pendant le mur
+    yell_e = max(speak(T, t, ('02_elle', '04_elle')), (1-ramp(t, T['cut_card']-.3, T['cut_card']))*(t < T['cut_card']))
+    yell_l = max(speak(T, t, ('03_lui', '05_lui')), (1-ramp(t, T['cut_card']-.3, T['cut_card']))*(t < T['cut_card']))
+    re = math.radians(yell_e*(4.2+1.6*math.sin(t*21))+(9.5*ramp(t, T['lean'], T['lean_end']) if t >= cz else 0.))
+    rl = -math.radians(yell_l*(4.2+1.6*math.sin(t*19+1)))
     def place(x, y, mirror, rot=0.):
         m = np.array([[-S if mirror else S, 0, x], [0, S, y], [0, 0, 1.]])
         if rot:
             pv = m@np.array([0, -76, 1.]); R = np.array([[math.cos(rot), -math.sin(rot), 0], [math.sin(rot), math.cos(rot), 0], [0, 0, 1.]])
             m = np.array([[1, 0, pv[0]], [0, 1, pv[1]], [0, 0, 1.]])@R@np.array([[1, 0, -pv[0]], [0, 1, -pv[1]], [0, 0, 1.]])@m
         return K@CAM@m
-    pe, pl = place(ex, ey, em, lean), place(lx, ly, lm)
-    tr = st['tracks'][sh]
-    ea = talk(T, t, ('02_elle', '04_elle', '07_elle'))+(-6*ramp(t, T['freeze'], T['freeze']+.3) if cw <= t < cz else 0)+(9*ramp(t, T['lean'], T['lean_end']) if t >= cz else 0)
-    la = talk(T, t, ('03_lui', '05_lui', '06_lui'), 2.6)+(5*ramp(t, T['freeze']+.1, T['freeze']+.4) if cw <= t < cc else 0)+(-5*ramp(t, T['lean']+.2, T['lean_end']+.2) if t >= cz else 0)
-    ank = None
-    if lean:
-        base_m = place(ex, ey, em); legs = st['elle'].character.views['tq'].legs
-        ank = {sd: (base_m@np.r_[np.asarray(legs[sd]['ankle'], float), 1.])[:2].tolist() for sd in ('left', 'right')}
+    def ankles(pup, x, y, mirror):
+        base_m = place(x, y, mirror); legs = pup.character.views['tq'].legs
+        return {sd: (base_m@np.r_[np.asarray(legs[sd]['ankle'], float), 1.])[:2].tolist() for sd in ('left', 'right')}
+    pe, pl = place(ex, ey, em, re), place(lx, ly, lm, rl)
+    ea = 4.5*speak(T, t, ('02_elle', '04_elle', '07_elle'))*math.sin(t*2*math.pi*3.4)+(-6*ramp(t, T['freeze'], T['freeze']+.25) if cw <= t < T['cut_elle2'] else 0)+(9*ramp(t, T['lean'], T['lean_end']) if t >= cz else 0)
+    la = 4.5*speak(T, t, ('03_lui', '05_lui'))*math.sin(t*2*math.pi*3.1)+2.5*speak(T, t, ('06_lui',))*math.sin(t*2*math.pi*2)+(5*ramp(t, T['freeze']+.1, T['freeze']+.35) if cw <= t < cc else 0)+(-5*ramp(t, T['lean']+.15, T['lean_end']+.15) if t >= cz else 0)
     targets = {}
-    if sh == 'c' and t >= T['hand_wall']-.25:
+    if pl_ == 'c':
         arm = st['lui'].character.views['tq'].arms['left']; fk = rt.forward_kinematics(arm, rt.PoseLibrary.sample(arm, 'reach', 1.))[2]
         a0 = (pl@np.r_[fk, 1.])[:2]; a1 = (K@CAM@np.array([412., 792., 1.]))[:2]
-        targets['left'] = lerp(a0, a1, ramp(t, T['hand_wall']-.25, T['hand_wall']+.12)).tolist()
-    fe = st['elle'].pose(placement=pe, frame_index=i, allow_cut=cut, head_variant=he, head_angle_deg=float(ea), ankle_targets=ank,
-                         arm_actions={sd: tr['elle'][sd].sample(t) for sd in ('left', 'right')})
-    fl = st['lui'].pose(placement=pl, frame_index=i, allow_cut=cut, head_variant=hl, head_angle_deg=float(la), wrist_targets=targets,
-                        arm_actions={sd: tr['lui'][sd].sample(t) for sd in ('left', 'right')})
+        targets['left'] = lerp(a0, a1, ramp(t, T['hand_wall']-.25, T['hand_wall']+.1)).tolist()
+    fe = st['elle'].pose(placement=pe, frame_index=i, allow_cut=cute, head_variant=he, head_angle_deg=float(ea), ankle_targets=ankles(st['elle'], ex, ey, em) if re else None,
+                         arm_actions={sd: st['tracks']['elle'][pe_][sd].sample(t) for sd in ('left', 'right')})
+    fl = st['lui'].pose(placement=pl, frame_index=i, allow_cut=cutl, head_variant=hl, head_angle_deg=float(la), wrist_targets=targets, ankle_targets=ankles(st['lui'], lx, ly, lm) if rl else None,
+                        arm_actions={sd: st['tracks']['lui'][pl_][sd].sample(t) for sd in ('left', 'right')})
     order = [fl, fe] if t >= cz else [fe, fl]
     return rt.render_scene(size, order, background=bg, frame_index=i)
 

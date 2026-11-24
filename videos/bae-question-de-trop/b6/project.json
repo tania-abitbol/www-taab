@@ -4,7 +4,7 @@
   "renderer": "b6-production-v1",
   "purpose": "production",
   "stage": "authored",
-  "duration": 30.0,
+  "duration": 22.966666666666665,
   "fps": 30,
   "scene": "scene.py",
   "story": "story.json",
@@ -15,7 +15,7 @@
   "voice": {
     "name": "ElevenLabs — Mylene (ELLE) et Maxime (LUI), eleven_v3, vitesse d’origine ; mix local voix + musique + effets",
     "path": "audio/mix.wav",
-    "sha256": "94e46d43b229a08cc48fab7382302cf7d8823b6deafce1c34ae0e3fb0fdb375c",
+    "sha256": "bdd04d2f0ce00526037f7a9690d74d75d4e0f79d3e20ee9314f97633eeca1b09",
     "speed": 1,
     "source": "tools/tts.py puis tools/mix_audio.py"
   },

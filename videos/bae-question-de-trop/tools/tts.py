@@ -4,13 +4,13 @@ KEY = os.environ.get("ELEVENLABS_API_KEY", "proxy-injected")
 VOICES = {"ELLE": "WQKwBV2Uzw1gSGr69N8I", "LUI": "5Qfm4RqcAer0xoyWtoHC"}  # Mylene, Maxime
 MODEL = os.environ.get("TTS_MODEL", "eleven_v3")
 LINES = [
-    ("01_elle_vo", "ELLE", "Ce jeu de couple a failli nous séparer."),
-    ("02_elle", "ELLE", "Attends… pourquoi tu me montres du doigt ?"),
-    ("03_lui", "LUI", "Parce que c'est évident !"),
-    ("04_elle", "ELLE", "Et le cadeau perdu par la poste ?"),
-    ("05_lui", "LUI", "Et toi, « j'arrive dans cinq minutes » ?!"),
-    ("06_lui", "LUI", "[doucement] … Ton rire."),
-    ("07_elle", "ELLE", "[petit rire] … Ok. Question suivante."),
+    ("01_elle_vo", "ELLE", "[serious, dramatic] Ce jeu de couple… a failli nous séparer."),
+    ("02_elle", "ELLE", "[shouting, outraged] Attends, pourquoi tu me montres du doigt ?!"),
+    ("03_lui", "LUI", "[shouting] Parce que c'est évident !"),
+    ("04_elle", "ELLE", "[angry, sarcastic] Et le cadeau « perdu par la poste » ?!"),
+    ("05_lui", "LUI", "[shouting, indignant] Et toi ! « J'arrive dans cinq minutes » ?!"),
+    ("06_lui", "LUI", "[whispering softly] … Ton rire."),
+    ("07_elle", "ELLE", "[laughs softly] Ok… Question suivante."),
     ("08_elle_vo", "ELLE", "Et vous, quelle question a lancé la guerre ?"),
 ]
 out = sys.argv[1]

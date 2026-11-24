@@ -5,33 +5,89 @@
  "height": 1280,
  "shots": [
   {
-   "id": "etincelle",
+   "id": "accroche",
    "start": 0,
-   "end": 8.95,
-   "composition": "Plan large natif 9:16 : ELLE à gauche, LUI à droite sur le canapé, téléphone entre eux ; haut du cadre libre pour l’accroche puis la carte rose ; bande de sous-titres sur les jambes.",
-   "action": "Accroche, la carte sort du téléphone, lecture, doigts pointés en même temps, éclair rouge, répliques 2 et 3.",
+   "end": 1.9,
+   "composition": "Plan large natif 9:16 : déjà en pleine dispute, doigts pointés, éclair rouge entre eux ; accroche en gros en haut du cadre.",
+   "action": "Ouverture dans le conflit : ils crient en se pointant du doigt pendant la voix off d’accroche.",
    "camera": {
-    "intent": "Lent rapprochement puis recadrage motivé au moment où ils se pointent du doigt ; léger recul avant la rupture."
+    "intent": "Secousse à l’éclair puis rapprochement lent."
    },
-   "transition": "Coupe sur l’action : le canapé craque.",
+   "transition": "Coupe sur la carte qui sort du téléphone.",
+   "asset_inputs": [
+    "art/room.png",
+    "art/sofa_left.png",
+    "art/sofa_right.png",
+    "art/phone.png",
+    "art/bolt.png",
+    "art/title_hook.png",
+    "art/card1.png"
+   ]
+  },
+  {
+   "id": "carte",
+   "start": 1.9,
+   "end": 3.1333333333333333,
+   "composition": "Gros plan sur la carte rose, les deux têtes en bas du cadre.",
+   "action": "La carte « Qui de vous deux ment le mieux ? » est lue.",
+   "camera": {
+    "intent": "Gros plan fixe avec très léger rapprochement, temps de lecture."
+   },
+   "transition": "Coupe sur la dispute.",
    "asset_inputs": [
     "art/room.png",
     "art/sofa_left.png",
     "art/sofa_right.png",
     "art/phone.png",
     "art/card1.png",
-    "art/bolt.png",
-    "art/title_hook.png"
+    "art/bolt.png"
    ]
   },
   {
-   "id": "escalade",
-   "start": 8.95,
-   "end": 16.0,
-   "composition": "Même axe, le canapé s’ouvre : un vide central se crée, les bulles rouges occupent le haut de chaque côté.",
-   "action": "Le canapé se fend et les moitiés s’écartent, le téléphone tombe sur le tapis ; répliques 4 et 5 avec bulles de preuves.",
+   "id": "dispute",
+   "start": 3.1333333333333333,
+   "end": 7.2,
+   "composition": "Plan moyen serré sur le couple, carte au-dessus.",
+   "action": "Répliques 2 et 3 avec gestes, puis le canapé se fend et les moitiés s’écartent, le téléphone tombe.",
    "camera": {
-    "intent": "Secousse brève méritée au craquement, puis cadre posé pour lire les bulles."
+    "intent": "Recadrage sec vers celui qui parle, secousse à chaque attaque, recul brusque quand le canapé craque."
+   },
+   "transition": "Coupe gros plan ELLE.",
+   "asset_inputs": [
+    "art/room.png",
+    "art/sofa_left.png",
+    "art/sofa_right.png",
+    "art/phone.png",
+    "art/card1.png",
+    "art/bolt.png"
+   ]
+  },
+  {
+   "id": "preuve-elle",
+   "start": 7.2,
+   "end": 9.833333333333334,
+   "composition": "Gros plan ELLE avec sa bulle rouge (cadeau barré) au-dessus.",
+   "action": "Réplique 4, geste d’accusation.",
+   "camera": {
+    "intent": "Gros plan avec légère poussée."
+   },
+   "transition": "Coupe gros plan LUI.",
+   "asset_inputs": [
+    "art/room.png",
+    "art/sofa_left.png",
+    "art/sofa_right.png",
+    "art/phone.png",
+    "art/bubble_gift.png"
+   ]
+  },
+  {
+   "id": "preuve-lui",
+   "start": 9.833333333333334,
+   "end": 11.866666666666667,
+   "composition": "Gros plan LUI avec sa bulle rouge (horloge affolée) au-dessus.",
+   "action": "Réplique 5, geste d’accusation.",
+   "camera": {
+    "intent": "Gros plan avec légère poussée."
    },
    "transition": "Coupe franche (scratch) vers le mur.",
    "asset_inputs": [
@@ -39,19 +95,37 @@
     "art/sofa_left.png",
     "art/sofa_right.png",
     "art/phone.png",
-    "art/bubble_gift.png",
     "art/bubble_blank.png",
     "art/clock.png"
    ]
   },
   {
    "id": "mur",
-   "start": 16.0,
-   "end": 20.9,
-   "composition": "Dos à dos de part et d’autre du mur rouge qui monte au centre ; la nouvelle carte s’élève devant le mur.",
-   "action": "Le mur monte, bras croisés ; le téléphone vibre ; la carte « Question suivante » apparaît ; ils se figent.",
+   "start": 11.866666666666667,
+   "end": 13.266666666666667,
+   "composition": "Plan large : dos à dos, bras croisés, le mur rouge jaillit au centre.",
+   "action": "Le mur monte, le téléphone vibre, la nouvelle carte sort.",
    "camera": {
-    "intent": "Légère secousse pendant la montée du mur, puis rapprochement lent vers la carte."
+    "intent": "Secousse pendant la montée du mur, puis cadre posé."
+   },
+   "transition": "Coupe sur la carte.",
+   "asset_inputs": [
+    "art/room.png",
+    "art/sofa_left.png",
+    "art/sofa_right.png",
+    "art/phone.png",
+    "art/wall.png",
+    "art/card2.png"
+   ]
+  },
+  {
+   "id": "carte2",
+   "start": 13.266666666666667,
+   "end": 14.533333333333333,
+   "composition": "Gros plan sur la carte « Question suivante » devant le mur, têtes en bas du cadre.",
+   "action": "Lecture de la carte ; ils se figent.",
+   "camera": {
+    "intent": "Gros plan fixe, temps de lecture."
    },
    "transition": "Coupe vers LUI et le mur.",
    "asset_inputs": [
@@ -65,14 +139,14 @@
   },
   {
    "id": "fissure",
-   "start": 20.9,
-   "end": 22.8,
+   "start": 14.533333333333333,
+   "end": 15.966666666666667,
    "composition": "Plan rapproché sur LUI tourné vers le mur ; main et fissure au-dessus de la bande de sous-titres.",
    "action": "Il pose la main sur le mur, la fissure dorée se propage ; « …Ton rire. »",
    "camera": {
-    "intent": "Plan rapproché presque fixe, très léger rapprochement pour laisser lire le geste."
+    "intent": "Plan presque fixe, très léger rapprochement, silence."
    },
-   "transition": "Coupe sur l’explosion du mur.",
+   "transition": "Coupe sur la réaction d’ELLE.",
    "asset_inputs": [
     "art/room.png",
     "art/sofa_left.png",
@@ -83,10 +157,29 @@
    ]
   },
   {
+   "id": "reaction",
+   "start": 15.966666666666667,
+   "end": 16.866666666666667,
+   "composition": "Gros plan ELLE qui se retourne vers le mur, visage adouci.",
+   "action": "Réaction silencieuse.",
+   "camera": {
+    "intent": "Gros plan fixe."
+   },
+   "transition": "Coupe sur l’explosion du mur.",
+   "asset_inputs": [
+    "art/room.png",
+    "art/sofa_left.png",
+    "art/sofa_right.png",
+    "art/phone.png",
+    "art/wall.png"
+   ],
+   "short_cut_reason": "Plan de réaction bref et motivé (regard, puis explosion du mur) ; 0.90 s"
+  },
+  {
    "id": "chute",
-   "start": 22.8,
-   "end": 30.0,
-   "composition": "Retour au plan large : confettis dorés, canapé recollé, les deux rapprochés ; cœur doré et carton de fin en haut.",
+   "start": 16.866666666666667,
+   "end": 22.966666666666665,
+   "composition": "Plan large : confettis dorés, canapé recollé, les deux rapprochés ; cœur doré et carton de fin en haut.",
    "action": "Le mur éclate, le canapé se recolle, elle pose la tête contre lui, cœur doré, carton « Bae – jeu de couple ».",
    "camera": {
     "intent": "Secousse à l’explosion puis rapprochement lent sur le couple réconcilié."
@@ -107,10 +200,15 @@
    "id": "elle",
    "role": "ELLE, toujours à gauche (sweat rose)",
    "shot_ids": [
-    "etincelle",
-    "escalade",
+    "accroche",
+    "carte",
+    "dispute",
+    "preuve-elle",
+    "preuve-lui",
     "mur",
+    "carte2",
     "fissure",
+    "reaction",
     "chute"
    ]
   },
@@ -118,10 +216,15 @@
    "id": "lui",
    "role": "LUI, toujours à droite (t-shirt bleu canard)",
    "shot_ids": [
-    "etincelle",
-    "escalade",
+    "accroche",
+    "carte",
+    "dispute",
+    "preuve-elle",
+    "preuve-lui",
     "mur",
+    "carte2",
     "fissure",
+    "reaction",
     "chute"
    ]
   }

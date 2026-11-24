@@ -1,0 +1,9 @@
+{
+ "duration": 30.0,
+ "lines": {"01_elle_vo": 0.30, "02_elle": 5.25, "03_lui": 7.35, "04_elle": 10.30, "05_lui": 12.85, "06_lui": 21.55, "07_elle": 24.50, "08_elle_vo": 27.25},
+ "card1_pop": 2.85, "point": 4.45, "bolt": 4.80, "bolt_end": 8.70, "card1_out": 8.55,
+ "split": 8.95, "split_end": 10.15, "bubble1": 10.45, "bubble2": 13.00, "bubbles_out": 15.30,
+ "cut_wall": 16.00, "wall_up_end": 17.30, "buzz": 18.00, "card2_pop": 18.85, "freeze": 20.20,
+ "cut_close": 20.90, "hand_wall": 21.20, "crack": 21.45, "cut_wide": 22.80, "burst": 22.85,
+ "rejoin": 23.05, "rejoin_end": 23.95, "lean": 23.95, "lean_end": 24.65, "heart": 24.70, "endcard": 27.05
+}

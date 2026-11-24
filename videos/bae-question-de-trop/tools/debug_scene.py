@@ -8,7 +8,7 @@ class C: pass
 c = C(); c.base = B; c.puppet_runtime = rt; c.actions = A; c.fingerprint = 'debug'
 c.character_packages = {k: rt.load_character(B/'characters'/k) for k in ('elle', 'lui')}
 spec = importlib.util.spec_from_file_location('scene', B/'scene.py'); scene = importlib.util.module_from_spec(spec); spec.loader.exec_module(scene)
-t0, t1 = float(sys.argv[1]), float(sys.argv[2]); out = Path(sys.argv[3]) if len(sys.argv) > 3 else None; stills = [float(x) for x in sys.argv[4].split(',')] if len(sys.argv) > 4 else []
+t0, t1 = float(sys.argv[1]), min(float(sys.argv[2]), __import__('json').load(open(B/'timing.json'))['duration']); out = Path(sys.argv[3]) if len(sys.argv) > 3 else None; stills = [float(x) for x in sys.argv[4].split(',')] if len(sys.argv) > 4 else []
 k = .5; size = (360, 640); errs = {}
 for i in range(round(t0*30), round(t1*30)):
     t = i/30
@@ -27,6 +27,6 @@ if out:
         st = scene._C.get((str(B), 'debug'))
         if st:
             for p in ('elle', 'lui'): st[p]._previous = None
-            st['last'] = None
+            st['last'] = {}
         try: scene.draw(t, c, (720, 1280), 1.).beauty.convert('RGB').save(out/f'f_{t:05.2f}.jpg', quality=88)
         except Exception as e: print('still', t, 'ERR', str(e)[:100])
