@@ -29,6 +29,7 @@ import {
   personMark,
   postingUi,
   showHoursVary,
+  proofCatchupFor,
   sundayCatchupFor,
   slotsFor,
   taskIsHers,
@@ -342,6 +343,10 @@ export const PostingDashboard = ({
   const catchupDate = person ? sundayCatchupFor(girlName) : null;
   const catchupProof = catchupDate && person ? desk.days[person.id]?.[catchupDate]?.proofName ?? null : null;
   const showCatchup = Boolean(person && catchupDate && !catchupProof);
+  const proofCatchupDate = person ? proofCatchupFor(girlName, role) : null;
+  const proofCatchupDone = proofCatchupDate && person ? desk.days[person.id]?.[proofCatchupDate]?.proofName ?? null : null;
+  const showProofCatchup = Boolean(person && proofCatchupDate && !proofCatchupDone);
+  const proofCatchupLabel = proofCatchupDate ? ui.lateProofTitle(formatDay(proofCatchupDate, "en")) : "";
 
   const ownAccount = person ? accountForLang(lang) : "";
 
@@ -1240,6 +1245,28 @@ export const PostingDashboard = ({
 
           return null;
         })}
+
+        {showProofCatchup && proofCatchupDate && (
+          <section id="proof-catchup" className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
+            <h2 className="font-title text-2xl tracking-tight">{proofCatchupLabel}</h2>
+            <p className="mt-2 font-body text-sm leading-relaxed text-gray-700">{ui.lateProofBody}</p>
+            <input
+              id={`proof-catchup-${proofCatchupDate}`}
+              type="file"
+              accept="video/*"
+              aria-label={proofCatchupLabel}
+              onChange={(event) => void onProof(proofCatchupDate, event.target.files?.[0])}
+              className="mt-3 font-body text-sm"
+            />
+            {proofNote?.date === proofCatchupDate && proofNote.name ? <p className="mt-2 font-body text-sm">{proofNote.name}</p> : null}
+            <ProofFeedback
+              active={proofNote?.date === proofCatchupDate}
+              percent={proofNote?.date === proofCatchupDate ? proofNote.percent : 0}
+              text={proofNote?.date === proofCatchupDate ? proofNote.text : ""}
+              error={proofError?.date === proofCatchupDate ? proofError.text : null}
+            />
+          </section>
+        )}
 
         {!isTania && person ? (
           <WorkerView

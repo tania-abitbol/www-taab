@@ -26,7 +26,9 @@ const {
   formatMinutes,
   langFromName,
   calendarDate,
+  formatDay,
   missedProofDate,
+  proofCatchupFor,
   sundayCatchupFor,
   shiftIsoDate,
   timeZoneForGirl,
@@ -676,6 +678,24 @@ assert.equal(missedProofDate("Peches - ES", mondayMorning), "2026-11-15");
 assert.equal(sundayCatchupFor("Ghada - FR"), null);
 assert.equal(sundayCatchupFor("Peches - ES"), null);
 assert.equal(sundayCatchupFor("Karol - US"), null);
+const wednesdayOnTheDesk = new Date("2026-11-25T16:00:00Z");
+assert.equal(proofCatchupFor("Karol - US", "p3"), "2026-11-24");
+assert.equal(proofCatchupFor("Karol - US", "p1"), null);
+assert.equal(proofCatchupFor("Karol - US", "p2"), null);
+assert.equal(proofCatchupFor("Karol - EN", "p3"), null);
+assert.equal(proofCatchupFor("Ghada - FR", "p1"), null);
+assert.equal(proofCatchupFor("Ghada - FR", "p3"), null);
+assert.equal(proofCatchupFor("Peches - ES", "p2"), null);
+assert.equal(proofCatchupFor("Peches - ES", "p3"), null);
+assert.equal(proofCatchupFor("Karol - US", "p3") === "2026-11-22", false);
+for (const name of ["Ghada - FR", "Peches - ES", "Karol - US"]) {
+  const dates = workerVisiblePlans(name, wednesdayOnTheDesk).map((plan) => plan.date);
+  assert.equal(dates.includes("2026-11-22"), false, name);
+  assert.equal(dates.includes("2026-11-24"), true, name);
+  assert.equal(dates[0], "2026-11-23", name);
+  assert.equal(missedProofDate(name, wednesdayOnTheDesk), null, name);
+}
+assert.equal(postingUi("en").lateProofTitle(formatDay("2026-11-24", "en")), "Yesterday's video, Tuesday, November 24");
 assert.deepEqual(suiviDates("2026-11-08"), ["2026-11-06", "2026-11-07", "2026-11-08"]);
 assert.deepEqual(CATCHUP_DATES, ["2026-11-06", "2026-11-07"]);
 assert.equal(postingUi("fr").catchupFriday, "Vidéo du vendredi 6 novembre");

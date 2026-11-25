@@ -561,8 +561,18 @@ export const marketLabel = (name: string) => {
 
 export const girlLabel = (name: string) => `${displayName(name)} · ${marketLabel(name)}`;
 
-/** The Sunday 15 Nov catch-up has left the desk. */
+/** The Sunday 15 Nov catch-up has left the desk. Sunday 22 stays off it too. */
 export const sundayCatchupFor = (_name: string) => null;
+
+/** Tuesday 24 Nov 2026. Only Karol's US profile still uploads that proof. */
+export const KAROL_PROOF_CATCHUP = "2026-11-24";
+
+export const proofCatchupFor = (name: string, role = "p3") => {
+  if (role !== "p3") return null;
+  const key = displayName(name).toLowerCase().split(/[\s-–—]/)[0];
+  if (key !== "karol" || langFromName(name) !== "en") return null;
+  return KAROL_PROOF_CATCHUP;
+};
 
 export const accountWord = (index: number, lang: PostingLang) => {
   const number = index + 1;
