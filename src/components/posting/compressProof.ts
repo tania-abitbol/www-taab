@@ -1,6 +1,7 @@
 import type { BufferTarget, StreamTarget } from "mediabunny";
 
 import { PROOF_AUDIO_BPS, PROOF_MAX_HEIGHT, PROOF_VIDEO_BPS, proofMp4Name, proofNeedsCompress } from "~/config/proofCompress";
+import { nextCompressPercent } from "~/config/proofResume";
 
 export type CompressedProof = {
   file: File;
@@ -135,7 +136,7 @@ export const compressProof = async (file: File, onProgress: (percent: number) =>
     if (!conversion.isValid || !conversion.utilizedTracks.some((item) => item.isVideoTrack())) throw new Error("compress");
     let last = -1;
     conversion.onProgress = (progress: number) => {
-      const percent = Math.min(99, Math.max(0, Math.round(progress * 100)));
+      const percent = nextCompressPercent(last, progress);
       if (percent === last) return;
       last = percent;
       onProgress(percent);

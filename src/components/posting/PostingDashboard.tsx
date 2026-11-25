@@ -58,7 +58,19 @@ import { ProfileEditor, fieldClass, type ManagedProfile } from "~/components/pos
 import { AccountChecks, TaskCopy, TaskFace, type SlideLineActions } from "~/components/posting/TaskParts";
 import { BilanPlayer, ProofFeedback } from "~/components/posting/UploadFeedback";
 import { compressProof } from "~/components/posting/compressProof";
+import {
+  attemptStart,
+  blockProofRetry,
+  dropAttempt,
+  joinProofJob,
+  proofFileKey,
+  proofRetryBlocked,
+  readAttempt,
+  rememberAttempt,
+} from "~/components/posting/proofSend";
 import { readSharedFile, saveDownload, uploadBilan, uploadProof, uploadSlideFile } from "~/components/posting/uploads";
+import { capPercent } from "~/config/proofResume";
+import { PROOF_PART_BYTES } from "~/server/postingProofs";
 import { adminCopy, slideCopy, sundayCatchupCopy } from "~/config/postingCopy";
 
 const proofKey = (personId: string, date: string) => `proof:${personId}:${date}`;
@@ -419,50 +431,69 @@ export const PostingDashboard = ({
     });
   };
 
-  const onProof = async (date: string, file: File | undefined) => {
-    if (!file || !person || sending.current.has(date)) return;
+  const onProof = (date: string, file: File | undefined) => {
+    if (!file || !person) return;
+    const key = proofFileKey(date, file);
+    if (proofRetryBlocked(key)) return;
+    const worker = person;
+    void joinProofJob(key, () => runProof(date, file, key, worker.id));
+  };
+
+  const runProof = async (date: string, file: File, key: string, personId: string) => {
+    if (sending.current.has(date)) return;
     sending.current.add(date);
     setFileError("");
     setProofError(null);
-    setProofNote({ date, percent: 0, text: ui.proofCompressing(0), name: file.name });
     const fail = (text: string) => {
+      blockProofRetry(key);
       setProofNote(null);
       setProofError({ date, text });
     };
-    let release = async () => {};
-    let uploadFile = file;
-    try {
-      const compressed = await compressProof(file, (percent) => {
-        setProofNote({ date, percent, text: ui.proofCompressing(percent), name: file.name });
-      });
-      release = compressed.release;
-      uploadFile = compressed.file;
-    } catch {
-      await release();
-      fail(ui.proofCompressFail);
-      sending.current.delete(date);
-      return;
+    const mint = () =>
+      (globalThis.crypto?.randomUUID?.() ?? `${Date.now().toString(36)}abcdefghijkl`).replace(/-/g, "").slice(0, 12);
+    let uploadFile: File;
+    const existing = readAttempt(key);
+    if (existing) {
+      uploadFile = existing.file;
+      const start = attemptStart(existing);
+      const percent = start === "done" ? 100 : capPercent(start * PROOF_PART_BYTES, existing.file.size, 0);
+      setProofNote({ date, percent, text: ui.proofSending(percent), name: existing.file.name });
+    } else {
+      setProofNote({ date, percent: 0, text: ui.proofCompressing(0), name: file.name });
+      try {
+        const compressed = await compressProof(file, (percent) => {
+          setProofNote({ date, percent, text: ui.proofCompressing(percent), name: file.name });
+        });
+        uploadFile = compressed.file;
+        rememberAttempt(key, compressed.file, compressed.release, mint);
+      } catch {
+        fail(ui.proofCompressFail);
+        sending.current.delete(date);
+        return;
+      }
     }
     try {
       const prepared = await prepareProofUpload(date, uploadFile.name, uploadFile.size);
       if (!prepared.ok) {
-        await release();
+        await dropAttempt(key);
         fail(prepared.error === "size" ? ui.proofTooBig : ui.proofFail);
         return;
       }
-      if (prepared.local) await saveBlob(proofKey(person.id, date), uploadFile);
-      await uploadProof(uploadFile, date, (percent) =>
-        setProofNote({ date, percent, text: ui.proofSending(percent), name: prepared.name }),
+      if (prepared.local) await saveBlob(proofKey(personId, date), uploadFile);
+      await uploadProof(
+        uploadFile,
+        date,
+        (percent) => setProofNote({ date, percent, text: ui.proofSending(percent), name: prepared.name }),
+        key,
       );
       const saved = await commitProof(date, prepared.name);
       if (!saved.ok && prepared.local) throw new Error("commit");
-      setUrls((current) => ({ ...current, [proofKey(person.id, date)]: URL.createObjectURL(uploadFile) }));
+      setUrls((current) => ({ ...current, [proofKey(personId, date)]: URL.createObjectURL(uploadFile) }));
       patchDay(date, (day) => ({ ...day, proofName: prepared.name }));
+      blockProofRetry(key);
       setProofNote(null);
       setProofError(null);
-      release = async () => {};
     } catch (error) {
-      await release();
       fail(error instanceof Error && error.message === "413" ? ui.proofTooBig : ui.proofFail);
     } finally {
       sending.current.delete(date);

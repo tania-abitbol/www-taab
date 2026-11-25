@@ -911,4 +911,79 @@ for (const plan of DAY_PLANS.filter((item) => item.date >= "2026-11-17")) {
   assert.equal(timedMinutes(checksFor(plan)), plan.date >= "2026-11-23" ? 60 : 54, plan.date);
   assert.equal(checksFor(plan).some((item) => item.id.startsWith("story-")), false, plan.date);
 }
+const { capPercent, nextCompressPercent, proofIsComplete, partToSend, ackCursor, cursorFor } = await import("../src/config/proofResume.ts");
+assert.equal(nextCompressPercent(-1, 0), 0);
+assert.equal(nextCompressPercent(40, 0.4), 40);
+assert.equal(nextCompressPercent(99, 0), 99);
+assert.equal(nextCompressPercent(99, 0.5), 99);
+assert.equal(capPercent(10, 100, 90), 90);
+assert.equal(capPercent(100, 100, 0), 99);
+assert.equal(capPercent(0, 0, 0), 0);
+assert.equal(proofIsComplete(null, { name: "a.mp4", size: 10 }), false);
+assert.equal(proofIsComplete({ done: true, name: "a.mp4", size: 10 }, { name: "a.mp4", size: 10 }), true);
+assert.equal(proofIsComplete({ done: true, name: "a.mp4", size: 11 }, { name: "a.mp4", size: 10 }), false);
+assert.equal(proofIsComplete({ done: true, name: "b.mp4", size: null }, { name: "a.mp4", size: 10 }), false);
+assert.equal(proofIsComplete({ done: true, name: "a.mp4", size: null }, { name: "a.mp4", size: 10 }), true);
+const fresh = cursorFor(PROOF_PART_BYTES * 4, () => "abc12345");
+assert.equal(fresh.generation, "abc12345");
+assert.equal(fresh.parts, 4);
+assert.equal(partToSend(fresh), 0);
+const midway = ackCursor(ackCursor(fresh, 0), 1);
+assert.equal(partToSend(midway), 2);
+assert.equal(partToSend({ ...midway, next: midway.parts }), midway.parts - 1);
+assert.equal(partToSend({ ...midway, done: true }), "done");
+assert.equal(ackCursor(fresh, -1), fresh);
+assert.equal(ackCursor(fresh, 99), fresh);
+
+const { readFileSync } = await import("node:fs");
+const uploadRoute = readFileSync(new URL("../src/app/posting/upload/route.ts", import.meta.url), "utf8");
+assert.equal(uploadRoute.includes("export const maxDuration = 60"), true);
+assert.equal(uploadRoute.includes("export async function GET"), true);
+const dashboard = readFileSync(new URL("../src/components/posting/PostingDashboard.tsx", import.meta.url), "utf8");
+const runProof = dashboard.slice(dashboard.indexOf("const runProof"), dashboard.indexOf("const onBilan"));
+assert.equal(runProof.includes("uploadProof(file"), false);
+assert.equal(runProof.includes("uploadProof("), true);
+const compressCatch = runProof.slice(runProof.indexOf("compressProof"), runProof.indexOf("prepareProofUpload"));
+assert.match(compressCatch, /catch[\s\S]*return;/);
+
+const {
+  attemptStart,
+  blockProofRetry,
+  joinProofJob,
+  proofRetryBlocked,
+  readAttempt,
+  rememberAttempt,
+  resetProofSends,
+  ackAttempt,
+  markAttemptDone,
+} = await import("../src/components/posting/proofSend.ts");
+resetProofSends();
+const video = new File([new Uint8Array(PROOF_PART_BYTES + 1)], "day.mp4");
+const key = `2026-11-25:${video.size}:1:day.mp4`;
+const first = rememberAttempt(key, video, async () => {}, () => "abc12345");
+const second = rememberAttempt(key, video, async () => {}, () => "zzzz9999");
+assert.equal(first.generation, "abc12345");
+assert.equal(second.generation, first.generation);
+assert.equal(attemptStart(readAttempt(key)), 0);
+ackAttempt(key, 0);
+assert.equal(attemptStart(readAttempt(key)), 1);
+markAttemptDone(key);
+assert.equal(attemptStart(readAttempt(key)), "done");
+blockProofRetry("echo", 1_000);
+assert.equal(proofRetryBlocked("echo", 1_000), true);
+assert.equal(proofRetryBlocked("echo", 2_600), false);
+let jobs = 0;
+const pending = joinProofJob("same", async () => {
+  jobs += 1;
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  return "kept";
+});
+assert.equal(await joinProofJob("same", async () => {
+  jobs += 1;
+  return "other";
+}), "kept");
+assert.equal(await pending, "kept");
+assert.equal(jobs, 1);
+resetProofSends();
+
 console.log("posting codes ok");

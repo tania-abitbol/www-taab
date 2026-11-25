@@ -9,11 +9,13 @@ import {
   proofFileName,
   proofPartCount,
 } from "~/server/postingProofs";
-import { writeLocalProofPart } from "~/server/postingLocalProof";
-import { proofStorageReady, rememberProof, saveProofFile, writeProofPart } from "~/server/postingProofStore";
+import { localProofNames, localProofStat, writeLocalProofPart } from "~/server/postingLocalProof";
+import { loadProofFile, proofStorageReady, rememberProof, saveProofFile, writeProofPart } from "~/server/postingProofStore";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+/** The bar sits at 99 once the body has arrived. Saving that part still has to answer. */
+export const maxDuration = 60;
 
 const GENERATION = /^[a-z0-9]{8,16}$/;
 
@@ -23,9 +25,30 @@ const integer = (value: string | null) => {
   return Number.isSafeInteger(number) ? number : null;
 };
 
+const profileIdFrom = (requestCookies: ReturnType<typeof cookies>) => {
+  const session = readSession(requestCookies.get(DASHBOARD_COOKIE)?.value);
+  return session?.role && session.role !== "tania" ? session.role : null;
+};
+
+/** A finished proof stays finished. The sender checks this before sending the file again. */
+export async function GET(request: Request) {
+  const profileId = profileIdFrom(cookies());
+  if (!profileId) return NextResponse.json({ error: "denied" }, { status: 401 });
+  const date = new URL(request.url).searchParams.get("date") ?? "";
+  if (!proofAllowed(profileId, date, 1)) return NextResponse.json({ error: "date" }, { status: 400 });
+  if (!proofStorageReady()) {
+    const name = (await localProofNames(profileId))?.[date] ?? null;
+    const stat = name ? await localProofStat(profileId, date) : null;
+    if (!name || !stat) return NextResponse.json({ done: false, name: null, size: null });
+    return NextResponse.json({ done: true, name, size: stat.size });
+  }
+  const file = await loadProofFile(profileId, date).catch(() => null);
+  if (!file) return NextResponse.json({ done: false, name: null, size: null });
+  return NextResponse.json({ done: true, name: file.name, size: file.size });
+}
+
 export async function POST(request: Request) {
-  const session = readSession(cookies().get(DASHBOARD_COOKIE)?.value);
-  const profileId = session?.role && session.role !== "tania" ? session.role : null;
+  const profileId = profileIdFrom(cookies());
   if (!profileId) return NextResponse.json({ error: "denied" }, { status: 401 });
   const localStore = !proofStorageReady();
 
