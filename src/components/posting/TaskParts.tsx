@@ -29,7 +29,7 @@ export const taskEmoji = (id: string) => {
   if (id.startsWith("bio-")) return "✍️";
   if (id.startsWith("profile-")) return "👤";
   if (id.startsWith("post-")) return "🚀";
-  if (/^video[12]-us$/.test(id)) return "🎬";
+  if (/^video[12]-es$/.test(id)) return "🎬";
   if (id === "bilan") return "📊";
   return "🔥";
 };

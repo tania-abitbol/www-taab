@@ -780,7 +780,7 @@ export const PostingDashboard = ({
     const shared = board.files[plan.date]?.[storageId] ?? [];
     const names = shared.length > 0 ? shared.map((image) => image.name) : desk.taniaFiles[plan.date]?.[storageId] ?? [];
     const title = accountWord(index, "fr");
-    const videos = account.id === "us" && usVideoDay(plan.date, langFromName(worker.name));
+    const videos = account.id === "es" && usVideoDay(plan.date, langFromName(worker.name));
     return (
       <div key={storageId} className="rounded-2xl bg-gray-100 p-3">
         <label htmlFor={`upload-${plan.date}-${storageId}`} className="block font-title text-xl leading-none tracking-tight" style={{ color: ACCOUNT_TONE[index].ink }}>
@@ -869,7 +869,7 @@ export const PostingDashboard = ({
     const short = shortVideoNumber(check.id);
     if (short !== null) {
       if (!person || !usVideoDay(plan.date, lang)) return undefined;
-      const storageId = slideStorageId(person.id, "us");
+      const storageId = slideStorageId(person.id, "es");
       const video = slideshowOf(board, plan.date, storageId)[short - 1];
       const zipKey = `${storageId}-${plan.date}-video${short}`;
       return {
