@@ -29,7 +29,7 @@ import {
   personMark,
   postingUi,
   showHoursVary,
-  proofCatchupFor,
+  proofCatchupsFor,
   sundayCatchupFor,
   slotsFor,
   taskIsHers,
@@ -343,10 +343,9 @@ export const PostingDashboard = ({
   const catchupDate = person ? sundayCatchupFor(girlName) : null;
   const catchupProof = catchupDate && person ? desk.days[person.id]?.[catchupDate]?.proofName ?? null : null;
   const showCatchup = Boolean(person && catchupDate && !catchupProof);
-  const proofCatchupDate = person ? proofCatchupFor(girlName, role) : null;
-  const proofCatchupDone = proofCatchupDate && person ? desk.days[person.id]?.[proofCatchupDate]?.proofName ?? null : null;
-  const showProofCatchup = Boolean(person && proofCatchupDate && !proofCatchupDone);
-  const proofCatchupLabel = proofCatchupDate ? ui.lateProofTitle(formatDay(proofCatchupDate, "en")) : "";
+  const proofCatchupDates = person
+    ? proofCatchupsFor(girlName, role).filter((date) => !desk.days[person.id]?.[date]?.proofName)
+    : [];
 
   const ownAccount = person ? accountForLang(lang) : "";
 
@@ -465,17 +464,18 @@ export const PostingDashboard = ({
       setProofNote({ date, percent, text: ui.proofSending(percent), name: existing.file.name });
     } else {
       setProofNote({ date, percent: 0, text: ui.proofCompressing(0), name: file.name });
+      let release = async () => {};
       try {
         const compressed = await compressProof(file, (percent) => {
           setProofNote({ date, percent, text: ui.proofCompressing(percent), name: file.name });
         });
         uploadFile = compressed.file;
-        rememberAttempt(key, compressed.file, compressed.release, mint);
+        release = compressed.release;
       } catch {
-        fail(ui.proofCompressFail);
-        sending.current.delete(date);
-        return;
+        uploadFile = file;
+        setProofNote({ date, percent: 0, text: ui.proofSending(0), name: file.name });
       }
+      rememberAttempt(key, uploadFile, release, mint);
     }
     try {
       const prepared = await prepareProofUpload(date, uploadFile.name, uploadFile.size);
@@ -1246,27 +1246,34 @@ export const PostingDashboard = ({
           return null;
         })}
 
-        {showProofCatchup && proofCatchupDate && (
-          <section id="proof-catchup" className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]">
-            <h2 className="font-title text-2xl tracking-tight">{proofCatchupLabel}</h2>
-            <p className="mt-2 font-body text-sm leading-relaxed text-gray-700">{ui.lateProofBody}</p>
-            <input
-              id={`proof-catchup-${proofCatchupDate}`}
-              type="file"
-              accept="video/*"
-              aria-label={proofCatchupLabel}
-              onChange={(event) => void onProof(proofCatchupDate, event.target.files?.[0])}
-              className="mt-3 font-body text-sm"
-            />
-            {proofNote?.date === proofCatchupDate && proofNote.name ? <p className="mt-2 font-body text-sm">{proofNote.name}</p> : null}
-            <ProofFeedback
-              active={proofNote?.date === proofCatchupDate}
-              percent={proofNote?.date === proofCatchupDate ? proofNote.percent : 0}
-              text={proofNote?.date === proofCatchupDate ? proofNote.text : ""}
-              error={proofError?.date === proofCatchupDate ? proofError.text : null}
-            />
-          </section>
-        )}
+        {proofCatchupDates.map((date) => {
+          const label = ui.lateProofTitle(formatDay(date, "en"));
+          return (
+            <section
+              key={date}
+              id={`proof-catchup-card-${date}`}
+              className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]"
+            >
+              <h2 className="font-title text-2xl tracking-tight">{label}</h2>
+              <p className="mt-2 font-body text-sm leading-relaxed text-gray-700">{ui.lateProofBody}</p>
+              <input
+                id={`proof-catchup-${date}`}
+                type="file"
+                accept="video/*"
+                aria-label={label}
+                onChange={(event) => void onProof(date, event.target.files?.[0])}
+                className="mt-3 font-body text-sm"
+              />
+              {proofNote?.date === date && proofNote.name ? <p className="mt-2 font-body text-sm">{proofNote.name}</p> : null}
+              <ProofFeedback
+                active={proofNote?.date === date}
+                percent={proofNote?.date === date ? proofNote.percent : 0}
+                text={proofNote?.date === date ? proofNote.text : ""}
+                error={proofError?.date === date ? proofError.text : null}
+              />
+            </section>
+          );
+        })}
 
         {!isTania && person ? (
           <WorkerView

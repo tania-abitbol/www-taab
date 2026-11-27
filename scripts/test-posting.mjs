@@ -29,6 +29,7 @@ const {
   formatDay,
   missedProofDate,
   proofCatchupFor,
+  proofCatchupsFor,
   sundayCatchupFor,
   shiftIsoDate,
   timeZoneForGirl,
@@ -680,14 +681,21 @@ assert.equal(sundayCatchupFor("Peches - ES"), null);
 assert.equal(sundayCatchupFor("Karol - US"), null);
 const wednesdayOnTheDesk = new Date("2026-11-25T16:00:00Z");
 assert.equal(proofCatchupFor("Karol - US", "p3"), "2026-11-24");
+assert.deepEqual(proofCatchupsFor("Karol - US", "p3"), ["2026-11-24", "2026-11-25"]);
+assert.deepEqual(proofCatchupsFor("Karol - US", "p1"), []);
+assert.deepEqual(proofCatchupsFor("Karol - US", "p2"), []);
 assert.equal(proofCatchupFor("Karol - US", "p1"), null);
 assert.equal(proofCatchupFor("Karol - US", "p2"), null);
 assert.equal(proofCatchupFor("Karol - EN", "p3"), null);
+assert.deepEqual(proofCatchupsFor("Karol - EN", "p3"), []);
 assert.equal(proofCatchupFor("Ghada - FR", "p1"), null);
 assert.equal(proofCatchupFor("Ghada - FR", "p3"), null);
+assert.deepEqual(proofCatchupsFor("Ghada - FR", "p3"), []);
 assert.equal(proofCatchupFor("Peches - ES", "p2"), null);
 assert.equal(proofCatchupFor("Peches - ES", "p3"), null);
+assert.deepEqual(proofCatchupsFor("Peches - ES", "p3"), []);
 assert.equal(proofCatchupFor("Karol - US", "p3") === "2026-11-22", false);
+assert.equal(proofCatchupsFor("Karol - US", "p3").includes("2026-11-22"), false);
 for (const name of ["Ghada - FR", "Peches - ES", "Karol - US"]) {
   const dates = workerVisiblePlans(name, wednesdayOnTheDesk).map((plan) => plan.date);
   assert.equal(dates.includes("2026-11-22"), false, name);
@@ -964,7 +972,13 @@ const runProof = dashboard.slice(dashboard.indexOf("const runProof"), dashboard.
 assert.equal(runProof.includes("uploadProof(file"), false);
 assert.equal(runProof.includes("uploadProof("), true);
 const compressCatch = runProof.slice(runProof.indexOf("compressProof"), runProof.indexOf("prepareProofUpload"));
-assert.match(compressCatch, /catch[\s\S]*return;/);
+assert.ok(compressCatch.indexOf("compressed.file") < compressCatch.indexOf("catch"));
+assert.match(compressCatch, /catch[\s\S]*uploadFile = file/);
+assert.equal(compressCatch.includes("return"), false);
+assert.equal(compressCatch.includes("proofCompressFail"), false);
+assert.equal(runProof.split("uploadProof(").length - 1, 1);
+assert.equal(dashboard.includes("proofCatchupsFor"), true);
+assert.equal(dashboard.includes("proofCompressFail"), false);
 
 const {
   attemptStart,

@@ -13,6 +13,30 @@ const noop = async () => {};
 
 const kept = (file: File): CompressedProof => ({ file, release: noop });
 
+/** No progress for this long means the transcode is stuck. A moving encode resets it. */
+const STALL_MS = 180_000;
+
+const openStall = (onStall: () => void) => {
+  let timer = 0;
+  let rejectStall: ((error: Error) => void) | null = null;
+  const promise = new Promise<never>((_resolve, reject) => {
+    rejectStall = reject;
+  });
+  void promise.catch(() => undefined);
+  const arm = () => {
+    window.clearTimeout(timer);
+    timer = window.setTimeout(() => {
+      onStall();
+      rejectStall?.(new Error("compress"));
+    }, STALL_MS);
+  };
+  const stop = () => {
+    window.clearTimeout(timer);
+    rejectStall = null;
+  };
+  return { promise, arm, stop };
+};
+
 const METADATA_MS = 45_000;
 
 /** Display height after rotation, or null when the phone cannot read the file. */
@@ -82,7 +106,8 @@ const sweepStale = async () => {
 /**
  * Scales a proof video to at most 480p on the phone, before any upload.
  * Width follows the source aspect ratio. A frame already 480 tall or shorter is returned unchanged.
- * Throws when the file cannot be made smaller — the caller must not send the original.
+ * Throws when the transcode fails or stalls. The caller then sends the picked file once.
+ * A transcode that finishes is the 480p file.
  */
 export const compressProof = async (file: File, onProgress: (percent: number) => void): Promise<CompressedProof> => {
   await sweepStale().catch(() => undefined);
@@ -94,17 +119,22 @@ export const compressProof = async (file: File, onProgress: (percent: number) =>
   );
   const input = new Input({ source: new BlobSource(file), formats: ALL_FORMATS });
   let release = noop;
-  let cancel = noop;
+  let cancel: () => Promise<void> = noop;
+  const clock = openStall(() => {
+    void cancel();
+  });
+  const guard = <T>(work: Promise<T>) => Promise.race([work, clock.promise]);
   try {
-    const track = await input.getPrimaryVideoTrack();
-    const height = track ? await track.getDisplayHeight() : 0;
+    clock.arm();
+    const track = await guard(input.getPrimaryVideoTrack());
+    const height = track ? await guard(track.getDisplayHeight()) : 0;
     if (!track || !Number.isFinite(height) || height <= 0) throw new Error("compress");
     if (!proofNeedsCompress(height) && (hinted === null || !proofNeedsCompress(hinted))) return kept(file);
 
     onProgress(0);
     const niceName = proofMp4Name(file.name);
     const tempName = `proof-tmp-${globalThis.crypto?.randomUUID?.() ?? Date.now().toString(16)}.mp4`;
-    const opened = await openDiskSink(tempName, niceName, StreamTarget);
+    const opened = await guard(openDiskSink(tempName, niceName, StreamTarget));
     const sink = opened ?? openMemorySink(niceName, BufferTarget);
     const target = sink.target;
     const packed = sink.packed;
@@ -115,27 +145,31 @@ export const compressProof = async (file: File, onProgress: (percent: number) =>
       format: new Mp4OutputFormat({ fastStart: false }),
       target,
     });
-    const conversion = await Conversion.init({
-      input,
-      output,
-      tracks: "primary",
-      tags: {},
-      showWarnings: false,
-      video: {
-        codec: "avc",
-        ...(proofNeedsCompress(height) ? { height: PROOF_MAX_HEIGHT } : {}),
-        allowTransformationMetadata: false,
-        hardwareAcceleration: "prefer-hardware",
-        quality: new Quality({ bitrate: PROOF_VIDEO_BPS, bitrateMode: "constant" }),
-      },
-      audio: {
-        codec: "aac",
-        quality: new Quality({ bitrate: PROOF_AUDIO_BPS, bitrateMode: "constant" }),
-      },
-    });
+    clock.arm();
+    const conversion = await guard(
+      Conversion.init({
+        input,
+        output,
+        tracks: "primary",
+        tags: {},
+        showWarnings: false,
+        video: {
+          codec: "avc",
+          ...(proofNeedsCompress(height) ? { height: PROOF_MAX_HEIGHT } : {}),
+          allowTransformationMetadata: false,
+          hardwareAcceleration: "prefer-hardware",
+          quality: new Quality({ bitrate: PROOF_VIDEO_BPS, bitrateMode: "constant" }),
+        },
+        audio: {
+          codec: "aac",
+          quality: new Quality({ bitrate: PROOF_AUDIO_BPS, bitrateMode: "constant" }),
+        },
+      }),
+    );
     if (!conversion.isValid || !conversion.utilizedTracks.some((item) => item.isVideoTrack())) throw new Error("compress");
     let last = -1;
     conversion.onProgress = (progress: number) => {
+      clock.arm();
       const percent = nextCompressPercent(last, progress);
       if (percent === last) return;
       last = percent;
@@ -146,7 +180,9 @@ export const compressProof = async (file: File, onProgress: (percent: number) =>
       await conversion.cancel().catch(() => undefined);
       await drop();
     };
-    await conversion.execute();
+    clock.arm();
+    await guard(conversion.execute());
+    clock.stop();
     const smaller = await packed();
     sink.keep?.();
     onProgress(100);
@@ -159,6 +195,7 @@ export const compressProof = async (file: File, onProgress: (percent: number) =>
     release = noop;
     throw error instanceof Error ? error : new Error("compress");
   } finally {
+    clock.stop();
     try {
       input.dispose();
     } catch {
