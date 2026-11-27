@@ -21,14 +21,14 @@ export const POST_WARM_AFTER_MINUTES = 7;
 /** Monday to Saturday on the desk. 10 + 3 + 7 = 20 minutes, three accounts = 60. */
 export const WEEK_WARM_BEFORE_MINUTES = 10;
 export const POST_ACCOUNT_MINUTES = POST_WARM_BEFORE_MINUTES + POST_PUBLISH_MINUTES + POST_WARM_AFTER_MINUTES;
-/** US profile, 27–29 Nov: Account 3 posts two short videos (no music) instead of a slideshow. 5 + 5 at the start, 5 + 5 at the end. */
+/** US profile, 27–29 Nov: Account 2 (friends) posts two short videos (no music) instead of a slideshow. 5 + 5 at the start, 5 + 5 at the end. */
 export const US_VIDEO_DATES = ["2026-11-27", "2026-11-28", "2026-11-29"] as const;
 export const SHORT_POST_MINUTES = 5;
 export const SHORT_WARM_MINUTES = 5;
 export const usVideoDay = (date: string, lang: PostingLang) => lang === "en" && (US_VIDEO_DATES as readonly string[]).includes(date);
-/** Which of the day's two videos a task posts: video1-us → 1, video2-us → 2. */
+/** Which of the day's two videos a task posts: video1-es → 1, video2-es → 2. */
 export const shortVideoNumber = (id: string) => {
-  const match = /^video([12])-us$/.exec(id);
+  const match = /^video([12])-es$/.exec(id);
   return match ? Number(match[1]) : null;
 };
 
@@ -427,12 +427,12 @@ export const checksFor = (plan: DayPlan, lang: PostingLang = "fr"): CheckItem[] 
     }),
     ];
     if (usVideoDay(plan.date, lang)) {
-      const third = name(2);
+      const second = name(1);
       const short = (number: 1 | 2) => [
-        task(`video${number}-us`, say.shortPost(third, number), SHORT_POST_MINUTES),
-        task(`videoafter${number}-us`, say.shortAfter(third), SHORT_WARM_MINUTES),
+        task(`video${number}-es`, say.shortPost(second, number), SHORT_POST_MINUTES),
+        task(`videoafter${number}-es`, say.shortAfter(second), SHORT_WARM_MINUTES),
       ];
-      const others = checks.filter((check) => checkAccountId(check.id) !== "us");
+      const others = checks.filter((check) => checkAccountId(check.id) !== "es");
       const day = [...short(1), ...others, ...short(2)];
       return plan.date === ACTIVE_WEEK_END ? [...day, task("bilan", say.bilan, 5)] : day;
     }
