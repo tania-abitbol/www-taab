@@ -34,7 +34,8 @@ type Phrases = {
   videoPost: (account: string) => string;
   weekBefore: (account: string) => string;
   weekPost: (account: string) => string;
-  weekVideoPost: (account: string) => string;
+  shortPost: (account: string, number: number) => string;
+  shortAfter: (account: string) => string;
   weekAfter: (account: string, reply: boolean) => string;
   hardAfter: (account: string, count: number, reply: boolean) => string;
   hardWarm: (account: string, count: number, reply: boolean) => string;
@@ -219,16 +220,22 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Appuie sur Publier. Si ça rate, recommence avant de changer de compte.",
         "• Montre le post dans la grille."
       ),
-    weekVideoPost: (account) =>
+    shortPost: (account, number) =>
       block(
         account,
-        "Publication du diaporama.",
-        "• Prépare le diaporama et la description avant d'enregistrer.",
-        "• Tu télécharges les photos ici.",
-        "• Ajoute une musique TikTok tendance (onglet Populaire), volume audible. Ne poste jamais avec seulement le son original.",
+        `Publication de la vidéo ${number}.`,
+        "• Tu télécharges la vidéo ici.",
+        "• Pas de musique : publie la vidéo avec son propre son, sans rien ajouter.",
         "• Copie cette description, puis colle-la.",
-        "• Appuie sur Publier. Si ça rate, recommence avant de changer de compte.",
+        "• Appuie sur Publier. Si ça rate, recommence tout de suite.",
         "• Montre le post dans la grille."
+      ),
+    shortAfter: (account) =>
+      block(
+        account,
+        "Chauffe le compte après le post.",
+        "• Reste 5 minutes sur Pour toi : regarde, like, commente.",
+        "• Au moins 2 commentaires."
       ),
     weekAfter: (account, reply) =>
       block(
@@ -499,16 +506,22 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Pulsa Publicar. Si falla, inténtalo otra vez antes de cambiar de cuenta.",
         "• Muestra el post en la cuadrícula."
       ),
-    weekVideoPost: (account) =>
+    shortPost: (account, number) =>
       block(
         account,
-        "Publicación del carrusel.",
-        "• Prepara el carrusel y la descripción antes de grabar.",
-        "• Descargas las fotos aquí.",
-        "• Añade una música de TikTok en tendencia (pestaña Populares), volumen audible. Nunca publiques solo con el sonido original.",
-        "• Copia esta descripción, luego pégala.",
-        "• Pulsa Publicar. Si falla, inténtalo otra vez antes de cambiar de cuenta.",
-        "• Muestra el post en la cuadrícula."
+        `Publica el vídeo ${number}.`,
+        "• Descargas el vídeo aquí.",
+        "• Sin música: publica el vídeo con su propio sonido, sin añadir nada.",
+        "• Copia esta descripción y pégala.",
+        "• Pulsa Publicar. Si falla, vuelve a intentarlo enseguida.",
+        "• Enseña la publicación en la cuadrícula."
+      ),
+    shortAfter: (account) =>
+      block(
+        account,
+        "Calienta la cuenta después de publicar.",
+        "• Quédate 5 minutos en Para ti: mira, da like, comenta.",
+        "• Al menos 2 comentarios."
       ),
     weekAfter: (account, reply) =>
       block(
@@ -778,16 +791,22 @@ const phrases: Record<PostingLang, Phrases> = {
         "• Tap Post. If it fails, try again before you switch accounts.",
         "• Show the post in the grid."
       ),
-    weekVideoPost: (account) =>
+    shortPost: (account, number) =>
       block(
         account,
-        "Post the slideshow.",
-        "• Get the slideshow and the caption ready before you record.",
-        "• Download the photos here.",
-        "• Add a trending TikTok sound (Trending tab), audible volume. Never post with only the original sound.",
+        `Post video ${number}.`,
+        "• Download the video here.",
+        "• No music: post the video with its own sound, do not add anything.",
         "• Copy this caption, then paste it.",
-        "• Tap Post. If it fails, try again before you switch accounts.",
+        "• Tap Post. If it fails, try again right away.",
         "• Show the post in the grid."
+      ),
+    shortAfter: (account) =>
+      block(
+        account,
+        "Warm up the account after the post.",
+        "• Stay on For You for 5 minutes: watch, like, comment.",
+        "• At least 2 comments."
       ),
     weekAfter: (account, reply) =>
       block(
@@ -1059,9 +1078,9 @@ export const slideCopy = {
     note: "Tu fais le diaporama avec ces images.",
     download: "Télécharger les images",
     downloadLine: "Tu télécharges les photos ici.",
-    videoDownload: "Télécharger les images",
-    videoDownloadLine: "Tu télécharges les photos ici.",
-    videoWaiting: "Les photos ne sont pas encore là.",
+    videoDownload: "Télécharger la vidéo",
+    videoDownloadLine: "Tu télécharges la vidéo ici.",
+    videoWaiting: "La vidéo n'est pas encore là.",
     copy: "Copier",
     copyLine: "Copie cette description.",
     copied: "Copié.",
@@ -1072,9 +1091,9 @@ export const slideCopy = {
     note: "Haces el carrusel con estas imágenes.",
     download: "Descargar las imágenes",
     downloadLine: "Descargas las fotos aquí.",
-    videoDownload: "Descargar las imágenes",
-    videoDownloadLine: "Descargas las fotos aquí.",
-    videoWaiting: "Las fotos todavía no están.",
+    videoDownload: "Descargar el vídeo",
+    videoDownloadLine: "Descargas el vídeo aquí.",
+    videoWaiting: "El vídeo todavía no está.",
     copy: "Copiar",
     copyLine: "Copia esta descripción.",
     copied: "Copiado.",
@@ -1085,9 +1104,9 @@ export const slideCopy = {
     note: "You make the slideshow with these images.",
     download: "Download the images",
     downloadLine: "Download the photos here.",
-    videoDownload: "Download the images",
-    videoDownloadLine: "Download the photos here.",
-    videoWaiting: "The photos are not here yet.",
+    videoDownload: "Download the video",
+    videoDownloadLine: "Download the video here.",
+    videoWaiting: "The video is not here yet.",
     copy: "Copy",
     copyLine: "Copy this caption.",
     copied: "Copied.",
@@ -1097,6 +1116,7 @@ export const slideCopy = {
 
 /** Tania's desk is French only. */
 export const adminCopy = {
+  shortVideos: "2 vidéos ce jour-là, sans musique : la 1re en début de session, la 2e à la fin. Mets-les dans l'ordre.",
   summaryTitle: "Qui a fait quoi",
   filterLabel: "Filtrer par fille",
   filterAll: "Toutes",
