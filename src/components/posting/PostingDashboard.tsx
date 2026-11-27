@@ -29,6 +29,7 @@ import {
   personMark,
   postingUi,
   showHoursVary,
+  proofCatchupsFor,
   sundayCatchupFor,
   slotsFor,
   taskIsHers,
@@ -57,7 +58,20 @@ import { deleteBlob, loadBlob, readDesk, saveBlob, writeDesk } from "~/component
 import { ProfileEditor, fieldClass, type ManagedProfile } from "~/components/posting/ProfileEditor";
 import { AccountChecks, TaskCopy, TaskFace, type SlideLineActions } from "~/components/posting/TaskParts";
 import { BilanPlayer, ProofFeedback } from "~/components/posting/UploadFeedback";
+import { compressProof } from "~/components/posting/compressProof";
+import {
+  attemptStart,
+  blockProofRetry,
+  dropAttempt,
+  joinProofJob,
+  proofFileKey,
+  proofRetryBlocked,
+  readAttempt,
+  rememberAttempt,
+} from "~/components/posting/proofSend";
 import { readSharedFile, saveDownload, uploadBilan, uploadProof, uploadSlideFile } from "~/components/posting/uploads";
+import { capPercent } from "~/config/proofResume";
+import { PROOF_PART_BYTES } from "~/server/postingProofs";
 import { adminCopy, slideCopy, sundayCatchupCopy } from "~/config/postingCopy";
 
 const proofKey = (personId: string, date: string) => `proof:${personId}:${date}`;
@@ -329,6 +343,9 @@ export const PostingDashboard = ({
   const catchupDate = person ? sundayCatchupFor(girlName) : null;
   const catchupProof = catchupDate && person ? desk.days[person.id]?.[catchupDate]?.proofName ?? null : null;
   const showCatchup = Boolean(person && catchupDate && !catchupProof);
+  const proofCatchupDates = person
+    ? proofCatchupsFor(girlName, role).filter((date) => !desk.days[person.id]?.[date]?.proofName)
+    : [];
 
   const ownAccount = person ? accountForLang(lang) : "";
 
@@ -418,28 +435,67 @@ export const PostingDashboard = ({
     });
   };
 
-  const onProof = async (date: string, file: File | undefined) => {
-    if (!file || !person || sending.current.has(date)) return;
+  const onProof = (date: string, file: File | undefined) => {
+    if (!file || !person) return;
+    const key = proofFileKey(date, file);
+    if (proofRetryBlocked(key)) return;
+    const worker = person;
+    void joinProofJob(key, () => runProof(date, file, key, worker.id));
+  };
+
+  const runProof = async (date: string, file: File, key: string, personId: string) => {
+    if (sending.current.has(date)) return;
     sending.current.add(date);
     setFileError("");
     setProofError(null);
-    setProofNote({ date, percent: 0, text: ui.proofSending(0), name: file.name });
     const fail = (text: string) => {
+      blockProofRetry(key);
       setProofNote(null);
       setProofError({ date, text });
     };
+    const mint = () =>
+      (globalThis.crypto?.randomUUID?.() ?? `${Date.now().toString(36)}abcdefghijkl`).replace(/-/g, "").slice(0, 12);
+    let uploadFile: File;
+    const existing = readAttempt(key);
+    if (existing) {
+      uploadFile = existing.file;
+      const start = attemptStart(existing);
+      const percent = start === "done" ? 100 : capPercent(start * PROOF_PART_BYTES, existing.file.size, 0);
+      setProofNote({ date, percent, text: ui.proofSending(percent), name: existing.file.name });
+    } else {
+      setProofNote({ date, percent: 0, text: ui.proofCompressing(0), name: file.name });
+      let release = async () => {};
+      try {
+        const compressed = await compressProof(file, (percent) => {
+          setProofNote({ date, percent, text: ui.proofCompressing(percent), name: file.name });
+        });
+        uploadFile = compressed.file;
+        release = compressed.release;
+      } catch {
+        uploadFile = file;
+        setProofNote({ date, percent: 0, text: ui.proofSending(0), name: file.name });
+      }
+      rememberAttempt(key, uploadFile, release, mint);
+    }
     try {
-      const prepared = await prepareProofUpload(date, file.name, file.size);
+      const prepared = await prepareProofUpload(date, uploadFile.name, uploadFile.size);
       if (!prepared.ok) {
+        await dropAttempt(key);
         fail(prepared.error === "size" ? ui.proofTooBig : ui.proofFail);
         return;
       }
-      if (prepared.local) await saveBlob(proofKey(person.id, date), file);
-      await uploadProof(file, date, (percent) => setProofNote({ date, percent, text: ui.proofSending(percent), name: prepared.name }));
+      if (prepared.local) await saveBlob(proofKey(personId, date), uploadFile);
+      await uploadProof(
+        uploadFile,
+        date,
+        (percent) => setProofNote({ date, percent, text: ui.proofSending(percent), name: prepared.name }),
+        key,
+      );
       const saved = await commitProof(date, prepared.name);
       if (!saved.ok && prepared.local) throw new Error("commit");
-      setUrls((current) => ({ ...current, [proofKey(person.id, date)]: URL.createObjectURL(file) }));
+      setUrls((current) => ({ ...current, [proofKey(personId, date)]: URL.createObjectURL(uploadFile) }));
       patchDay(date, (day) => ({ ...day, proofName: prepared.name }));
+      blockProofRetry(key);
       setProofNote(null);
       setProofError(null);
     } catch (error) {
@@ -1188,6 +1244,35 @@ export const PostingDashboard = ({
           }
 
           return null;
+        })}
+
+        {proofCatchupDates.map((date) => {
+          const label = ui.lateProofTitle(formatDay(date, "en"));
+          return (
+            <section
+              key={date}
+              id={`proof-catchup-card-${date}`}
+              className="rounded-3xl bg-white p-4 shadow-[0_16px_40px_-28px_rgba(0,0,0,0.45)]"
+            >
+              <h2 className="font-title text-2xl tracking-tight">{label}</h2>
+              <p className="mt-2 font-body text-sm leading-relaxed text-gray-700">{ui.lateProofBody}</p>
+              <input
+                id={`proof-catchup-${date}`}
+                type="file"
+                accept="video/*"
+                aria-label={label}
+                onChange={(event) => void onProof(date, event.target.files?.[0])}
+                className="mt-3 font-body text-sm"
+              />
+              {proofNote?.date === date && proofNote.name ? <p className="mt-2 font-body text-sm">{proofNote.name}</p> : null}
+              <ProofFeedback
+                active={proofNote?.date === date}
+                percent={proofNote?.date === date ? proofNote.percent : 0}
+                text={proofNote?.date === date ? proofNote.text : ""}
+                error={proofError?.date === date ? proofError.text : null}
+              />
+            </section>
+          );
         })}
 
         {!isTania && person ? (

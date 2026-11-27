@@ -26,7 +26,10 @@ const {
   formatMinutes,
   langFromName,
   calendarDate,
+  formatDay,
   missedProofDate,
+  proofCatchupFor,
+  proofCatchupsFor,
   sundayCatchupFor,
   shiftIsoDate,
   timeZoneForGirl,
@@ -676,12 +679,39 @@ assert.equal(missedProofDate("Peches - ES", mondayMorning), "2026-11-15");
 assert.equal(sundayCatchupFor("Ghada - FR"), null);
 assert.equal(sundayCatchupFor("Peches - ES"), null);
 assert.equal(sundayCatchupFor("Karol - US"), null);
+const wednesdayOnTheDesk = new Date("2026-11-25T16:00:00Z");
+assert.equal(proofCatchupFor("Karol - US", "p3"), "2026-11-24");
+assert.deepEqual(proofCatchupsFor("Karol - US", "p3"), ["2026-11-24", "2026-11-25"]);
+assert.deepEqual(proofCatchupsFor("Karol - US", "p1"), []);
+assert.deepEqual(proofCatchupsFor("Karol - US", "p2"), []);
+assert.equal(proofCatchupFor("Karol - US", "p1"), null);
+assert.equal(proofCatchupFor("Karol - US", "p2"), null);
+assert.equal(proofCatchupFor("Karol - EN", "p3"), null);
+assert.deepEqual(proofCatchupsFor("Karol - EN", "p3"), []);
+assert.equal(proofCatchupFor("Ghada - FR", "p1"), null);
+assert.equal(proofCatchupFor("Ghada - FR", "p3"), null);
+assert.deepEqual(proofCatchupsFor("Ghada - FR", "p3"), []);
+assert.equal(proofCatchupFor("Peches - ES", "p2"), null);
+assert.equal(proofCatchupFor("Peches - ES", "p3"), null);
+assert.deepEqual(proofCatchupsFor("Peches - ES", "p3"), []);
+assert.equal(proofCatchupFor("Karol - US", "p3") === "2026-11-22", false);
+assert.equal(proofCatchupsFor("Karol - US", "p3").includes("2026-11-22"), false);
+for (const name of ["Ghada - FR", "Peches - ES", "Karol - US"]) {
+  const dates = workerVisiblePlans(name, wednesdayOnTheDesk).map((plan) => plan.date);
+  assert.equal(dates.includes("2026-11-22"), false, name);
+  assert.equal(dates.includes("2026-11-24"), true, name);
+  assert.equal(dates[0], "2026-11-23", name);
+  assert.equal(missedProofDate(name, wednesdayOnTheDesk), null, name);
+}
+assert.equal(postingUi("en").lateProofTitle(formatDay("2026-11-24", "en")), "Yesterday's video, Tuesday, November 24");
 assert.deepEqual(suiviDates("2026-11-08"), ["2026-11-06", "2026-11-07", "2026-11-08"]);
 assert.deepEqual(CATCHUP_DATES, ["2026-11-06", "2026-11-07"]);
 assert.equal(postingUi("fr").catchupFriday, "Vidéo du vendredi 6 novembre");
 for (const lang of ["fr", "es", "en"]) {
   const copy = postingUi(lang);
-  for (const text of [copy.catchupBody, copy.lateProofBody, copy.proofTooBig, copy.proofDropHint]) assert.equal(/10 G/.test(text), false, `${lang} ${text}`);
+  for (const text of [copy.catchupBody, copy.lateProofBody, copy.proofTooBig, copy.proofDropHint, copy.proofCompressFail, copy.proofCompressing(12)]) {
+    assert.equal(/10 G/.test(text), false, `${lang} ${text}`);
+  }
   assert.equal("proofUpload" in copy, false, lang);
 }
 assert.ok(postingUi("es").catchupSaturday.includes("sábado"));
@@ -780,6 +810,28 @@ assert.equal(cleanDayWork({ slot: "19-20", checks: { create: true, nope: false }
 assert.equal(cleanDayWork({ slot: "bad" })?.slot, null);
 assert.equal(proofObjectKey("p1", "2026-11-08"), "file-p1-2026-11-08");
 assert.equal(PROOF_MAX_BYTES, 10 * 1024 * 1024 * 1024);
+assert.equal(postingUi("fr").proofCompressing(40), "Compression… 40 %");
+assert.equal(postingUi("es").proofCompressing(40), "Comprimiendo… 40 %");
+assert.equal(postingUi("en").proofCompressing(40), "Compressing… 40%");
+assert.equal(postingUi("fr").proofCompressFail, "La compression a échoué. Réessaie.");
+assert.equal(postingUi("es").proofCompressFail, "La compresión ha fallado. Vuelve a intentarlo.");
+assert.equal(postingUi("en").proofCompressFail, "Compression failed. Try again.");
+const { PROOF_AUDIO_BPS, PROOF_MAX_HEIGHT, PROOF_VIDEO_BPS, proofEncodedBytes, proofMp4Name, proofNeedsCompress } = await import("../src/config/proofCompress.ts");
+assert.equal(PROOF_MAX_HEIGHT, 480);
+assert.equal(PROOF_VIDEO_BPS, 800_000);
+assert.equal(PROOF_AUDIO_BPS, 128_000);
+assert.equal(proofNeedsCompress(480), false);
+assert.equal(proofNeedsCompress(481), true);
+assert.equal(proofNeedsCompress(720), true);
+assert.equal(proofNeedsCompress(1080), true);
+assert.equal(proofNeedsCompress(1920), true);
+assert.equal(proofNeedsCompress(Number.NaN), false);
+const hourBytes = proofEncodedBytes(3600);
+assert.equal(hourBytes, Math.ceil(((PROOF_VIDEO_BPS + PROOF_AUDIO_BPS) * 3600) / 8));
+assert.equal(hourBytes, 417_600_000);
+assert.ok(hourBytes >= 300_000_000 && hourBytes <= 500_000_000, String(hourBytes));
+assert.equal(proofMp4Name("session.mov"), "session.mp4");
+assert.equal(proofMp4Name("session.mp4"), "session.mp4");
 assert.equal(proofAllowed("p1", "2026-11-08", PROOF_MAX_BYTES), true);
 assert.equal(proofAllowed("p1", "2026-11-08", PROOF_MAX_BYTES + 1), false);
 assert.equal(proofAllowed("tania", "2026-11-08", 10), false);
@@ -887,4 +939,85 @@ for (const plan of DAY_PLANS.filter((item) => item.date >= "2026-11-17")) {
   assert.equal(timedMinutes(checksFor(plan)), plan.date >= "2026-11-23" ? 60 : 54, plan.date);
   assert.equal(checksFor(plan).some((item) => item.id.startsWith("story-")), false, plan.date);
 }
+const { capPercent, nextCompressPercent, proofIsComplete, partToSend, ackCursor, cursorFor } = await import("../src/config/proofResume.ts");
+assert.equal(nextCompressPercent(-1, 0), 0);
+assert.equal(nextCompressPercent(40, 0.4), 40);
+assert.equal(nextCompressPercent(99, 0), 99);
+assert.equal(nextCompressPercent(99, 0.5), 99);
+assert.equal(capPercent(10, 100, 90), 90);
+assert.equal(capPercent(100, 100, 0), 99);
+assert.equal(capPercent(0, 0, 0), 0);
+assert.equal(proofIsComplete(null, { name: "a.mp4", size: 10 }), false);
+assert.equal(proofIsComplete({ done: true, name: "a.mp4", size: 10 }, { name: "a.mp4", size: 10 }), true);
+assert.equal(proofIsComplete({ done: true, name: "a.mp4", size: 11 }, { name: "a.mp4", size: 10 }), false);
+assert.equal(proofIsComplete({ done: true, name: "b.mp4", size: null }, { name: "a.mp4", size: 10 }), false);
+assert.equal(proofIsComplete({ done: true, name: "a.mp4", size: null }, { name: "a.mp4", size: 10 }), true);
+const fresh = cursorFor(PROOF_PART_BYTES * 4, () => "abc12345");
+assert.equal(fresh.generation, "abc12345");
+assert.equal(fresh.parts, 4);
+assert.equal(partToSend(fresh), 0);
+const midway = ackCursor(ackCursor(fresh, 0), 1);
+assert.equal(partToSend(midway), 2);
+assert.equal(partToSend({ ...midway, next: midway.parts }), midway.parts - 1);
+assert.equal(partToSend({ ...midway, done: true }), "done");
+assert.equal(ackCursor(fresh, -1), fresh);
+assert.equal(ackCursor(fresh, 99), fresh);
+
+const { readFileSync } = await import("node:fs");
+const uploadRoute = readFileSync(new URL("../src/app/posting/upload/route.ts", import.meta.url), "utf8");
+assert.equal(uploadRoute.includes("export const maxDuration = 60"), true);
+assert.equal(uploadRoute.includes("export async function GET"), true);
+const dashboard = readFileSync(new URL("../src/components/posting/PostingDashboard.tsx", import.meta.url), "utf8");
+const runProof = dashboard.slice(dashboard.indexOf("const runProof"), dashboard.indexOf("const onBilan"));
+assert.equal(runProof.includes("uploadProof(file"), false);
+assert.equal(runProof.includes("uploadProof("), true);
+const compressCatch = runProof.slice(runProof.indexOf("compressProof"), runProof.indexOf("prepareProofUpload"));
+assert.ok(compressCatch.indexOf("compressed.file") < compressCatch.indexOf("catch"));
+assert.match(compressCatch, /catch[\s\S]*uploadFile = file/);
+assert.equal(compressCatch.includes("return"), false);
+assert.equal(compressCatch.includes("proofCompressFail"), false);
+assert.equal(runProof.split("uploadProof(").length - 1, 1);
+assert.equal(dashboard.includes("proofCatchupsFor"), true);
+assert.equal(dashboard.includes("proofCompressFail"), false);
+
+const {
+  attemptStart,
+  blockProofRetry,
+  joinProofJob,
+  proofRetryBlocked,
+  readAttempt,
+  rememberAttempt,
+  resetProofSends,
+  ackAttempt,
+  markAttemptDone,
+} = await import("../src/components/posting/proofSend.ts");
+resetProofSends();
+const video = new File([new Uint8Array(PROOF_PART_BYTES + 1)], "day.mp4");
+const key = `2026-11-25:${video.size}:1:day.mp4`;
+const first = rememberAttempt(key, video, async () => {}, () => "abc12345");
+const second = rememberAttempt(key, video, async () => {}, () => "zzzz9999");
+assert.equal(first.generation, "abc12345");
+assert.equal(second.generation, first.generation);
+assert.equal(attemptStart(readAttempt(key)), 0);
+ackAttempt(key, 0);
+assert.equal(attemptStart(readAttempt(key)), 1);
+markAttemptDone(key);
+assert.equal(attemptStart(readAttempt(key)), "done");
+blockProofRetry("echo", 1_000);
+assert.equal(proofRetryBlocked("echo", 1_000), true);
+assert.equal(proofRetryBlocked("echo", 2_600), false);
+let jobs = 0;
+const pending = joinProofJob("same", async () => {
+  jobs += 1;
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  return "kept";
+});
+assert.equal(await joinProofJob("same", async () => {
+  jobs += 1;
+  return "other";
+}), "kept");
+assert.equal(await pending, "kept");
+assert.equal(jobs, 1);
+resetProofSends();
+
 console.log("posting codes ok");
