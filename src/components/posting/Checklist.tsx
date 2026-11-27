@@ -29,24 +29,25 @@ export const Checklist = ({
     return { done: counted.filter((check) => done[check.id] === true).length, total: counted.length };
   };
   const [open, setOpen] = useState<Set<number>>(() => {
-    const first = groups.find((group) => {
+    const first = groups.findIndex((group) => {
       if (group.account === null) return false;
       const { done: ticked, total } = tally(group.items);
       return total > 0 && ticked < total;
     });
-    return new Set(first?.account === undefined || first.account === null ? [] : [first.account]);
+    return new Set(first < 0 ? [] : [first]);
   });
-  const toggle = (account: number) =>
+  /** Keyed by step, not account: Account 3 can appear twice in one day (start and end). */
+  const toggle = (step: number) =>
     setOpen((current) => {
       const next = new Set(current);
-      if (next.has(account)) next.delete(account);
-      else next.add(account);
+      if (next.has(step)) next.delete(step);
+      else next.add(step);
       return next;
     });
 
   return (
     <div className="flex flex-col gap-3">
-      {groups.map((group) => {
+      {groups.map((group, step) => {
         if (group.account === null) {
           return (
             <ul key={group.items[0].id} className="flex flex-col gap-4">
@@ -72,16 +73,16 @@ export const Checklist = ({
         const title = accountWord(account, lang);
         const { done: ticked, total } = tally(group.items);
         const complete = total > 0 && ticked === total;
-        const expanded = open.has(account);
+        const expanded = open.has(step);
         const goal = group.items.find((check) => check.goal)?.goal;
-        const panel = `steps-${date}-${account}`;
+        const panel = `steps-${date}-${step}`;
         return (
           <div key={group.items[0].id} className="overflow-hidden rounded-2xl border-2" style={{ borderColor: tone.frame }}>
             <button
               type="button"
               aria-expanded={expanded}
               aria-controls={panel}
-              onClick={() => toggle(account)}
+              onClick={() => toggle(step)}
               className="flex min-h-14 w-full items-center gap-3 px-3 py-2 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black"
             >
               <span className="flex min-w-0 flex-1 flex-col gap-1.5">

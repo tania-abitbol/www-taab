@@ -36,6 +36,8 @@ import {
   calendarDate,
   timeZoneForGirl,
   girlLabel,
+  shortVideoNumber,
+  usVideoDay,
   type AccountName,
   type DayPlan,
 } from "~/config/posting";
@@ -690,6 +692,28 @@ export const PostingDashboard = ({
     }
   };
 
+  /** One video of the card, as the file itself (no zip), so it lands straight in the phone's gallery. */
+  const downloadVideo = async (date: string, storageId: string, index: number) => {
+    const key = `${storageId}-${date}-video${index + 1}`;
+    if (zippingRef.current) return;
+    const video = slideshowOf(board, date, storageId)[index];
+    if (!video) return;
+    zippingRef.current = key;
+    setZipping(key);
+    setFileError("");
+    try {
+      const bytes = await readSharedFile(video.id);
+      const url = URL.createObjectURL(new Blob([bytes], { type: video.type || "video/mp4" }));
+      saveDownload(url, video.name || `video-${index + 1}.mp4`);
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch {
+      setFileError(ui.downloadFail);
+    } finally {
+      zippingRef.current = null;
+      setZipping(null);
+    }
+  };
+
   const addPerson = async (event: FormEvent) => {
     event.preventDefault();
     const result = await addManagedProfile(newName, newCode);
@@ -735,7 +759,7 @@ export const PostingDashboard = ({
     const day = desk.days[girlId]?.[date];
     const tasks =
       plan && worker
-        ? checksFor(plan, "fr").filter((check) => taskIsHers(check.id, accountForLang(langFromName(worker.name))) && !check.banner)
+        ? checksFor(plan, langFromName(worker.name)).filter((check) => taskIsHers(check.id, accountForLang(langFromName(worker.name))) && !check.banner)
         : [];
     return {
       slot: slotsFor(desk, girlId, date)[0] ?? null,
@@ -751,20 +775,22 @@ export const PostingDashboard = ({
     window.requestAnimationFrame(() => document.getElementById(`admin-day-${date}`)?.scrollIntoView({ block: "start", behavior: "smooth" }));
   };
 
-  const slideCard = (plan: DayPlan, worker: { id: string; label: string }, account: AccountName, index: number) => {
+  const slideCard = (plan: DayPlan, worker: { id: string; label: string; name: string }, account: AccountName, index: number) => {
     const storageId = slideStorageId(worker.id, account.id);
     const shared = board.files[plan.date]?.[storageId] ?? [];
     const names = shared.length > 0 ? shared.map((image) => image.name) : desk.taniaFiles[plan.date]?.[storageId] ?? [];
     const title = accountWord(index, "fr");
+    const videos = account.id === "us" && usVideoDay(plan.date, langFromName(worker.name));
     return (
       <div key={storageId} className="rounded-2xl bg-gray-100 p-3">
         <label htmlFor={`upload-${plan.date}-${storageId}`} className="block font-title text-xl leading-none tracking-tight" style={{ color: ACCOUNT_TONE[index].ink }}>
           {title}
         </label>
+        {videos ? <p className="mt-1 font-body text-sm text-gray-700">{adminCopy.shortVideos}</p> : null}
         <input
           id={`upload-${plan.date}-${storageId}`}
           type="file"
-          accept="image/*,video/*"
+          accept={videos ? "video/*" : "image/*,video/*"}
           multiple
           aria-label={`${title} ${worker.label}`}
           onChange={(event) => void onSlides(plan.date, storageId, event.target.files)}
@@ -840,6 +866,28 @@ export const PostingDashboard = ({
   };
 
   const slideActions = (plan: DayPlan, check: CheckItem): SlideLineActions | undefined => {
+    const short = shortVideoNumber(check.id);
+    if (short !== null) {
+      if (!person || !usVideoDay(plan.date, lang)) return undefined;
+      const storageId = slideStorageId(person.id, "us");
+      const video = slideshowOf(board, plan.date, storageId)[short - 1];
+      const zipKey = `${storageId}-${plan.date}-video${short}`;
+      return {
+        date: zipKey,
+        downloadLabel: slideCopy[lang].videoDownload,
+        downloadLine: slideCopy[lang].videoDownloadLine,
+        namesCount: video ? 1 : 0,
+        busy: zipping === zipKey,
+        busyLabel: ui.downloadPreparing,
+        onDownload: () => void downloadVideo(plan.date, storageId, short - 1),
+        copyLabel: slideCopy[lang].copy,
+        copiedLabel: slideCopy[lang].copied,
+        copyLine: slideCopy[lang].copyLine,
+        caption: captionOf(plan.date, storageId),
+        emptyCaption: slideCopy[lang].noCaption,
+        waiting: slideCopy[lang].videoWaiting,
+      };
+    }
     const accountId = check.id.startsWith("post-") ? check.id.slice(5) : "";
     if (!person || !accountId || plan.date < SLIDE_FROM || plan.date > SLIDE_UNTIL || !plan.publishers.includes(accountId)) return undefined;
     const storageId = slideStorageId(person.id, accountId);
