@@ -157,3 +157,20 @@ export const findSlide = (board: SlideBoard, id: string) => {
   }
   return null;
 };
+
+/** A two-video card keeps one caption per video in its single caption field, split by this line. */
+const VIDEO_CAPTION_SPLIT = "\n---\n";
+
+export const videoCaptions = (caption: string): [string, string] => {
+  const [first = "", ...rest] = caption.split(VIDEO_CAPTION_SPLIT);
+  return [first, rest.join(VIDEO_CAPTION_SPLIT)];
+};
+
+/** Caption for video 1 or 2. An old single caption still serves both videos. */
+export const videoCaption = (caption: string, index: number) => {
+  const parts = videoCaptions(caption);
+  return caption.includes(VIDEO_CAPTION_SPLIT) ? parts[index] ?? "" : caption;
+};
+
+export const joinVideoCaptions = (first: string, second: string) =>
+  second.trim() ? `${first}${VIDEO_CAPTION_SPLIT}${second}` : first;

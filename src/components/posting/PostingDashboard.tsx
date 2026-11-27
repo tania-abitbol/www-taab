@@ -51,7 +51,7 @@ import { SaveStatus, type SaveState } from "~/components/posting/SaveStatus";
 import { SlotPicker } from "~/components/posting/SlotPicker";
 import { WorkerView } from "~/components/posting/WorkerView";
 import { BILAN_MAX_BYTES } from "~/config/bilanVideo";
-import { SLIDE_FROM, SLIDE_UNTIL, slideshowOf, type SlideBoard, type SlideImage } from "~/config/slideBoard";
+import { SLIDE_FROM, SLIDE_UNTIL, joinVideoCaptions, slideshowOf, videoCaption, videoCaptions, type SlideBoard, type SlideImage } from "~/config/slideBoard";
 import { zipStoredFiles } from "~/config/slideZip";
 import { leavePosting } from "~/app/dashboard/creator/actions";
 import { addManagedProfile, commitProof, deleteManagedProfile, deleteValidatedDay, dropSharedSlide, loadSharedSlides, prepareProofUpload, publishSlideCaption, publishSlides, saveManagedProfile, saveMyDay } from "~/app/posting/actions";
@@ -824,15 +824,40 @@ export const PostingDashboard = ({
             })}
           </ul>
         )}
-        <textarea
-          id={`caption-${plan.date}-${storageId}`}
-          value={captionOf(plan.date, storageId)}
-          onChange={(event) => saveCaption(plan.date, storageId, event.target.value)}
-          rows={3}
-          placeholder={adminCopy.captionPlaceholder}
-          aria-label={adminCopy.captionLabel(worker.label, title)}
-          className="mt-3 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 font-body text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
-        />
+        {videos ? (
+          ([0, 1] as const).map((part) => {
+            const parts = videoCaptions(captionOf(plan.date, storageId));
+            return (
+              <label key={part} className="mt-3 block font-body text-sm font-bold">
+                {adminCopy.videoCaption(part + 1)}
+                <textarea
+                  id={`caption-${plan.date}-${storageId}-${part + 1}`}
+                  value={parts[part]}
+                  onChange={(event) =>
+                    saveCaption(
+                      plan.date,
+                      storageId,
+                      part === 0 ? joinVideoCaptions(event.target.value, parts[1]) : joinVideoCaptions(parts[0], event.target.value),
+                    )
+                  }
+                  rows={2}
+                  placeholder={adminCopy.captionPlaceholder}
+                  className="mt-1 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 font-body text-sm font-normal focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
+                />
+              </label>
+            );
+          })
+        ) : (
+          <textarea
+            id={`caption-${plan.date}-${storageId}`}
+            value={captionOf(plan.date, storageId)}
+            onChange={(event) => saveCaption(plan.date, storageId, event.target.value)}
+            rows={3}
+            placeholder={adminCopy.captionPlaceholder}
+            aria-label={adminCopy.captionLabel(worker.label, title)}
+            className="mt-3 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 font-body text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
+          />
+        )}
       </div>
     );
   };
@@ -883,7 +908,7 @@ export const PostingDashboard = ({
         copyLabel: slideCopy[lang].copy,
         copiedLabel: slideCopy[lang].copied,
         copyLine: slideCopy[lang].copyLine,
-        caption: captionOf(plan.date, storageId),
+        caption: videoCaption(captionOf(plan.date, storageId), short - 1),
         emptyCaption: slideCopy[lang].noCaption,
         waiting: slideCopy[lang].videoWaiting,
       };
