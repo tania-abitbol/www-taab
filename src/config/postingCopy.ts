@@ -1117,6 +1117,7 @@ export const slideCopy = {
 /** Tania's desk is French only. */
 export const adminCopy = {
   shortVideos: "2 vidéos ce jour-là, sans musique : la 1re en début de session, la 2e à la fin. Mets-les dans l'ordre.",
+  videoCaption: (number: number) => `Description de la vidéo ${number}`,
   summaryTitle: "Qui a fait quoi",
   filterLabel: "Filtrer par fille",
   filterAll: "Toutes",
